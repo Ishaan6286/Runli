@@ -25,7 +25,7 @@ const Header = () => {
             style={{
               position: "fixed",
               top: "20px",
-              right: "20px",
+              left: "20px", // Moved to LEFT
               zIndex: 10000000,
               pointerEvents: "auto",
             }}

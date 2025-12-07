@@ -650,8 +650,8 @@ export default function GymMode() {
                     <button
                         onClick={() => setShowCalculator(!showCalculator)}
                         style={{
-                            background: showCalculator ? '#10b981' : 'rgba(255, 255, 255, 0.2)', // Increased visibility
-                            border: '1px solid rgba(255,255,255,0.1)', // Added border
+                            background: showCalculator ? '#10b981' : '#ffffff', // Solid white for max visibility
+                            border: 'none',
                             borderRadius: '50%',
                             width: '48px',
                             height: '48px',
@@ -660,7 +660,8 @@ export default function GymMode() {
                             justifyContent: 'center',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
-                            color: showCalculator ? 'black' : 'white'
+                            color: 'black', // Black icon on white/green bg
+                            boxShadow: '0 0 10px rgba(255,255,255,0.3)'
                         }}
                         title="Plate Calculator"
                     >
@@ -690,8 +691,8 @@ export default function GymMode() {
                     <button
                         onClick={() => navigate('/')}
                         style={{
-                            background: 'rgba(255, 255, 255, 0.2)', // Increased visibility
-                            border: '1px solid rgba(255,255,255,0.1)', // Added border
+                            background: '#ffffff', // Solid white for max visibility
+                            border: 'none',
                             borderRadius: '50%',
                             width: '48px',
                             height: '48px',
@@ -699,10 +700,11 @@ export default function GymMode() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
-                            transition: 'all 0.2s'
+                            transition: 'all 0.2s',
+                            boxShadow: '0 0 10px rgba(255,255,255,0.3)'
                         }}
                     >
-                        <X size={24} color="white" />
+                        <X size={24} color="black" />
                     </button>
                 </div>
             </div>
@@ -961,25 +963,26 @@ export default function GymMode() {
                                                 <button
                                                     onClick={(e) => playVideo(e, workout)}
                                                     style={{
-                                                        background: 'rgba(16, 185, 129, 0.15)', // Slightly more visible background
-                                                        border: '1px solid #10b981', // Added solid border for defining shape
+                                                        background: '#10b981', // Solid Green Background
+                                                        border: '2px solid #059669', // Darker green border
                                                         borderRadius: '50%',
-                                                        width: '36px',
-                                                        height: '36px',
+                                                        width: '40px', // Slightly larger
+                                                        height: '40px',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
                                                         cursor: 'pointer',
-                                                        color: '#10b981',
-                                                        transition: 'all 0.2s'
+                                                        color: 'black', // Black icon
+                                                        transition: 'all 0.2s',
+                                                        boxShadow: '0 0 15px rgba(16, 185, 129, 0.4)'
                                                     }}
                                                     onMouseOver={(e) => {
-                                                        e.currentTarget.style.background = '#10b981';
-                                                        e.currentTarget.style.color = 'black';
+                                                        e.currentTarget.style.transform = 'scale(1.1)';
+                                                        e.currentTarget.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.6)';
                                                     }}
                                                     onMouseOut={(e) => {
-                                                        e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)';
-                                                        e.currentTarget.style.color = '#10b981';
+                                                        e.currentTarget.style.transform = 'scale(1)';
+                                                        e.currentTarget.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.4)';
                                                     }}
                                                     title="Watch Form Video"
                                                 >
@@ -1150,8 +1153,8 @@ export default function GymMode() {
                             position: 'absolute',
                             top: '2rem',
                             right: '2rem',
-                            background: 'rgba(255, 255, 255, 0.2)', // Increased visibility
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            background: 'rgba(255, 255, 255, 0.9)', // High visibility white
+                            border: 'none',
                             borderRadius: '50%',
                             width: '48px',
                             height: '48px',
@@ -1159,11 +1162,12 @@ export default function GymMode() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
-                            color: 'white',
-                            transition: 'all 0.2s'
+                            color: 'black', // Black icon
+                            transition: 'all 0.2s',
+                            boxShadow: '0 0 20px rgba(255,255,255,0.3)'
                         }}
                     >
-                        <X size={24} />
+                        <X size={24} color="black" />
                     </button>
 
                     {/* Title */}

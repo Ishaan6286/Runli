@@ -89,73 +89,14 @@ const Hero = () => {
           Your personal companion for tracking nutrition, calculating metrics, and managing your gym life. Simple, effective, and free.
         </p>
 
-        {/* Main CTA Button - Conditional based on login status */}
-        <Link to={user ? "/userinfo" : "/login"} style={{
-          padding: "1rem 3.5rem",
-          background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-          color: "#000",
-          textDecoration: "none",
-          borderRadius: "999px",
-          fontWeight: "800",
-          fontSize: "1.1rem",
-          boxShadow: "0 0 30px rgba(16, 185, 129, 0.4)",
-          transition: "all 0.3s ease",
-          border: "1px solid rgba(255,255,255,0.1)"
-        }}
-          onMouseOver={e => {
-            e.currentTarget.style.transform = "scale(1.05)";
-            e.currentTarget.style.boxShadow = "0 0 40px rgba(16, 185, 129, 0.6)";
-          }}
-          onMouseOut={e => {
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow = "0 0 30px rgba(16, 185, 129, 0.4)";
-          }}
-        >
-          {user ? "Generate a New Plan" : "Start my journey"}
-        </Link>
-
-        {/* Secondary CTA - Plan Page */}
-        {user && (
-          <Link to="/plan" style={{
-            padding: "1rem 3.5rem",
-            background: "transparent",
-            color: "#10b981",
-            textDecoration: "none",
-            borderRadius: "999px",
-            fontWeight: "800",
-            fontSize: "1.1rem",
-            border: "2px solid #10b981",
-            transition: "all 0.3s ease",
-            marginTop: "1rem"
-          }}
-            onMouseOver={e => {
-              e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
-              e.currentTarget.style.transform = "scale(1.05)";
-            }}
-            onMouseOut={e => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.transform = "scale(1)";
-            }}
-          >
-            View Plan Page
-          </Link>
-        )}
-
-        {/* Divider */}
-        <div style={{
-          width: "100%",
-          height: "1px",
-          background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)",
-          margin: "4rem 0 2rem"
-        }}></div>
-
         {/* Feature Quick Links */}
         <div style={{
           display: "flex",
           gap: "1.5rem",
           justifyContent: "center",
           flexWrap: "wrap",
-          marginTop: "1.5rem"
+          marginBottom: "2.5rem",
+          marginTop: "0.5rem"
         }}>
           {user && (
             <Link to="/dashboard" style={{
@@ -222,6 +163,31 @@ const Hero = () => {
             <Target size={20} /> Habit Tracker
           </Link>
         </div>
+
+        {/* Main CTA Button - Conditional based on login status */}
+        <Link to={user ? "/userinfo" : "/login"} style={{
+          padding: "1rem 3.5rem",
+          background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+          color: "#000",
+          textDecoration: "none",
+          borderRadius: "999px",
+          fontWeight: "800",
+          fontSize: "1.1rem",
+          boxShadow: "0 0 30px rgba(16, 185, 129, 0.4)",
+          transition: "all 0.3s ease",
+          border: "1px solid rgba(255,255,255,0.1)"
+        }}
+          onMouseOver={e => {
+            e.currentTarget.style.transform = "scale(1.05)";
+            e.currentTarget.style.boxShadow = "0 0 40px rgba(16, 185, 129, 0.6)";
+          }}
+          onMouseOut={e => {
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow = "0 0 30px rgba(16, 185, 129, 0.4)";
+          }}
+        >
+          {user ? "Generate a New Plan" : "Start my journey"}
+        </Link>
 
       </div>
     </div>
