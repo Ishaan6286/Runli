@@ -961,8 +961,8 @@ export default function GymMode() {
                                                 <button
                                                     onClick={(e) => playVideo(e, workout)}
                                                     style={{
-                                                        background: 'rgba(16, 185, 129, 0.2)',
-                                                        border: 'none',
+                                                        background: 'rgba(16, 185, 129, 0.15)', // Slightly more visible background
+                                                        border: '1px solid #10b981', // Added solid border for defining shape
                                                         borderRadius: '50%',
                                                         width: '36px',
                                                         height: '36px',
@@ -970,7 +970,16 @@ export default function GymMode() {
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
                                                         cursor: 'pointer',
-                                                        color: '#10b981'
+                                                        color: '#10b981',
+                                                        transition: 'all 0.2s'
+                                                    }}
+                                                    onMouseOver={(e) => {
+                                                        e.currentTarget.style.background = '#10b981';
+                                                        e.currentTarget.style.color = 'black';
+                                                    }}
+                                                    onMouseOut={(e) => {
+                                                        e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)';
+                                                        e.currentTarget.style.color = '#10b981';
                                                     }}
                                                     title="Watch Form Video"
                                                 >
@@ -1127,7 +1136,7 @@ export default function GymMode() {
                     position: 'fixed',
                     inset: 0,
                     background: '#000000',
-                    zIndex: 9999,
+                    zIndex: 20000000, // Higher than Header (10000000)
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -1141,8 +1150,8 @@ export default function GymMode() {
                             position: 'absolute',
                             top: '2rem',
                             right: '2rem',
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            border: 'none',
+                            background: 'rgba(255, 255, 255, 0.2)', // Increased visibility
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
                             borderRadius: '50%',
                             width: '48px',
                             height: '48px',
@@ -1150,7 +1159,8 @@ export default function GymMode() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
-                            color: 'white'
+                            color: 'white',
+                            transition: 'all 0.2s'
                         }}
                     >
                         <X size={24} />
@@ -1158,7 +1168,7 @@ export default function GymMode() {
 
                     {/* Title */}
                     <h1 style={{
-                        fontSize: '3rem',
+                        fontSize: window.innerWidth < 768 ? '2rem' : '3rem', // Responsive font size
                         fontWeight: 800,
                         background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
                         WebkitBackgroundClip: 'text',
@@ -1214,7 +1224,7 @@ export default function GymMode() {
 
                     {/* Countdown Display */}
                     <div style={{
-                        fontSize: '12rem',
+                        fontSize: window.innerWidth < 768 ? '6rem' : '12rem', // Responsive font size
                         fontWeight: 900,
                         fontFamily: 'monospace',
                         color: plankTimeLeft <= 10 ? '#ef4444' : '#10b981',
@@ -1236,7 +1246,7 @@ export default function GymMode() {
                                 color: isPlankRunning ? '#ef4444' : 'white',
                                 border: 'none',
                                 borderRadius: '1rem',
-                                padding: '1.5rem 4rem',
+                                padding: window.innerWidth < 768 ? '1rem 2rem' : '1.5rem 4rem', // Responsive padding
                                 fontSize: '1.5rem',
                                 fontWeight: 700,
                                 cursor: 'pointer',
