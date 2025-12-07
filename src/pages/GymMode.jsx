@@ -650,22 +650,32 @@ export default function GymMode() {
                     <button
                         onClick={() => setShowCalculator(!showCalculator)}
                         style={{
-                            background: showCalculator ? '#10b981' : '#ffffff', // Solid white for max visibility
-                            border: 'none',
+                            background: '#ffffff', // Solid white for max visibility
+                            border: showCalculator ? '3px solid #10b981' : '3px solid rgba(16, 185, 129, 0.5)', // Green border
                             borderRadius: '50%',
-                            width: '48px',
-                            height: '48px',
+                            width: '56px', // Larger size to match exit button
+                            height: '56px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
-                            color: 'black', // Black icon on white/green bg
-                            boxShadow: '0 0 10px rgba(255,255,255,0.3)'
+                            color: 'black',
+                            boxShadow: '0 0 20px rgba(255,255,255,0.5), 0 4px 12px rgba(0,0,0,0.3)'
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                            e.currentTarget.style.background = '#10b981';
+                            e.currentTarget.style.border = '3px solid #10b981';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.background = '#ffffff';
+                            e.currentTarget.style.border = showCalculator ? '3px solid #10b981' : '3px solid rgba(16, 185, 129, 0.5)';
                         }}
                         title="Plate Calculator"
                     >
-                        <Calculator size={24} />
+                        <Calculator size={28} strokeWidth={2.5} />
                     </button>
                     <button
                         onClick={() => setShowPlankTimer(true)}
