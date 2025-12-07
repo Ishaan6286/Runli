@@ -650,8 +650,8 @@ export default function GymMode() {
                     <button
                         onClick={() => setShowCalculator(!showCalculator)}
                         style={{
-                            background: showCalculator ? '#10b981' : 'rgba(255, 255, 255, 0.1)',
-                            border: 'none',
+                            background: showCalculator ? '#10b981' : 'rgba(255, 255, 255, 0.2)', // Increased visibility
+                            border: '1px solid rgba(255,255,255,0.1)', // Added border
                             borderRadius: '50%',
                             width: '48px',
                             height: '48px',
@@ -690,8 +690,8 @@ export default function GymMode() {
                     <button
                         onClick={() => navigate('/')}
                         style={{
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            border: 'none',
+                            background: 'rgba(255, 255, 255, 0.2)', // Increased visibility
+                            border: '1px solid rgba(255,255,255,0.1)', // Added border
                             borderRadius: '50%',
                             width: '48px',
                             height: '48px',

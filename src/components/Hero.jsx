@@ -152,35 +152,74 @@ const Hero = () => {
         {/* Feature Quick Links */}
         <div style={{
           display: "flex",
-          gap: "3rem",
-          justifyContent: "center"
+          gap: "1.5rem",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          marginTop: "1.5rem"
         }}>
+          {user && (
+            <Link to="/dashboard" style={{
+              display: "flex", alignItems: "center", gap: "0.75rem",
+              background: "rgba(16, 185, 129, 0.1)",
+              border: "1px solid rgba(16, 185, 129, 0.3)",
+              color: "#10b981", textDecoration: "none", fontWeight: "600",
+              padding: "0.8rem 2rem", borderRadius: "999px",
+              transition: "all 0.2s",
+              fontSize: "1rem"
+            }}
+              onMouseOver={e => {
+                e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              Go to Dashboard →
+            </Link>
+          )}
+
           <Link to="/gym-mode" style={{
             display: "flex", alignItems: "center", gap: "0.75rem",
+            background: "transparent",
+            border: "1px solid #10b981",
             color: "#10b981", textDecoration: "none", fontWeight: "600",
+            padding: "0.8rem 2rem", borderRadius: "999px",
             transition: "all 0.2s",
-            fontSize: "1.1rem"
+            fontSize: "1rem"
           }}
-            onMouseOver={e => e.currentTarget.style.opacity = "0.8"}
-            onMouseOut={e => e.currentTarget.style.opacity = "1"}
+            onMouseOver={e => {
+              e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+              e.currentTarget.style.transform = "translateY(-2px)";
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
           >
-            <Dumbbell size={24} /> Gym Mode
+            <Dumbbell size={20} /> Gym Mode
           </Link>
 
           <Link to="/habits" style={{
             display: "flex", alignItems: "center", gap: "0.75rem",
-            color: "#9ca3af", textDecoration: "none", fontWeight: "600",
+            background: "transparent",
+            border: "1px solid #3b82f6", // Blue specific for clarity
+            color: "#3b82f6", textDecoration: "none", fontWeight: "600",
+            padding: "0.8rem 2rem", borderRadius: "999px",
             transition: "all 0.2s",
-            fontSize: "1.1rem"
+            fontSize: "1rem"
           }}
             onMouseOver={e => {
-              e.currentTarget.style.color = "#10b981";
+              e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+              e.currentTarget.style.transform = "translateY(-2px)";
             }}
             onMouseOut={e => {
-              e.currentTarget.style.color = "#9ca3af";
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.transform = "translateY(0)";
             }}
           >
-            <Target size={24} /> Habit Tracker
+            <Target size={20} /> Habit Tracker
           </Link>
         </div>
 
