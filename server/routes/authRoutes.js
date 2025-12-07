@@ -102,7 +102,8 @@ router.get('/google/callback',
 
     // Redirect to frontend with token
     // We pass the token in the URL query parameter
-    res.redirect(`http://localhost:5173/auth/callback?token=${token}`);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
   }
 );
 
