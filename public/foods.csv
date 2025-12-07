@@ -1,0 +1,416 @@
+Dish Name,Calories (kcal),Carbohydrates (g),Protein (g),Fats (g)
+Hot tea (Garam Chai),16.14,2.58,0.39,0.53
+Instant coffee,23.16,3.65,0.64,0.75
+Espreso coffee,51.54,6.62,1.75,2.14
+Iced tea,10.34,2.7,0.03,0.01
+Raw mango drink (Aam panna),35.92,9.05,0.16,0.03
+Fruit Punch (with fresh juices),36.12,9.38,0.14,0.03
+Fresh Lemonade,28.62,7.46,0.15,0.03
+Water melon juice,36.96,9.15,0.61,0.04
+Mango shake,55.51,7.21,1.15,2.52
+Lassi,51.53,5.29,1.72,2.69
+Flavoured milk,79.57,9.1,2.02,3.95
+Buttermilk,31.78,2.71,1.52,1.67
+Sweet buttermilk,48.06,5.88,1.68,1.91
+Masala milk,52.48,5.4,1.86,2.65
+Coconut milk,202.48,6.8,2.29,18.72
+Coconut water,18.57,4.3,0.3,0.08
+Coconut oil (for consumption),884.0,0.0,0.0,100.0
+Flaxseed oil,884.0,0.0,0.0,100.0
+Groundnut oil,884.0,0.0,0.0,100.0
+Mustard oil,884.0,0.0,0.0,100.0
+Olive oil,884.0,0.0,0.0,100.0
+Sesame oil,884.0,0.0,0.0,100.0
+Soyabean oil,884.0,0.0,0.0,100.0
+Sunflower oil,884.0,0.0,0.0,100.0
+Palm oil,884.0,0.0,0.0,100.0
+Ghee,884.0,0.0,0.0,100.0
+Vegetable fat (Vanaspati),884.0,0.0,0.0,100.0
+Vegetable oil (Generic),884.0,0.0,0.0,100.0
+Cashews,553.05,29.17,18.22,43.85
+Almonds,575.46,21.55,21.26,49.42
+Walnuts,654.34,13.71,15.23,65.21
+Pistachios,560.15,27.17,20.16,45.39
+Peanuts,567.0,16.13,25.8,49.24
+Raisins,299.04,79.18,3.07,0.46
+Dates,277.1,74.97,2.46,0.15
+Figs,74.0,19.18,0.75,0.3
+Apricots,48.0,11.12,1.4,0.39
+Apple,52.1,13.81,0.26,0.17
+Banana,88.7,22.84,1.09,0.33
+Orange,47.3,11.75,0.94,0.12
+Mosambi,43.2,10.97,0.8,0.1
+Grapes,69.2,18.1,0.64,0.16
+Pomegranate,83.0,18.7,1.67,1.17
+Kiwi,61.0,14.66,1.02,0.5
+Papaya,43.0,10.82,0.47,0.26
+Pineapple,50.0,13.12,0.54,0.12
+Strawberry,32.4,7.68,0.67,0.3
+Guava,68.0,14.32,2.55,0.95
+Pear,57.1,15.2,0.38,0.12
+Watermelon,30.0,7.55,0.61,0.15
+Muskmelon,34.0,8.16,0.84,0.19
+Goji berry,349.0,77.06,14.28,0.39
+Lychee,66.0,16.53,0.83,0.44
+Blackberry,43.0,9.61,1.39,0.49
+Mango,60.0,14.98,0.82,0.38
+Avocado,160.0,8.53,2.0,14.66
+Coconut,354.0,15.23,3.33,33.49
+Lemon,29.0,9.32,1.1,0.3
+Lime,30.0,10.54,0.7,0.2
+Jamun,60.0,14.0,0.7,0.2
+Custard apple,94.0,23.64,1.56,0.29
+Cherries,63.0,16.01,1.06,0.2
+Plums,46.0,11.42,0.7,0.28
+Amla,44.0,10.18,0.88,0.58
+Black currant,63.0,15.38,1.4,0.41
+Passion fruit,97.0,23.38,2.2,0.7
+Sapota,83.0,19.96,0.44,1.1
+Breadfruit,103.0,27.12,1.07,0.23
+Carambola,31.0,6.73,1.04,0.33
+Persimmon,127.0,33.5,0.7,0.4
+Tamarind,239.0,62.5,2.8,0.6
+Wood Apple,134.0,31.8,7.3,0.3
+Milk,61.0,4.78,3.22,3.29
+Curd/Dahi,59.0,3.69,3.47,3.25
+Paneer,321.0,1.2,25.0,24.0
+Cottage cheese (low fat),72.0,2.6,12.0,0.6
+Tofu,76.0,1.9,8.0,4.8
+Soya milk,54.0,2.7,3.3,1.8
+Yoghurt (Greek),59.0,3.6,10.0,0.4
+Cream (light),197.0,4.3,2.8,19.1
+Cream (heavy),340.0,3.7,2.1,36.0
+Butter,717.0,0.06,0.85,81.11
+Mozzarella cheese,300.0,2.2,22.0,22.0
+Cheddar cheese,404.0,1.3,24.0,33.0
+Egg,155.0,1.12,12.58,10.6
+Chicken,165.0,0.0,31.0,3.6
+Turkey,135.0,0.0,29.0,1.4
+Mutton,294.0,0.0,17.0,23.4
+Pork,242.0,0.0,27.0,14.0
+Fish (Salmon),208.0,0.0,20.0,13.0
+Fish (Tuna),184.0,0.0,30.0,6.3
+Prawns,85.0,0.2,20.0,0.5
+Crab,87.0,0.4,19.0,0.6
+Oyster,68.0,4.9,7.0,2.0
+Lobster,89.0,0.9,19.0,0.6
+Beef,250.0,0.0,26.0,15.0
+Lentils (Masoor Dal),352.0,63.4,24.63,1.06
+Black gram (Urad Dal),341.0,59.8,25.21,1.64
+Split Bengal gram (Chana Dal),387.0,65.8,22.51,6.04
+Green gram (Moong Dal),347.0,62.6,24.58,1.21
+Red Kidney Beans (Rajma),333.0,60.0,24.0,0.8
+Chickpeas (Chole/Chana),364.0,60.65,19.3,5.98
+Pigeon pea (Toor Dal/Arhar Dal),343.0,62.9,21.7,1.5
+Whole Wheat Flour (Atta),340.0,72.5,13.2,1.1
+Rice (White, uncooked),350.0,77.5,6.6,0.5
+Rice (Brown, uncooked),362.0,76.2,7.5,2.0
+Jowar (Sorghum) Flour,339.0,72.1,10.4,1.9
+Bajra (Pearl Millet) Flour,361.0,67.5,11.6,5.0
+Ragi (Finger Millet) Flour,336.0,72.0,7.3,1.3
+Corn Flour,361.0,79.5,3.2,1.2
+Barley (Jau) Flour,354.0,73.5,9.9,1.2
+Quinoa,368.0,64.16,14.12,6.07
+Oats,389.0,66.27,16.89,6.9
+Soya Chunks,327.0,27.7,48.0,0.5
+Refined Flour (Maida),364.0,76.3,10.3,1.0
+Semolina (Suji),360.0,72.8,12.7,1.1
+Vermicelli,352.0,74.0,12.0,0.5
+Potatoes,77.0,17.47,2.05,0.09
+Sweet Potato,86.0,20.12,1.57,0.05
+Onion,40.0,9.34,1.1,0.1
+Tomato,18.0,3.89,0.88,0.2
+Carrot,41.0,9.58,0.93,0.24
+Beetroot,43.0,9.96,1.61,0.17
+Cucumber,15.0,3.63,0.7,0.11
+Cabbage,25.0,5.8,1.28,0.1
+Cauliflower,25.0,4.97,1.92,0.28
+Broccoli,34.0,6.62,2.82,0.37
+Spinach,23.0,3.63,2.86,0.39
+Methi (Fenugreek leaves),49.0,6.0,4.8,0.9
+Coriander leaves,23.0,3.67,2.13,0.52
+Drumstick leaves,92.0,12.5,6.7,1.7
+Pudina (Mint leaves),70.0,14.0,3.75,0.94
+Palak (Spinach),23.0,3.63,2.86,0.39
+Brinjal/Eggplant,25.0,5.88,0.98,0.18
+Bhindi (Okra),33.0,7.45,1.93,0.19
+Gourd (Lauki),15.0,3.65,0.62,0.02
+Bitter Gourd (Karela),17.0,3.95,1.03,0.17
+Tinda (Indian round gourd),21.0,4.4,1.4,0.1
+Beans (French),31.0,6.97,1.83,0.12
+Peas (Green),81.0,13.93,5.42,0.4
+Mushrooms,22.0,3.27,3.09,0.34
+Ginger,80.0,17.77,1.82,0.75
+Garlic,149.0,33.06,6.36,0.5
+Capsicum,20.0,4.64,0.86,0.17
+Chillies (Green),40.0,9.45,2.0,0.4
+Lemon (for vegetable),29.0,9.32,1.1,0.3
+Kadi Patta (Curry leaves),108.0,18.7,6.1,1.0
+Green Beans,31.0,6.97,1.83,0.12
+Mustard Leaves (Sarson ka saag),26.0,4.6,2.8,0.6
+Radish,16.0,3.4,0.68,0.1
+Sweet corn,96.0,21.0,3.4,1.5
+Yam (Suran),118.0,27.9,1.53,0.17
+Colocasia (Arbi),118.0,26.46,1.5,0.2
+Chilli Powder,318.0,56.6,12.0,17.0
+Coriander Powder,298.0,54.9,12.3,17.8
+Turmeric Powder,354.0,64.9,7.8,9.9
+Cumin Seeds,375.0,43.99,17.81,22.27
+Mustard Seeds,508.0,28.09,24.94,36.16
+Asafoetida (Hing),297.0,67.8,4.0,1.1
+Cardamom,311.0,68.47,10.7,6.7
+Cinnamon,247.0,80.6,3.9,1.2
+Cloves,323.0,65.53,5.98,13.0
+Black Pepper,251.0,64.8,10.95,3.26
+Bay Leaf,313.0,74.9,7.6,1.4
+Garam Masala,378.0,51.8,14.6,12.7
+Salt,0.0,0.0,0.0,0.0
+Sugar,387.0,99.8,0.0,0.0
+Jaggery,383.0,95.0,0.4,0.1
+Honey,304.0,82.4,0.3,0.0
+White Bread,265.0,49.0,9.0,3.2
+Brown Bread,250.0,49.0,11.0,2.5
+Whole Wheat Bread,247.0,46.0,13.0,3.2
+Multigrain Bread,250.0,45.0,12.0,3.5
+Pita Bread,266.0,55.0,9.0,1.0
+Naan,287.0,59.0,8.0,2.0
+Chapati/Roti,297.0,57.0,11.0,3.5
+Paratha (Plain),317.0,54.0,11.0,7.0
+Puri,387.0,45.0,9.0,19.0
+Dosa (Plain),167.0,34.0,5.0,1.0
+Idli,106.0,21.0,4.0,0.5
+Uttapam,197.0,38.0,5.0,2.5
+Upma,166.0,26.0,5.0,4.5
+Poha,133.0,28.0,3.0,1.5
+Rice (cooked),130.0,28.0,2.7,0.3
+Dal (cooked),113.0,19.0,7.0,0.4
+Sambar,66.0,10.0,4.0,1.0
+Rasam,34.0,6.0,1.5,0.5
+Curry/Sabzi (mixed veg),80.0,12.0,4.0,2.0
+Curry/Sabzi (potato),120.0,20.0,3.0,3.0
+Curry/Sabzi (gobi),60.0,9.0,3.0,1.5
+Curry/Sabzi (paneer),180.0,8.0,10.0,12.0
+Curry/Sabzi (chicken),180.0,5.0,20.0,8.0
+Curry/Sabzi (mutton),220.0,4.0,20.0,14.0
+Tandoori Chicken,165.0,1.0,30.0,4.0
+Chicken Tikka,180.0,2.0,25.0,8.0
+Chicken Seekh Kebab,200.0,3.0,28.0,9.0
+Mutton Seekh Kebab,240.0,3.0,25.0,14.0
+Fish Fry,200.0,5.0,20.0,10.0
+Fish Curry,180.0,8.0,18.0,8.0
+Prawn Curry,160.0,7.0,18.0,6.0
+Biryani (Chicken),350.0,45.0,20.0,10.0
+Biryani (Mutton),400.0,40.0,20.0,18.0
+Pulao (Veg),300.0,50.0,8.0,8.0
+Khichdi,200.0,30.0,8.0,5.0
+Dalia (Broken Wheat),342.0,71.0,12.0,1.5
+Poha (Rice Flakes),346.0,78.0,6.0,1.0
+Sewai (Vermicelli),352.0,74.0,12.0,0.5
+Sweet Dish (Gulab Jamun),300.0,40.0,4.0,15.0
+Sweet Dish (Rasgulla),250.0,30.0,5.0,12.0
+Sweet Dish (Jalebi),450.0,60.0,3.0,22.0
+Sweet Dish (Ladoo),380.0,50.0,8.0,15.0
+Sweet Dish (Halwa),400.0,55.0,6.0,18.0
+Sweet Dish (Kheer),220.0,35.0,6.0,6.0
+Sweet Dish (Sevaiyan),250.0,40.0,5.0,8.0
+Ice Cream (Vanilla),207.0,23.0,3.5,11.0
+Ice Cream (Chocolate),216.0,25.0,4.0,12.0
+Kulfi,230.0,25.0,5.0,13.0
+Shrikhand,280.0,35.0,7.0,12.0
+Sandwich (Veg),250.0,30.0,8.0,10.0
+Sandwich (Cheese),350.0,30.0,15.0,20.0
+Sandwich (Chicken),300.0,25.0,20.0,12.0
+Burger (Veg),300.0,35.0,10.0,12.0
+Burger (Chicken),350.0,30.0,20.0,15.0
+Pizza (Veg),280.0,30.0,12.0,12.0
+Pizza (Cheese),300.0,30.0,15.0,14.0
+Pizza (Chicken),320.0,30.0,20.0,14.0
+French Fries,312.0,41.0,3.4,15.0
+Samosa,262.0,29.0,5.0,15.0
+Pakora (Mixed Veg),300.0,30.0,6.0,18.0
+Vada Pav,230.0,30.0,6.0,10.0
+Pav Bhaji,250.0,35.0,8.0,8.0
+Bhel Puri,250.0,50.0,6.0,4.0
+Pani Puri/Golgappa,200.0,40.0,4.0,2.0
+Dahi Vada,220.0,25.0,8.0,10.0
+Dabeli,280.0,40.0,8.0,10.0
+Chaat (Aloo Tikki),250.0,30.0,5.0,12.0
+Noodle (Veg),150.0,25.0,4.0,3.0
+Noodle (Chicken),180.0,20.0,10.0,7.0
+Rice (Fried),200.0,30.0,6.0,6.0
+Manchurian (Veg),150.0,15.0,4.0,8.0
+Manchurian (Chicken),180.0,10.0,15.0,9.0
+Soup (Tomato),30.0,6.0,1.0,0.5
+Soup (Veg),40.0,7.0,2.0,1.0
+Soup (Chicken),60.0,4.0,8.0,2.0
+Salad (Veg),50.0,10.0,2.0,1.0
+Salad (Chicken),100.0,5.0,15.0,2.0
+Raita (Veg),80.0,10.0,4.0,3.0
+Curd Rice,150.0,25.0,5.0,3.0
+Lemon Rice,180.0,35.0,4.0,3.0
+Tamarind Rice,180.0,35.0,4.0,3.0
+Bisibelebath,150.0,25.0,6.0,3.0
+Pongal,180.0,30.0,6.0,4.0
+Vada (Medu),150.0,20.0,5.0,6.0
+Mysore Bonda,180.0,25.0,4.0,8.0
+Appam,100.0,20.0,3.0,1.0
+Idiyappam,120.0,25.0,4.0,1.0
+Puttu,150.0,30.0,5.0,2.0
+Adai,200.0,30.0,8.0,5.0
+Kuzhi Paniyaram,180.0,25.0,5.0,7.0
+Jowar Roti,120.0,25.0,4.0,1.0
+Bajra Roti,130.0,25.0,4.0,2.0
+Makke ki Roti,150.0,30.0,5.0,2.0
+Besan Cheela,150.0,20.0,8.0,4.0
+Ragi Roti,110.0,22.0,3.0,1.0
+Khandvi,150.0,20.0,5.0,6.0
+Dhokla,120.0,20.0,6.0,2.0
+Fafda,300.0,35.0,10.0,15.0
+Thepla,180.0,25.0,5.0,7.0
+Handvo,250.0,35.0,10.0,8.0
+Gathiya,350.0,40.0,10.0,18.0
+Papad,50.0,10.0,3.0,0.5
+Khakhra,40.0,8.0,2.0,0.5
+Chutney (Coconut),100.0,10.0,2.0,6.0
+Chutney (Tomato),50.0,10.0,1.0,0.5
+Chutney (Mint),30.0,6.0,1.0,0.5
+Pickle (Mixed Veg),200.0,10.0,2.0,18.0
+Pickle (Mango),250.0,15.0,1.0,20.0
+Pickle (Lemon),200.0,10.0,1.0,18.0
+Jam/Jelly,250.0,60.0,0.5,0.1
+Marmalade,250.0,60.0,0.5,0.1
+Ketchup,100.0,25.0,1.0,0.1
+Mustard Sauce,60.0,5.0,4.0,4.0
+Mayonnaise,680.0,4.0,1.0,75.0
+Soy Sauce,53.0,4.9,8.0,0.6
+Hot Sauce,30.0,6.0,1.0,0.5
+Vinegar,18.0,0.9,0.0,0.0
+Baked Beans,93.0,18.0,4.7,0.3
+Corn Flakes,378.0,84.0,7.5,1.0
+Oatmeal (cooked),68.0,12.0,2.5,1.5
+Muesli,375.0,70.0,10.0,6.0
+Granola,471.0,64.0,10.0,20.0
+Pancakes,227.0,41.0,8.0,4.0
+Waffles,280.0,47.0,7.0,7.0
+Doughnut,452.0,51.0,5.0,25.0
+Muffin,375.0,50.0,6.0,17.0
+Croissant,406.0,45.0,8.0,22.0
+Pastry,350.0,40.0,5.0,20.0
+Cake,370.0,55.0,5.0,15.0
+Cookies/Biscuits,450.0,60.0,6.0,20.0
+Chocolates,535.0,58.0,8.0,30.0
+Candy,400.0,90.0,0.0,5.0
+Gummy Bears,333.0,77.0,6.0,0.0
+Marshmallows,318.0,81.0,2.0,0.1
+Chewing Gum,300.0,70.0,0.0,0.0
+Soft Drink (Cola),41.0,10.4,0.1,0.0
+Soft Drink (Lemon/Lime),38.0,9.6,0.1,0.0
+Fruit Juice (Apple),46.0,11.3,0.1,0.1
+Fruit Juice (Orange),45.0,10.4,0.7,0.1
+Vegetable Juice (Carrot),40.0,9.0,0.9,0.2
+Vegetable Juice (Tomato),17.0,3.5,0.8,0.1
+Tea (Black, brewed),1.0,0.3,0.1,0.0
+Tea (Green, brewed),1.0,0.2,0.1,0.0
+Coffee (Black, brewed),2.0,0.0,0.3,0.0
+Coffee (Latte),56.0,5.0,3.0,3.0
+Coffee (Cappuccino),48.0,4.0,3.0,2.5
+Coffee (Mocha),68.0,8.0,4.0,2.5
+Hot Chocolate,80.0,12.0,4.0,3.0
+Wine (Red),85.0,2.6,0.1,0.0
+Wine (White),82.0,2.6,0.1,0.0
+Beer (Regular),43.0,3.5,0.5,0.0
+Beer (Light),29.0,2.0,0.3,0.0
+Whiskey,250.0,0.0,0.0,0.0
+Vodka,231.0,0.0,0.0,0.0
+Rum,231.0,0.0,0.0,0.0
+Brandy,245.0,0.0,0.0,0.0
+Gin,263.0,0.0,0.0,0.0
+Soda Water,0.0,0.0,0.0,0.0
+Tonic Water,34.0,8.2,0.0,0.0
+Energy Drink,42.0,10.0,0.0,0.0
+Sports Drink,24.0,6.0,0.0,0.0
+Protein Shake,150.0,10.0,25.0,2.0
+Meal Replacement Shake,200.0,20.0,20.0,5.0
+Oats (Rolled),389.0,66.27,16.89,6.9
+Oats (Instant),370.0,66.0,13.0,6.0
+Oats (Steel Cut),379.0,67.7,15.4,6.5
+Oat Bran,246.0,66.2,17.3,7.0
+Wheat Germ,360.0,51.8,23.1,9.2
+Flaxseed (Ground),534.0,28.8,18.3,42.2
+Chia Seeds,486.0,42.1,16.5,30.7
+Hemp Seeds,553.0,15.0,30.0,45.0
+Sesame Seeds,573.0,23.45,17.73,49.67
+Sunflower Seeds,584.0,20.0,20.7,51.5
+Pumpkin Seeds,559.0,14.7,30.3,49.0
+Poppy Seeds,525.0,28.1,18.0,41.6
+Brazil Nuts,659.0,12.3,14.3,66.8
+Macadamia Nuts,718.0,13.8,7.9,75.8
+Pecan Nuts,691.0,13.9,9.2,72.0
+Pine Nuts,673.0,13.1,13.7,68.4
+Hazelnuts,628.0,16.7,15.0,60.7
+Chestnuts,209.0,45.5,2.4,2.2
+Amla (Dried),309.0,73.0,2.5,0.5
+Kokum (Dried),350.0,83.0,1.0,1.0
+Tamarind (Pulp),239.0,62.5,2.8,0.6
+Dry Ginger,335.0,70.8,9.0,6.0
+Dry Mango (Amchur),302.0,74.5,3.6,1.0
+Dry Pomegranate (Anardana),370.0,82.0,5.0,2.0
+Dry Fenugreek Leaves (Kasuri Methi),323.0,48.0,23.0,6.0
+Curry Leaves (Dried),295.0,63.0,10.0,3.0
+Dried Mint Leaves (Pudina),285.0,60.0,15.0,4.0
+Dried Coriander Leaves (Dhaniya),279.0,55.0,11.0,5.0
+Dry Red Chillies,318.0,56.6,12.0,17.0
+Star Anise,337.0,50.0,17.6,15.9
+Black Cardamom,311.0,68.47,10.7,6.7
+Mace,475.0,50.5,6.7,36.3
+Nutmeg,525.0,49.3,6.0,36.3
+Saffron,310.0,65.4,11.4,5.8
+Fennel Seeds (Saunf),345.0,52.3,15.8,14.9
+Carom Seeds (Ajwain),305.0,43.0,17.1,24.8
+Black Salt (Kala Namak),0.0,0.0,0.0,0.0
+Rock Salt (Sendha Namak),0.0,0.0,0.0,0.0
+Chaat Masala,250.0,50.0,5.0,2.0
+Garam Masala (Powder),378.0,51.8,14.6,12.7
+Chana Masala,350.0,60.0,15.0,5.0
+Sambar Powder,300.0,50.0,10.0,5.0
+Rasam Powder,280.0,55.0,8.0,4.0
+Tea Masala,350.0,65.0,8.0,6.0
+Coffee Powder (Instant),352.0,72.0,10.0,0.2
+Coffee Beans,374.0,74.0,14.0,0.5
+Cocoa Powder,228.0,57.9,19.6,13.7
+Baking Soda,0.0,0.0,0.0,0.0
+Baking Powder,0.0,0.0,0.0,0.0
+Yeast (Dry),325.0,42.0,45.0,7.0
+Gelatin,355.0,0.0,85.6,0.1
+Agar Agar,26.0,6.7,0.5,0.0
+Vanilla Extract,288.0,12.6,0.1,0.1
+Almond Extract,250.0,50.0,0.0,0.0
+Rose Water,0.0,0.0,0.0,0.0
+Kewra Water,0.0,0.0,0.0,0.0
+Saffron Essence,0.0,0.0,0.0,0.0
+Cardamom Essence,0.0,0.0,0.0,0.0
+Food Colouring,0.0,0.0,0.0,0.0
+Edible Glitter,0.0,0.0,0.0,0.0
+Sprinkles,400.0,90.0,0.0,5.0
+Marshmallow Fluff,318.0,81.0,2.0,0.1
+Peanut Butter,588.0,20.0,25.0,50.0
+Almond Butter,614.0,21.0,21.0,55.0
+Cashew Butter,570.0,30.0,18.0,46.0
+Hazelnut Butter,628.0,16.7,15.0,60.7
+Tahini,595.0,21.0,17.0,54.0
+Nutella,539.0,57.6,6.8,31.6
+Chocolate Spread,540.0,60.0,4.0,32.0
+Honey Mustard,273.0,31.0,2.0,16.0
+Barbecue Sauce,174.0,42.0,1.0,0.4
+Worcestershire Sauce,78.0,18.0,0.4,0.1
+Fish Sauce,37.0,0.0,9.0,0.0
+Oyster Sauce,79.0,14.0,5.0,0.5
+Teriyaki Sauce,108.0,20.0,4.0,0.0
+Hoisin Sauce,230.0,55.0,3.0,0.5
+Sweet Chilli Sauce,208.0,50.0,0.5,0.1
+Hot Chilli Sauce,46.06,7.36,1.25,0.27
+Home made plain noodles,238.78,44.5,6.21,3.56
+Dal moong,43.69,4.92,2.2,1.62
+Cumin seeds baghar (Jeera baghar/tadka),736.81,5.22,3.34,78.77
+Onion tomato baghar (Pyaaz tamatar ka tadka),137.52,6.17,1.26,11.98
+Mustard seeds baghar (Mustard seed tadka),552.59,10.45,4.73,54.3

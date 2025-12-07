@@ -1,0 +1,214 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #030712;
+    color: #f3f4f6;
+    /* gray-100 */
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+  }
+}
+
+@layer components {
+
+  /* Glassmorphism Utilities */
+  .glass {
+    background-color: rgba(255, 255, 255, 0.05);
+    /* bg-white/5 */
+    backdrop-filter: blur(16px);
+    /* backdrop-blur-lg */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* border-white/10 */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    /* shadow-glass (approx) */
+  }
+
+  .glass-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-radius: 1rem;
+    /* rounded-2xl */
+    padding: 1.5rem;
+    /* p-6 */
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-card:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 15px rgba(124, 58, 237, 0.1);
+    /* shadow-glow */
+    transform: translateY(-0.25rem);
+  }
+
+  .glass-input {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border-radius: 0.75rem;
+    /* rounded-xl */
+    padding: 0.75rem 1rem;
+    /* px-4 py-3 */
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+  }
+
+  .glass-input::placeholder {
+    color: #9ca3af;
+    /* gray-400 */
+  }
+
+  .glass-input:focus {
+    border-color: rgba(124, 58, 237, 0.5);
+    /* primary/50 */
+    box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.5);
+    /* ring-1 ring-primary/50 */
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: #030712;
+    /* bg-dark */
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #1f2937;
+    /* bg-gray-800 */
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #374151;
+    /* bg-gray-700 */
+  }
+}
+
+/* Animation Utilities */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile-First Responsive Styles */
+@media (max-width: 767px) {
+
+  /* Increase base font size for better readability on mobile */
+  body {
+    font-size: 16px;
+  }
+
+  /* Ensure touch targets are at least 44px */
+  button,
+  input[type="button"],
+  input[type="submit"],
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Optimize padding for mobile */
+  .glass-card {
+    padding: 1rem;
+  }
+
+  /* Better input sizing on mobile */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+    /* Prevents zoom on iOS */
+    padding: 0.75rem;
+  }
+
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Stack grids on mobile */
+  [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 768px) and (max-width: 1023px) {
+
+  /* 2-column layout for tablets */
+  [style*="repeat(auto-fit"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+
+  /* Increase tap targets on touch devices */
+  button {
+    padding: 0.875rem 1.5rem;
+  }
+
+  /* Remove hover effects on touch devices */
+  .glass-card:hover {
+    transform: none;
+  }
+
+  /* Better spacing for touch */
+  * {
+    -webkit-tap-highlight-color: rgba(16, 185, 129, 0.2);
+  }
+}
+
+/* PWA-specific styles */
+@media (display-mode: standalone) {
+
+  /* Add safe area padding for notched devices */
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Hide browser-specific elements when in standalone mode */
+  .hide-in-pwa {
+    display: none;
+  }
+}
