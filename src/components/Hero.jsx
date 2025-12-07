@@ -164,30 +164,57 @@ const Hero = () => {
           </Link>
         </div>
 
-        {/* Main CTA Button - Conditional based on login status */}
-        <Link to={user ? "/userinfo" : "/login"} style={{
-          padding: "1rem 3.5rem",
-          background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-          color: "#000",
-          textDecoration: "none",
-          borderRadius: "999px",
-          fontWeight: "800",
-          fontSize: "1.1rem",
-          boxShadow: "0 0 30px rgba(16, 185, 129, 0.4)",
-          transition: "all 0.3s ease",
-          border: "1px solid rgba(255,255,255,0.1)"
-        }}
-          onMouseOver={e => {
-            e.currentTarget.style.transform = "scale(1.05)";
-            e.currentTarget.style.boxShadow = "0 0 40px rgba(16, 185, 129, 0.6)";
+        {/* Main CTA Buttons - Conditional based on login status */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center" }}>
+          <Link to={user ? "/userinfo" : "/login"} style={{
+            padding: "1rem 3.5rem",
+            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+            color: "#000",
+            textDecoration: "none",
+            borderRadius: "999px",
+            fontWeight: "800",
+            fontSize: "1.1rem",
+            boxShadow: "0 0 30px rgba(16, 185, 129, 0.4)",
+            transition: "all 0.3s ease",
+            border: "1px solid rgba(255,255,255,0.1)"
           }}
-          onMouseOut={e => {
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow = "0 0 30px rgba(16, 185, 129, 0.4)";
-          }}
-        >
-          {user ? "Generate a New Plan" : "Start my journey"}
-        </Link>
+            onMouseOver={e => {
+              e.currentTarget.style.transform = "scale(1.05)";
+              e.currentTarget.style.boxShadow = "0 0 40px rgba(16, 185, 129, 0.6)";
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = "0 0 30px rgba(16, 185, 129, 0.4)";
+            }}
+          >
+            {user ? "Generate a New Plan" : "Start my journey"}
+          </Link>
+
+          {user && (
+            <Link to="/plan" style={{
+              padding: "0.9rem 3rem",
+              background: "transparent",
+              color: "#10b981",
+              textDecoration: "none",
+              borderRadius: "999px",
+              fontWeight: "700",
+              fontSize: "1rem",
+              border: "2px solid #10b981",
+              transition: "all 0.3s ease"
+            }}
+              onMouseOver={e => {
+                e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+                e.currentTarget.style.transform = "scale(1.05)";
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
+              View Plan Page
+            </Link>
+          )}
+        </div>
 
       </div>
     </div>

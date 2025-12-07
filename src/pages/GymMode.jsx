@@ -692,19 +692,28 @@ export default function GymMode() {
                         onClick={() => navigate('/')}
                         style={{
                             background: '#ffffff', // Solid white for max visibility
-                            border: 'none',
+                            border: '3px solid #ef4444', // Red border for exit button
                             borderRadius: '50%',
-                            width: '48px',
-                            height: '48px',
+                            width: '56px', // Larger size
+                            height: '56px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
-                            boxShadow: '0 0 10px rgba(255,255,255,0.3)'
+                            boxShadow: '0 0 20px rgba(255,255,255,0.5), 0 4px 12px rgba(0,0,0,0.3)'
                         }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                            e.currentTarget.style.background = '#ef4444';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.background = '#ffffff';
+                        }}
+                        title="Exit Gym Mode"
                     >
-                        <X size={24} color="black" />
+                        <X size={32} color="black" strokeWidth={3} />
                     </button>
                 </div>
             </div>
@@ -820,9 +829,9 @@ export default function GymMode() {
                             alignItems: 'center',
                             gap: '1rem'
                         }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#a3a3a3' }}>
-                                <Clock size={20} />
-                                <span style={{ fontWeight: 600 }}>WORKOUT TIME</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#10b981' }}>
+                                <Clock size={28} strokeWidth={2.5} />
+                                <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>WORKOUT TIME</span>
                             </div>
                             <div style={{ fontSize: '3rem', fontWeight: 700, fontFamily: 'monospace', color: '#10b981' }}>
                                 {formatTime(time)}
@@ -869,9 +878,9 @@ export default function GymMode() {
                             alignItems: 'center',
                             gap: '1rem'
                         }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#a3a3a3' }}>
-                                <Clock size={20} />
-                                <span style={{ fontWeight: 600 }}>REST TIMER</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#fbbf24' }}>
+                                <Clock size={28} strokeWidth={2.5} />
+                                <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>REST TIMER</span>
                             </div>
                             <div style={{ fontSize: '3rem', fontWeight: 700, fontFamily: 'monospace', color: isResting ? '#fbbf24' : '#a3a3a3' }}>
                                 {formatTime(restTime)}
@@ -963,30 +972,35 @@ export default function GymMode() {
                                                 <button
                                                     onClick={(e) => playVideo(e, workout)}
                                                     style={{
-                                                        background: '#10b981', // Solid Green Background
-                                                        border: '2px solid #059669', // Darker green border
+                                                        background: '#ffffff', // Bright white background for maximum visibility
+                                                        border: '3px solid #10b981', // Thick green border
                                                         borderRadius: '50%',
-                                                        width: '40px', // Slightly larger
-                                                        height: '40px',
+                                                        width: '48px', // Larger size
+                                                        height: '48px',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
                                                         cursor: 'pointer',
-                                                        color: 'black', // Black icon
+                                                        color: '#10b981', // Green icon
                                                         transition: 'all 0.2s',
-                                                        boxShadow: '0 0 15px rgba(16, 185, 129, 0.4)'
+                                                        boxShadow: '0 0 20px rgba(16, 185, 129, 0.6), 0 4px 12px rgba(0,0,0,0.3)',
+                                                        flexShrink: 0 // Prevent button from shrinking
                                                     }}
                                                     onMouseOver={(e) => {
-                                                        e.currentTarget.style.transform = 'scale(1.1)';
-                                                        e.currentTarget.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.6)';
+                                                        e.currentTarget.style.transform = 'scale(1.15)';
+                                                        e.currentTarget.style.boxShadow = '0 0 30px rgba(16, 185, 129, 0.8), 0 6px 16px rgba(0,0,0,0.4)';
+                                                        e.currentTarget.style.background = '#10b981';
+                                                        e.currentTarget.style.color = 'white';
                                                     }}
                                                     onMouseOut={(e) => {
                                                         e.currentTarget.style.transform = 'scale(1)';
-                                                        e.currentTarget.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.4)';
+                                                        e.currentTarget.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.6), 0 4px 12px rgba(0,0,0,0.3)';
+                                                        e.currentTarget.style.background = '#ffffff';
+                                                        e.currentTarget.style.color = '#10b981';
                                                     }}
                                                     title="Watch Form Video"
                                                 >
-                                                    <PlayCircle size={20} />
+                                                    <PlayCircle size={26} strokeWidth={2.5} />
                                                 </button>
                                             )}
                                         </div>
@@ -1153,21 +1167,33 @@ export default function GymMode() {
                             position: 'absolute',
                             top: '2rem',
                             right: '2rem',
-                            background: 'rgba(255, 255, 255, 0.9)', // High visibility white
-                            border: 'none',
+                            background: '#ffffff', // Solid white for maximum visibility
+                            border: '4px solid #ef4444', // Thick red border
                             borderRadius: '50%',
-                            width: '48px',
-                            height: '48px',
+                            width: '64px', // Much larger
+                            height: '64px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
-                            color: 'black', // Black icon
+                            color: 'black',
                             transition: 'all 0.2s',
-                            boxShadow: '0 0 20px rgba(255,255,255,0.3)'
+                            boxShadow: '0 0 30px rgba(255, 255, 255, 0.9), 0 0 60px rgba(239, 68, 68, 0.5), 0 8px 16px rgba(0,0,0,0.4)',
+                            zIndex: 20000001 // Above modal content
                         }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.15) rotate(90deg)';
+                            e.currentTarget.style.background = '#ef4444';
+                            e.currentTarget.style.boxShadow = '0 0 40px rgba(239, 68, 68, 0.9), 0 8px 20px rgba(0,0,0,0.5)';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
+                            e.currentTarget.style.background = '#ffffff';
+                            e.currentTarget.style.boxShadow = '0 0 30px rgba(255, 255, 255, 0.9), 0 0 60px rgba(239, 68, 68, 0.5), 0 8px 16px rgba(0,0,0,0.4)';
+                        }}
+                        title="Close Plank Timer"
                     >
-                        <X size={24} color="black" />
+                        <X size={36} color="black" strokeWidth={4} />
                     </button>
 
                     {/* Title */}
