@@ -21,13 +21,13 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: 'icon-192.png',
+            src: '/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: 'icon-512.png',
+            src: '/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
@@ -40,14 +40,14 @@ export default defineConfig({
             short_name: 'Gym',
             description: 'Start your workout session',
             url: '/gym-mode',
-            icons: [{ src: 'icon-192.png', sizes: '192x192' }]
+            icons: [{ src: '/icon-192.png', sizes: '192x192' }]
           },
           {
             name: 'Meal Planner',
             short_name: 'Meals',
             description: 'Plan your meals',
             url: '/diet-plan',
-            icons: [{ src: 'icon-192.png', sizes: '192x192' }]
+            icons: [{ src: '/icon-192.png', sizes: '192x192' }]
           }
         ]
       },
