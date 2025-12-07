@@ -4,7 +4,13 @@ function getYouTubeId(url) {
   if (!url) return "";
   try {
     const urlObj = new URL(url);
+    // Handle youtu.be short links
     if (urlObj.hostname === "youtu.be") return urlObj.pathname.substring(1);
+    // Handle YouTube Shorts
+    if (urlObj.pathname.includes("/shorts/")) {
+      return urlObj.pathname.split("/shorts/")[1].split("?")[0];
+    }
+    // Handle regular YouTube URLs
     if (urlObj.hostname.includes("youtube")) return urlObj.searchParams.get("v");
     return url;
   } catch {
@@ -152,10 +158,10 @@ const mistakeVideos = {
   // Chest
   "Bench Press (Flat)": "BYKScL2sgCs",
   "Bench Press (Incline)": "DbFgADa2IqA",
-  "Bench Press (Decline)": "LfyQBUKR8SE",
+  "Bench Press (Decline)": "https://youtu.be/LfyQBUKR8SE?si=rSQZD5q78rEyH0fN",
   "Dumbbell Press (Flat)": "VmB1G1K7v94",
   "Dumbbell Press (Incline)": "8iPEnn-ltC8",
-  "Dumbbell Press (Decline)": "JXrGRvDvhxs",
+  "Dumbbell Press (Decline)": "https://youtube.com/shorts/1OdTFeN90W4?si=Q1QeB7htGoSw2iUU",
   "Push-ups": "IODxDxX7oi4",
   "Cable Crossover": "taI4XduLpTk",
   "Dips (Chest variation)": "2z8JmcrW-As",
@@ -224,8 +230,8 @@ const mistakeVideos = {
 
   // Calves
   "Standing Calf Raise": "gwLzBJYoWlI",
-  "Seated Calf Raise": "JbyjNymZS7Q",
-  "Leg Press Calf Raise": "sK6RHs4OQwQ",
+  "Seated Calf Raise": "https://youtube.com/shorts/pHm6LFuGGbs?si=lAvcm-MS-KCzLdXj",
+  "Leg Press Calf Raise": "https://youtube.com/shorts/Z1i96JHZCuE?si=L__ZBqTc10kO0en8",
 
   // Core
   "Crunch": "Xyd_fa5zoEU",
@@ -258,19 +264,19 @@ const fitnessVideos = {
     { title: "Gym Machine Guide for Beginners - ScottHermanFitness", videoId: "2tM1LFFxeKg" },
     { title: "Perfect Push-Up Form - Athlean-X", videoId: "IODxDxX7oi4" },
     { title: "Fat Loss Science Explained - Jeff Nippard", videoId: "https://youtu.be/d8V9ZaSq9Oc?si=E58VyEB6KmjNJQYQ" },
-    { title: "Build Muscle Without Weights - Calisthenicmovement", videoId: "vc1E5CfRfos" },
+    { title: "Build Muscle Without Weights ", videoId: "https://youtube.com/shorts/5JzXaqEdsBc?si=L39G_AOpQSzoNKfu" },
     { title: "Nutrition Basics for Beginners - Natacha Océane", videoId: "https://youtu.be/fU3y1NeMyrE?si=mmdOxG1p7_Q2AV0T8fiJy5Hs" },
-    { title: "How to Stay Motivated - Joe Wicks", videoId: "VRZ8aEWLHow to Stay Motivated - Joe WickskzU" },
+    { title: "How to Stay Motivated ", videoId: "https://youtube.com/shorts/I0Zbb7F5JVY?si=YgCoY_T22obGHI0Y" },
     { title: "Sleep and Recovery - Jeff Cavaliere", videoId: "https://youtu.be/0JeQlfQ5iCg?si=-wJXke1wcObr-6oj" },
     { title: "Hydration for Athletes - Thomas DeLauer", videoId: "https://youtu.be/UdqVagcUqD4?si=farT0HlAiVwfFonL" }
   ],
   "Nutrition & Lifestyle (Relatable Content)": [
     { title: "Meal Prep for the Week", videoId: "https://youtu.be/1N6hbRbyAeQ?si=oSGmyEFBMcq_HYiNOQmA4" },
-    { title: "Full Day of Eating - Greg Doucette", videoId: "xaWeWyhttps://youtu.be/_-5Vve47yks?si=C8zq9rftSYrgeHJnR2Qh8" },
+    { title: "Full Day of Eating - Greg Doucette", videoId: "https://youtu.be/_-5Vve47yks?si=C8zq9rftSYrgeHJnR2Qh8" },
     { title: "Healthy Snack Ideas - Pick Up Limes", videoId: "https://youtu.be/S1OJ3U2T4PY?si=y7shyRaVlH9AagcL" },
     { title: "Morning Routine for Fitness - Matt D'Avella", videoId: "https://youtu.be/3PrCie6lvY8?si=5Lkv7lhrmk329lO9" },
-    { title: "Staying Consistent Tips - Natacha Océane", videoId: "ml6cT4AZdqI" },
-    { title: "Weekly Workout Split Explained - Jeff Nippard", videoId: "eTxO5ZMxcsc" },
+    { title: "Staying Consistent Tips ", videoId: "https://youtu.be/f_ZTq8AnuNI?si=rSQ6t8zq3-bc7spr" },
+    { title: "Weekly Workout Split Explained ", videoId: "https://youtu.be/n-ZU4hMQ5ZA?si=F5EViH1V2Tr1j4QK" },
     { title: "Best Fitness Apps Review - Stephanie Buttermore", videoId: "https://youtu.be/DD5AdBErOiQ?si=IF-nuim-6UNqEaO4" },
     { title: "Budget Home Gym Setup - Buff Dudes", videoId: "https://youtu.be/BhLPFyZLUY4?si=Z2bXH7w0nm27rwWq" },
     { title: "Gym Bag Essentials - Whitney Simmons", videoId: "https://youtu.be/WkJ4DO4x_XQ?si=cqKur_AZzjGoMf6I" }
@@ -431,7 +437,7 @@ function ExerciseFormPage() {
 function FitnessVideosPage() {
   const [currentVideo, setCurrentVideo] = useState({
     title: fitnessVideos["Follow-Along Workouts (High Engagement)"][0].title,
-    url: "https://www.youtube.com/embed/3qNtRSsNVdE"
+    url: `https://www.youtube.com/embed/${getYouTubeId(fitnessVideos["Follow-Along Workouts (High Engagement)"][0].videoId)}`
   });
   const [expanded, setExpanded] = useState({});
   const [videoWidth, setVideoWidth] = useState(640);
