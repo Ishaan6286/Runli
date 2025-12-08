@@ -27,8 +27,8 @@ const Hero = () => {
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
-        width: "600px",
-        height: "600px",
+        width: "min(600px, 90vw)",
+        height: "min(600px, 90vw)",
         background: "radial-gradient(circle, rgba(16,185,129,0.15) 0%, rgba(0,0,0,0) 70%)",
         pointerEvents: "none",
         zIndex: 0
@@ -37,16 +37,21 @@ const Hero = () => {
       <div style={{
         textAlign: "center",
         zIndex: 10,
-        maxWidth: "800px",
+        maxWidth: "min(800px, 95vw)",
+        width: "100%",
         display: "flex",
         flexDirection: "column",
-        alignItems: "center"
+        alignItems: "center",
+        padding: "0 1rem"
       }}>
 
         {/* Central Logo with Glow */}
         <div style={{
           position: "relative",
-          marginBottom: "2rem"
+          marginBottom: "clamp(1rem, 4vw, 2rem)",
+          width: "100%",
+          display: "flex",
+          justifyContent: "center"
         }}>
           <div style={{
             position: "absolute",
@@ -61,7 +66,8 @@ const Hero = () => {
             src={logo}
             alt="Runli Logo"
             style={{
-              width: "360px",
+              width: "clamp(200px, 60vw, 360px)",
+              maxWidth: "100%",
               height: "auto",
               filter: "drop-shadow(0 0 30px rgba(16,185,129,0.4))"
             }}
@@ -69,10 +75,10 @@ const Hero = () => {
         </div>
 
         <h1 style={{
-          fontSize: "4.5rem",
+          fontSize: "clamp(2rem, 8vw, 4.5rem)",
           fontWeight: "900",
           color: "#10b981",
-          marginBottom: "1.5rem",
+          marginBottom: "clamp(0.75rem, 3vw, 1.5rem)",
           letterSpacing: "-0.02em",
           textShadow: "0 0 40px rgba(16,185,129,0.3)"
         }}>
@@ -80,11 +86,12 @@ const Hero = () => {
         </h1>
 
         <p style={{
-          fontSize: "1.25rem",
+          fontSize: "clamp(0.9rem, 2.5vw, 1.25rem)",
           color: "#9ca3af",
-          marginBottom: "3.5rem",
+          marginBottom: "clamp(2rem, 5vw, 3.5rem)",
           lineHeight: "1.6",
-          maxWidth: "600px"
+          maxWidth: "min(600px, 90vw)",
+          padding: "0 1rem"
         }}>
           Your personal companion for tracking nutrition, calculating metrics, and managing your gym life. Simple, effective, and free.
         </p>
@@ -92,21 +99,24 @@ const Hero = () => {
         {/* Feature Quick Links */}
         <div style={{
           display: "flex",
-          gap: "1.5rem",
+          gap: "clamp(0.75rem, 2vw, 1.5rem)",
           justifyContent: "center",
           flexWrap: "wrap",
-          marginBottom: "2.5rem",
-          marginTop: "0.5rem"
+          marginBottom: "clamp(1.5rem, 4vw, 2.5rem)",
+          marginTop: "clamp(0.25rem, 1vw, 0.5rem)",
+          width: "100%",
+          padding: "0 0.5rem"
         }}>
           {user && (
             <Link to="/dashboard" style={{
-              display: "flex", alignItems: "center", gap: "0.75rem",
+              display: "flex", alignItems: "center", gap: "0.5rem",
               background: "rgba(16, 185, 129, 0.1)",
               border: "1px solid rgba(16, 185, 129, 0.3)",
               color: "#10b981", textDecoration: "none", fontWeight: "600",
-              padding: "0.8rem 2rem", borderRadius: "999px",
+              padding: "clamp(0.6rem, 2vw, 0.8rem) clamp(1.2rem, 3vw, 2rem)",
+              borderRadius: "999px",
               transition: "all 0.2s",
-              fontSize: "1rem"
+              fontSize: "clamp(0.85rem, 2vw, 1rem)"
             }}
               onMouseOver={e => {
                 e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
@@ -122,13 +132,14 @@ const Hero = () => {
           )}
 
           <Link to="/gym-mode" style={{
-            display: "flex", alignItems: "center", gap: "0.75rem",
+            display: "flex", alignItems: "center", gap: "0.5rem",
             background: "transparent",
             border: "1px solid #10b981",
             color: "#10b981", textDecoration: "none", fontWeight: "600",
-            padding: "0.8rem 2rem", borderRadius: "999px",
+            padding: "clamp(0.6rem, 2vw, 0.8rem) clamp(1.2rem, 3vw, 2rem)",
+            borderRadius: "999px",
             transition: "all 0.2s",
-            fontSize: "1rem"
+            fontSize: "clamp(0.85rem, 2vw, 1rem)"
           }}
             onMouseOver={e => {
               e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
@@ -143,13 +154,14 @@ const Hero = () => {
           </Link>
 
           <Link to="/habits" style={{
-            display: "flex", alignItems: "center", gap: "0.75rem",
+            display: "flex", alignItems: "center", gap: "0.5rem",
             background: "transparent",
             border: "1px solid #3b82f6", // Blue specific for clarity
             color: "#3b82f6", textDecoration: "none", fontWeight: "600",
-            padding: "0.8rem 2rem", borderRadius: "999px",
+            padding: "clamp(0.6rem, 2vw, 0.8rem) clamp(1.2rem, 3vw, 2rem)",
+            borderRadius: "999px",
             transition: "all 0.2s",
-            fontSize: "1rem"
+            fontSize: "clamp(0.85rem, 2vw, 1rem)"
           }}
             onMouseOver={e => {
               e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
@@ -165,18 +177,20 @@ const Hero = () => {
         </div>
 
         {/* Main CTA Buttons - Conditional based on login status */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center", width: "100%" }}>
           <Link to={user ? "/userinfo" : "/login"} style={{
-            padding: "1rem 3.5rem",
+            padding: "clamp(0.8rem, 2.5vw, 1rem) clamp(2rem, 5vw, 3.5rem)",
             background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
             color: "#000",
             textDecoration: "none",
             borderRadius: "999px",
             fontWeight: "800",
-            fontSize: "1.1rem",
+            fontSize: "clamp(0.95rem, 2.5vw, 1.1rem)",
             boxShadow: "0 0 30px rgba(16, 185, 129, 0.4)",
             transition: "all 0.3s ease",
-            border: "1px solid rgba(255,255,255,0.1)"
+            border: "1px solid rgba(255,255,255,0.1)",
+            textAlign: "center",
+            maxWidth: "min(400px, 90vw)"
           }}
             onMouseOver={e => {
               e.currentTarget.style.transform = "scale(1.05)";
@@ -192,15 +206,17 @@ const Hero = () => {
 
           {user && (
             <Link to="/plan" style={{
-              padding: "0.9rem 3rem",
+              padding: "clamp(0.7rem, 2vw, 0.9rem) clamp(1.8rem, 4vw, 3rem)",
               background: "transparent",
               color: "#10b981",
               textDecoration: "none",
               borderRadius: "999px",
               fontWeight: "700",
-              fontSize: "1rem",
+              fontSize: "clamp(0.9rem, 2vw, 1rem)",
               border: "2px solid #10b981",
-              transition: "all 0.3s ease"
+              transition: "all 0.3s ease",
+              textAlign: "center",
+              maxWidth: "min(350px, 85vw)"
             }}
               onMouseOver={e => {
                 e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";

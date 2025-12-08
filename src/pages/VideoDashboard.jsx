@@ -304,7 +304,23 @@ function ExerciseFormPage() {
     url: "https://www.youtube.com/embed/2yjwXTZQDDI"
   });
   const [expanded, setExpanded] = useState({});
-  const [videoWidth, setVideoWidth] = useState(640);
+
+  // Calculate responsive video width
+  const getVideoWidth = () => {
+    const viewportWidth = window.innerWidth;
+    if (viewportWidth < 768) return Math.min(viewportWidth - 40, 600); // Mobile
+    if (viewportWidth < 1024) return Math.min(viewportWidth - 100, 700); // Tablet
+    return Math.min(viewportWidth - 200, 900); // Desktop
+  };
+
+  const [videoWidth, setVideoWidth] = useState(getVideoWidth());
+
+  // Update video width on resize
+  React.useEffect(() => {
+    const handleResize = () => setVideoWidth(getVideoWidth());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const playVideo = (title, col) => {
     const dict = col === "mistake" ? mistakeVideos : exerciseVideos;
@@ -318,33 +334,36 @@ function ExerciseFormPage() {
   const toggle = (sec) => setExpanded((prev) => ({ ...prev, [sec]: !prev[sec] }));
 
   return (
-    <div style={{ padding: window.innerWidth < 768 ? "1rem 0.5rem 0 0.5rem" : "34px 40px 0 40px" }}>
-      <h2 style={{ fontSize: "1.7rem", fontWeight: "bold", marginBottom: 20, color: "#10b981" }}>General Fitness Video Section</h2>
-      <GlassCard style={{ marginBottom: 36 }}>
-        <iframe
-          width={videoWidth}
-          height={videoWidth * 9 / 16}
-          src={currentVideo.url}
-          title={currentVideo.title}
-          style={{
-            borderRadius: 16,
-            boxShadow: "0 2px 13px rgba(0,0,0,0.5)",
-            border: "none",
-            background: "#1a1a1a"
-          }}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-        <label style={{ marginTop: 7, fontSize: 13, opacity: .82, display: "block", color: "#a3a3a3" }}>Adjust video size</label>
+    <div style={{ padding: window.innerWidth < 768 ? "1rem 0.5rem 0 0.5rem" : "clamp(1rem, 3vw, 2.125rem) clamp(1rem, 4vw, 2.5rem) 0" }}>
+      <h2 style={{ fontSize: "clamp(1.25rem, 3vw, 1.7rem)", fontWeight: "bold", marginBottom: "clamp(1rem, 2vw, 1.25rem)", color: "#10b981" }}>General Fitness Video Section</h2>
+      <GlassCard style={{ marginBottom: "clamp(1.5rem, 3vw, 2.25rem)", padding: "clamp(1rem, 2vw, 1.5rem)" }}>
+        <div style={{ width: "100%", maxWidth: "900px", margin: "0 auto" }}>
+          <iframe
+            width="100%"
+            height={Math.min(videoWidth * 9 / 16, 506)}
+            src={currentVideo.url}
+            title={currentVideo.title}
+            style={{
+              borderRadius: 16,
+              boxShadow: "0 2px 13px rgba(0,0,0,0.5)",
+              border: "none",
+              background: "#1a1a1a",
+              maxWidth: "100%"
+            }}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+        <label style={{ marginTop: "clamp(0.5rem, 1vw, 0.75rem)", fontSize: "clamp(0.75rem, 1.5vw, 0.8125rem)", opacity: .82, display: "block", color: "#a3a3a3" }}>Adjust video size</label>
         <input
           type="range"
-          min="320"
-          max="900"
+          min={window.innerWidth < 768 ? "280" : "320"}
+          max={window.innerWidth < 768 ? "600" : "900"}
           value={videoWidth}
           onChange={e => setVideoWidth(Number(e.target.value))}
-          style={{ width: 240, accentColor: "#10b981" }}
+          style={{ width: "min(240px, 80vw)", accentColor: "#10b981" }}
         />
-        <p style={{ fontSize: 16, fontWeight: 500, marginTop: 15, opacity: .9, color: "white" }}>{currentVideo.title}</p>
+        <p style={{ fontSize: "clamp(0.9rem, 2vw, 1rem)", fontWeight: 500, marginTop: "clamp(0.75rem, 2vw, 1rem)", opacity: .9, color: "white" }}>{currentVideo.title}</p>
       </GlassCard>
       <div style={{ display: "flex", gap: 30, alignItems: "flex-start", flexWrap: "wrap" }}>
         {/* Exercise Form column */}
