@@ -133,5 +133,51 @@ export const HABIT_TEMPLATES = [
         goalType: 'boolean',
         goalValue: 1,
         unit: ''
+    },
+    {
+        name: 'Quit Smoking',
+        type: 'quit_smoking',
+        icon: '🚭',
+        color: '#ef4444',
+        goalType: 'boolean',
+        goalValue: 1,
+        unit: ''
+    },
+    {
+        name: 'Quit Drinking',
+        type: 'quit_drinking',
+        icon: '🚫',
+        color: '#f97316',
+        goalType: 'boolean',
+        goalValue: 1,
+        unit: ''
+    },
+    {
+        name: 'Read Book',
+        type: 'reading',
+        icon: '📚',
+        color: '#06b6d4',
+        goalType: 'duration',
+        goalValue: 30,
+        unit: 'minutes'
+    },
+    {
+        name: 'Prayer',
+        type: 'prayer',
+        icon: '🙏',
+        color: '#a855f7',
+        goalType: 'boolean',
+        goalValue: 1,
+        unit: ''
+    },
+    {
+        name: 'Talk to Parents',
+        type: 'talk_parents',
+        icon: '👨‍👩‍👦',
+        color: '#ec4899',
+        goalType: 'boolean',
+        goalValue: 1,
+        unit: ''
     }
 ];
+
