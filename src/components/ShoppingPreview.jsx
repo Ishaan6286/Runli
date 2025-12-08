@@ -48,34 +48,35 @@ export default function ShoppingPreview() {
         <div style={{
             width: "100vw",
             background: "#000000",
-            padding: "4rem 1.5rem",
+            padding: "clamp(2rem, 5vw, 4rem) clamp(1rem, 3vw, 1.5rem)",
             position: "relative",
             borderTop: "1px solid rgba(16, 185, 129, 0.1)"
         }}>
-            <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+            <div style={{ maxWidth: "min(1200px, 95vw)", margin: "0 auto" }}>
                 {/* Header */}
-                <div style={{ textAlign: "center", marginBottom: "3rem" }}>
+                <div style={{ textAlign: "center", marginBottom: "clamp(2rem, 4vw, 3rem)" }}>
                     <h2 style={{
-                        fontSize: "2.5rem",
+                        fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
                         fontWeight: 900,
                         background: "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
                         WebkitBackgroundClip: "text",
                         WebkitTextFillColor: "transparent",
                         backgroundClip: "text",
-                        marginBottom: "1rem",
+                        marginBottom: "clamp(0.75rem, 2vw, 1rem)",
                         letterSpacing: "-0.5px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        gap: "0.5rem"
+                        gap: "0.5rem",
+                        flexWrap: "wrap"
                     }}>
                         <ShoppingCart size={32} style={{ color: "#10b981" }} />
                         Fitness Store
                     </h2>
                     <p style={{
                         color: "#a3a3a3",
-                        fontSize: "1.1rem",
-                        marginBottom: "2rem"
+                        fontSize: "clamp(0.95rem, 2vw, 1.1rem)",
+                        marginBottom: "clamp(1rem, 3vw, 2rem)"
                     }}>
                         Premium supplements & gym accessories curated for you
                     </p>
@@ -84,9 +85,9 @@ export default function ShoppingPreview() {
                 {/* Products Grid */}
                 <div style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-                    gap: "1.5rem",
-                    marginBottom: "3rem"
+                    gridTemplateColumns: "repeat(auto-fit, minmax(min(250px, 100%), 1fr))",
+                    gap: "clamp(1rem, 2vw, 1.5rem)",
+                    marginBottom: "clamp(2rem, 4vw, 3rem)"
                 }}>
                     {featuredProducts.map((product) => (
                         <div

@@ -190,37 +190,37 @@ export default function FoodLog() {
         minHeight: "100vh",
         width: "100vw",
         background: "#000000",
-        padding: "4rem 0",
+        padding: "clamp(2rem, 5vw, 4rem) 0",
         boxSizing: "border-box",
-        overflowX: "auto"
+        overflowX: "hidden"
       }}
     >
 
       <div
         style={{
-          maxWidth: 1200,
+          maxWidth: "min(1200px, 95vw)",
           margin: "0 auto",
-          borderRadius: "2rem",
+          borderRadius: "clamp(1rem, 3vw, 2rem)",
           boxShadow: "0 0 75px 0 rgba(16, 185, 129, 0.15)",
           background: "rgba(26, 26, 26, 0.95)",
           backdropFilter: "blur(24px)",
           border: "1px solid rgba(16, 185, 129, 0.1)",
-          padding: "2.5rem 2rem",
-          width: "94vw",
+          padding: "clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 3vw, 2rem)",
+          width: "100%",
           display: "flex",
-          gap: 45,
+          gap: "clamp(1.5rem, 4vw, 2.8rem)",
           justifyContent: "space-between",
           alignItems: "flex-start",
           flexWrap: "wrap"
         }}
       >
         {/* LEFT: Meal Splits */}
-        <div style={{ flex: 2, minWidth: 350 }}>
+        <div style={{ flex: 2, minWidth: "min(350px, 100%)", width: "100%" }}>
           <div style={{
             fontWeight: 900,
             color: "#ffffff",
-            fontSize: "2.2rem",
-            marginBottom: "2rem",
+            fontSize: "clamp(1.5rem, 4vw, 2.2rem)",
+            marginBottom: "clamp(1rem, 3vw, 2rem)",
             letterSpacing: "-0.5px",
             background: "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
             WebkitBackgroundClip: "text",
@@ -360,11 +360,12 @@ export default function FoodLog() {
         {/* RIGHT: CHART & MACRO TABLE */}
         <div style={{
           flex: 1,
-          minWidth: 340,
+          minWidth: "min(340px, 100%)",
+          width: "100%",
           background: "#121212",
-          borderRadius: "1.5rem",
+          borderRadius: "clamp(1rem, 2vw, 1.5rem)",
           border: "1px solid rgba(255,255,255,0.05)",
-          padding: "2rem",
+          padding: "clamp(1rem, 3vw, 2rem)",
           display: "flex", flexDirection: "column", alignItems: "center"
         }}>
           <svg width={160} height={160} style={{ margin: "20px 0 30px 0", display: "block" }}>

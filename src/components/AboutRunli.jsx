@@ -15,7 +15,7 @@ export default function AboutRunli() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "4rem 1.5rem",
+          padding: "clamp(2rem, 5vw, 4rem) clamp(1rem, 3vw, 1.5rem)",
           position: "relative"
         }}
       >
@@ -23,9 +23,9 @@ export default function AboutRunli() {
         <div
           style={{
             width: "100%",
-            maxWidth: 800,
-            padding: "2.5rem 2rem",
-            borderRadius: "1.5rem",
+            maxWidth: "min(800px, 95vw)",
+            padding: "clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 3vw, 2rem)",
+            borderRadius: "clamp(1rem, 2vw, 1.5rem)",
             background: "rgba(26, 26, 26, 0.95)",
             color: "#ffffff",
             boxShadow: "0 0 75px 0 rgba(16, 185, 129, 0.3)",
@@ -36,8 +36,8 @@ export default function AboutRunli() {
         >
           <h2 style={{
             fontWeight: 900,
-            fontSize: "2.25rem",
-            marginBottom: "1rem",
+            fontSize: "clamp(1.5rem, 4vw, 2.25rem)",
+            marginBottom: "clamp(0.75rem, 2vw, 1rem)",
             background: "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
@@ -114,16 +114,16 @@ export default function AboutRunli() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "4rem 1.5rem",
+          padding: "clamp(2rem, 5vw, 4rem) clamp(1rem, 3vw, 1.5rem)",
           position: "relative"
         }}
       >
         <div
           style={{
             width: "100%",
-            maxWidth: 1000,
-            padding: "2.5rem 2rem",
-            borderRadius: "1.5rem",
+            maxWidth: "min(1000px, 95vw)",
+            padding: "clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 3vw, 2rem)",
+            borderRadius: "clamp(1rem, 2vw, 1.5rem)",
             background: "rgba(26, 26, 26, 0.95)",
             color: "#ffffff",
             boxShadow: "0 0 75px 0 rgba(16, 185, 129, 0.3)",

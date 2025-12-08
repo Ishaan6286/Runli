@@ -74,31 +74,31 @@ export default function NearbyGyms() {
         <div style={{
             width: "100vw",
             background: "#000000",
-            padding: "4rem 1.5rem",
+            padding: "clamp(2rem, 5vw, 4rem) clamp(1rem, 3vw, 1.5rem)",
             position: "relative"
         }}>
             <div style={{
-                maxWidth: "1200px",
+                maxWidth: "min(1200px, 95vw)",
                 margin: "0 auto"
             }}>
                 {/* Header */}
-                <div style={{ textAlign: "center", marginBottom: "3rem" }}>
+                <div style={{ textAlign: "center", marginBottom: "clamp(2rem, 4vw, 3rem)" }}>
                     <h2 style={{
-                        fontSize: "2.5rem",
+                        fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
                         fontWeight: 900,
                         background: "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
                         WebkitBackgroundClip: "text",
                         WebkitTextFillColor: "transparent",
                         backgroundClip: "text",
-                        marginBottom: "1rem",
+                        marginBottom: "clamp(0.75rem, 2vw, 1rem)",
                         letterSpacing: "-0.5px"
                     }}>
                         Best Gyms Near You 🏋️
                     </h2>
                     <p style={{
                         color: "#a3a3a3",
-                        fontSize: "1.1rem",
-                        marginBottom: "2rem"
+                        fontSize: "clamp(0.95rem, 2vw, 1.1rem)",
+                        marginBottom: "clamp(1rem, 3vw, 2rem)"
                     }}>
                         Find the perfect gym in your area with ratings, fees, and distance
                     </p>
@@ -160,8 +160,8 @@ export default function NearbyGyms() {
                 {gyms.length > 0 && (
                     <div style={{
                         display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
-                        gap: "1.5rem"
+                        gridTemplateColumns: "repeat(auto-fit, minmax(min(350px, 100%), 1fr))",
+                        gap: "clamp(1rem, 2vw, 1.5rem)"
                     }}>
                         {gyms.map((gym, index) => (
                             <div
