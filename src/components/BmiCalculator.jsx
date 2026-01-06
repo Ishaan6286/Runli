@@ -17,10 +17,50 @@ export default function BmiCalculator() {
 
   function computeBmi() {
     let hM = 0, wK = 0;
-    if (heightCm) hM = Number(heightCm) / 100;
-    else if (heightFt || heightIn) hM = ((+heightFt || 0) * 12 + (+heightIn || 0)) * 0.0254;
-    if (weightKg) wK = +weightKg;
-    else if (weightLbs) wK = +weightLbs * 0.453592;
+
+    // Validate Age
+    if (years && parseInt(years) > 100) {
+      setFeedback("Age cannot be more than 100.");
+      setBmi(null);
+      return;
+    }
+
+    if (heightCm) {
+      if (parseFloat(heightCm) > 250) {
+        setFeedback("Height cannot be more than 250cm.");
+        setBmi(null);
+        return;
+      }
+      hM = Number(heightCm) / 100;
+    }
+    else if (heightFt || heightIn) {
+      const ft = +heightFt || 0;
+      const inch = +heightIn || 0;
+      if (ft > 8 || (ft === 8 && inch > 2.5)) { // 250cm is approx 8'2"
+        setFeedback("Height cannot be more than 8ft 2in (250cm).");
+        setBmi(null);
+        return;
+      }
+      hM = (ft * 12 + inch) * 0.0254;
+    }
+
+    if (weightKg) {
+      if (parseFloat(weightKg) > 200) {
+        setFeedback("Weight cannot be more than 200kg.");
+        setBmi(null);
+        return;
+      }
+      wK = +weightKg;
+    }
+    else if (weightLbs) {
+      if (parseFloat(weightLbs) > 441) { // 200kg is approx 440.9lbs
+        setFeedback("Weight cannot be more than 441lbs (200kg).");
+        setBmi(null);
+        return;
+      }
+      wK = +weightLbs * 0.453592;
+    }
+
     if (hM > 0 && wK > 0) {
       const bmiVal = wK / (hM * hM);
       setBmi(round2(bmiVal));
@@ -127,7 +167,7 @@ export default function BmiCalculator() {
             Age <span style={{ fontWeight: 500, fontSize: 15, color: "#737373" }}>(optional)</span>
           </div>
           <div style={{ display: "flex", gap: 13 }}>
-            <input type="number" min={0} value={years} onChange={e => setYears(e.target.value)} placeholder="Years"
+            <input type="number" min={0} max={100} value={years} onChange={e => setYears(e.target.value)} placeholder="Years"
               style={{
                 border: "1px solid rgba(16, 185, 129, 0.3)", color: "#ffffff", background: "#1a1a1a", borderRadius: 10,
                 fontWeight: 700, padding: "8px 15px", fontSize: 17, width: 80, outline: "none"
@@ -152,6 +192,7 @@ export default function BmiCalculator() {
             <input
               type="number"
               min={0}
+              max={250}
               value={heightCm}
               onChange={e => setHeightCm(e.target.value)}
               placeholder="cm"
@@ -193,6 +234,7 @@ export default function BmiCalculator() {
             <input
               type="number"
               min={0}
+              max={200}
               value={weightKg}
               onChange={e => setWeightKg(e.target.value)}
               placeholder="kg"

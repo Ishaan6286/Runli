@@ -108,6 +108,24 @@ export default function UserInfo() {
       }
     }
 
+    // Validate specific limits
+    if (parseInt(data.age) > 100) {
+      setError("Age cannot be more than 100.");
+      return;
+    }
+    if (parseFloat(data.height) > 250) {
+      setError("Height cannot be more than 250cm.");
+      return;
+    }
+    if (parseFloat(data.weight) > 200) {
+      setError("Weight cannot be more than 200kg.");
+      return;
+    }
+    if (parseFloat(data.targetWeight) > 200) {
+      setError("Target weight cannot be more than 200kg.");
+      return;
+    }
+
     setSaving(true);
     setError("");
     setSuccess("");
@@ -291,13 +309,13 @@ export default function UserInfo() {
                 ]
               },
               {
-                label: "Height (cm)", name: "height", type: "number", placeholder: "e.g. 176"
+                label: "Height (cm)", name: "height", type: "number", placeholder: "e.g. 176", min: 50, max: 250
               },
               {
-                label: "Weight (kg)", name: "weight", type: "number", placeholder: "Current weight"
+                label: "Weight (kg)", name: "weight", type: "number", placeholder: "Current weight", min: 20, max: 200
               },
               {
-                label: "Target Weight (kg)", name: "targetWeight", type: "number", placeholder: "Your goal weight"
+                label: "Target Weight (kg)", name: "targetWeight", type: "number", placeholder: "Your goal weight", min: 20, max: 200
               },
               {
                 label: "Workout Frequency", name: "frequency", type: "select", options: [
@@ -371,6 +389,8 @@ export default function UserInfo() {
                     value={data[field.name]}
                     onChange={handleChange}
                     placeholder={field.placeholder || ""}
+                    min={field.min}
+                    max={field.max}
                     style={{
                       width: "100%",
                       height: 48,
