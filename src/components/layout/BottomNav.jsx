@@ -37,8 +37,35 @@ const BottomNav = () => {
 
       {NAV_ITEMS.map(({ to, label, Icon }, idx) => (
         <React.Fragment key={to}>
-          {/* Space for center FAB */}
-          {idx === 2 && <div style={{ width: 56, flexShrink: 0 }} aria-hidden="true" />}
+          {/* Space for center FAB replaced with Diet NavLink */}
+          {idx === 2 && (
+            <NavLink
+              to="/diet-plan"
+              className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+              aria-label="Diet"
+              style={{ width: 56, flexShrink: 0, position: 'relative', textDecoration: 'none' }}
+            >
+              {({ isActive }) => (
+                <>
+                  <span
+                    className="nav-icon"
+                    aria-hidden="true"
+                    style={{ height: 20, width: 20, display: 'block' }} // Invisible spacer reserving icon height behind the FAB
+                  />
+                  <motion.span
+                    animate={isActive
+                      ? { color: 'var(--primary-400)', fontWeight: 700, opacity: 1 }
+                      : { color: 'var(--text-muted)', fontWeight: 400, opacity: 0.8 }
+                    }
+                    transition={{ duration: 0.2 }}
+                    style={{ position: 'relative', zIndex: 1, fontSize: '0.625rem', letterSpacing: '0.02em', marginTop: '2px', textTransform: 'uppercase' }}
+                  >
+                    Diet
+                  </motion.span>
+                </>
+              )}
+            </NavLink>
+          )}
 
           <NavLink
             to={to}
