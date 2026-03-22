@@ -1,5 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import RecommendationSection from '../components/RecommendationSection';
+import { getRecommendations } from '../utils/recommendationEngine';
 
 
 // SPLIT GENERATOR BASED ON FREQUENCY
@@ -132,6 +134,8 @@ export default function Plan() {
   const height = Number(user.height);
   const gender = user.gender || "";
   const freq = Number(user.frequency) || 4;
+
+  const recommendations = React.useMemo(() => getRecommendations(), []);
   const targetPhysique = user.target || "";
   const protein = proteinTarget(weight, targetPhysique);
   const bmiVal = weight && height ? Number(calculateBMI(weight, height)).toFixed(1) : null;
@@ -148,128 +152,77 @@ export default function Plan() {
   }
 
   return (
-    <div
-      className="min-h-screen w-full flex justify-center items-start py-12 px-2"
-      style={{
-        background: "#000000",
-        minHeight: "100vh",
-        position: "relative",
-        paddingTop: "6rem"
-      }}
-    >
+    <div className="page-wrapper" style={{ display: "flex", justifyContent: "center", padding: "clamp(1rem, 3vw, 2rem)", paddingTop: "clamp(1.25rem, 4vw, 2rem)" }}>
 
-      <div className="max-w-[1100px] w-full flex flex-col items-center gap-5">
-        <h1 style={{
-          fontSize: "2.5rem",
-          fontWeight: 900,
-          background: "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          backgroundClip: "text",
-          marginBottom: "0.5rem",
-          textAlign: "center",
-          letterSpacing: "-0.5px"
-        }}>
-          Your Personalized Fitness Blueprint <span role="img" aria-label="target">🚀</span>
-        </h1>
-        <div style={{ color: "#a3a3a3", fontSize: "1.125rem", fontWeight: 500, marginBottom: "1.5rem", textAlign: "center" }}>
-          Roadmap to your dream physique.
+      <div style={{ maxWidth: "1100px", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "1.25rem" }}>
+        
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+          <h1 style={{
+            fontSize: "clamp(1.75rem, 5vw, 2.75rem)",
+            fontWeight: 800,
+            color: "var(--primary-400)",
+            marginBottom: "0.5rem",
+            letterSpacing: "-0.02em"
+          }}>
+            Your Fitness Blueprint <span role="img" aria-label="target">🚀</span>
+          </h1>
+          <div style={{ color: "var(--text-secondary)", fontSize: "1.0625rem", fontWeight: 500 }}>
+            Roadmap to your dream physique.
+          </div>
         </div>
 
         <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
           {/* Key Metrics */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem", justifyContent: "center" }}>
+            
             {/* Main Goal Card */}
-            <div style={{
-              flex: "1 1 300px",
-              background: "rgba(26, 26, 26, 0.95)",
-              borderRadius: "1.5rem",
-              border: "1px solid rgba(16, 185, 129, 0.2)",
-              padding: "1.5rem",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              textAlign: "center"
-            }}>
-              <span style={{ marginBottom: "0.5rem", fontSize: "1.125rem", fontWeight: 700, color: "#ffffff" }}>Main Goal</span>
+            <div className="card" style={{ flex: "1 1 300px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+              <span style={{ marginBottom: "0.5rem", fontSize: "1.0625rem", fontWeight: 700, color: "var(--text-primary)" }}>Main Goal</span>
               <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem" }}>
                 <span style={{ fontSize: "2rem" }} role="img">🎯</span>
                 <div>
-                  <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "#10b981" }}>{bmiVal || "--"}</div>
-                  <div style={{ color: "#a3a3a3", fontWeight: 500 }}>{bmiVal && bmiCategory(bmiVal) ? `BMI — ${bmiCategory(bmiVal)}` : ""}</div>
+                  <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--primary-500)" }}>{bmiVal || "--"}</div>
+                  <div style={{ color: "var(--text-secondary)", fontWeight: 500 }}>{bmiVal && bmiCategory(bmiVal) ? `BMI — ${bmiCategory(bmiVal)}` : ""}</div>
                 </div>
               </div>
-              <div style={{
-                marginTop: "0.5rem",
-                padding: "0.5rem 1.5rem",
-                borderRadius: "1rem",
-                background: "rgba(16, 185, 129, 0.1)",
-                color: "#10b981",
-                fontWeight: 600,
-                fontSize: "1rem"
-              }}>
+              <div className="chip chip-primary" style={{ padding: "0.5rem 1.25rem", fontSize: "0.9375rem" }}>
                 {mainGoal}
               </div>
             </div>
 
             {/* Calories Card */}
-            <div style={{
-              flex: "1 1 300px",
-              background: "rgba(26, 26, 26, 0.95)",
-              borderRadius: "1.5rem",
-              border: "1px solid rgba(245, 158, 11, 0.2)",
-              padding: "1.5rem",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              textAlign: "center"
-            }}>
-              <span style={{ color: "#fbbf24", fontSize: "1.125rem", fontWeight: 700, marginBottom: "0.5rem" }}>Calories</span>
-              <span style={{ fontSize: "2.25rem", fontWeight: 800, color: "#ffffff" }}>{calories || "--"}</span>
-              <span style={{ color: "#a3a3a3", fontWeight: 500, marginTop: "0.25rem" }}>kcal / day</span>
+            <div className="card" style={{ flex: "1 1 300px", borderColor: "rgba(245, 158, 11, 0.2)", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+              <span style={{ color: "var(--amber-500)", fontSize: "1.0625rem", fontWeight: 700, marginBottom: "0.5rem" }}>Calories</span>
+              <span style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--text-primary)" }}>{calories || "--"}</span>
+              <span style={{ color: "var(--text-secondary)", fontWeight: 500, marginTop: "0.25rem" }}>kcal / day</span>
             </div>
 
             {/* Protein Card */}
-            <div style={{
-              flex: "1 1 300px",
-              background: "rgba(26, 26, 26, 0.95)",
-              borderRadius: "1.5rem",
-              border: "1px solid rgba(236, 72, 153, 0.2)",
-              padding: "1.5rem",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              textAlign: "center"
-            }}>
-              <span style={{ color: "#f472b6", fontSize: "1.125rem", fontWeight: 700, marginBottom: "0.5rem" }}>Protein</span>
-              <span style={{ fontSize: "2.25rem", fontWeight: 800, color: "#ffffff" }}>{protein || "--"}</span>
-              <span style={{ color: "#a3a3a3", fontWeight: 500, marginTop: "0.25rem" }}>per day (g)</span>
+            <div className="card" style={{ flex: "1 1 300px", borderColor: "rgba(236, 72, 153, 0.2)", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+              <span style={{ color: "var(--purple-400)", fontSize: "1.0625rem", fontWeight: 700, marginBottom: "0.5rem" }}>Protein</span>
+              <span style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--text-primary)" }}>{protein || "--"}</span>
+              <span style={{ color: "var(--text-secondary)", fontWeight: 500, marginTop: "0.25rem" }}>g / day</span>
             </div>
           </div>
 
           {/* Workout Split */}
-          <div style={{
-            background: "rgba(26, 26, 26, 0.95)",
-            borderRadius: "1.5rem",
-            border: "1px solid rgba(16, 185, 129, 0.1)",
-            padding: "2rem",
-            marginBottom: "1rem"
-          }}>
-            <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "#ffffff", marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <div className="card" style={{ marginBottom: "0.5rem" }}>
+            <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
               Weekly Workout Split <span role="img" aria-label="workout">🏋️‍♂️</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1rem" }}>
               {split.map((d, idx) => (
                 <div key={idx} style={{
                   padding: "1rem",
-                  background: "#121212",
-                  borderRadius: "1rem",
-                  border: "1px solid rgba(255, 255, 255, 0.05)"
+                  background: "var(--bg-raised)",
+                  borderRadius: "var(--r-lg)",
+                  border: "1px solid var(--border-subtle)"
                 }}>
-                  <div style={{ color: "#10b981", fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.5rem" }}>
-                    {d.day} <span style={{ color: "#ffffff" }}>{d.focus}</span>
+                  <div style={{ color: "var(--primary-400)", fontWeight: 700, fontSize: "1.0625rem", marginBottom: "0.5rem" }}>
+                    {d.day} <span style={{ color: "var(--text-primary)" }}>{d.focus}</span>
                   </div>
-                  <ul style={{ marginLeft: "1.25rem", listStyleType: "disc", color: "#a3a3a3", lineHeight: "1.6" }}>
+                  <ul style={{ marginLeft: "1.25rem", listStyleType: "disc", color: "var(--text-secondary)", lineHeight: "1.6" }}>
                     {d.exercises.map((ex, i) => <li key={i}>{ex}</li>)}
                   </ul>
                 </div>
@@ -280,112 +233,61 @@ export default function Plan() {
           {/* Info Cards */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem", width: "100%" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-              <div style={{
-                background: "rgba(26, 26, 26, 0.95)",
-                borderRadius: "1.5rem",
-                border: "1px solid rgba(234, 179, 8, 0.3)",
-                padding: "1.5rem"
-              }}>
-                <div style={{ fontWeight: 700, color: "#facc15", marginBottom: "1rem" }}>⚠️ Avoid These</div>
-                <ul style={{ color: "#d4d4d4", lineHeight: "1.6" }}>
-                  <li><span style={{ color: "#facc15", fontWeight: 700 }}>Target:</span> {protein}g / day</li>
-                  <li>Aim for <span style={{ fontWeight: 700 }}>0.7-1g/lb</span> of lean mass.</li>
+              <div className="card" style={{ borderColor: "rgba(234, 179, 8, 0.3)" }}>
+                <div style={{ fontWeight: 700, color: "var(--amber-400)", marginBottom: "1rem" }}>⚠️ Remember</div>
+                <ul style={{ color: "var(--text-secondary)", lineHeight: "1.6" }}>
+                  <li><span style={{ color: "var(--amber-400)", fontWeight: 700 }}>Target:</span> {protein}g protein / day</li>
+                  <li>Aim for <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>0.7-1g/lb</span> of lean mass.</li>
                   <li>Spread intake across 4–5 meals.</li>
-                  <li>Example: <span style={{ fontWeight: 700 }}>150g chicken breast</span> (45g)</li>
+                  <li>Example: <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>150g chicken breast</span> = ~45g</li>
                 </ul>
               </div>
 
-              <div style={{
-                background: "rgba(26, 26, 26, 0.95)",
-                borderRadius: "1.5rem",
-                border: "1px solid rgba(244, 114, 182, 0.3)",
-                padding: "1.5rem"
-              }}>
-                <div style={{ fontWeight: 700, color: "#f472b6", marginBottom: "1rem" }}>Protein Intake Details</div>
-                <ul style={{ color: "#d4d4d4", lineHeight: "1.6" }}>
-                  <li><span style={{ fontWeight: 600, color: "#fbcfe8" }}>Aim:</span> For {protein}g per day.</li>
-                  <li><span style={{ color: "#a3a3a3" }}>Good sources:</span> Chicken, fish, dairy, eggs, lentils.</li>
-                  <li style={{ color: "#fbcfe8" }}>Spread in 4–5 meals for best results.</li>
+              <div className="card" style={{ borderColor: "rgba(244, 114, 182, 0.3)" }}>
+                <div style={{ fontWeight: 700, color: "var(--purple-400)", marginBottom: "1rem" }}>Protein Sources</div>
+                <ul style={{ color: "var(--text-secondary)", lineHeight: "1.6" }}>
+                  <li>Lean chicken, turkey, fish, and dairy.</li>
+                  <li>Eggs and lentils for vegetarians.</li>
+                  <li style={{ color: "var(--purple-400)", opacity: 0.9 }}>Spread in 4–5 meals for best muscle synthesis.</li>
                 </ul>
               </div>
             </div>
 
-            <div style={{
-              background: "rgba(26, 26, 26, 0.95)",
-              borderRadius: "1.5rem",
-              border: "1px solid rgba(59, 130, 246, 0.3)",
-              padding: "1.5rem",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              textAlign: "center"
-            }}>
-              <div style={{ fontWeight: 700, color: "#60a5fa", marginBottom: "1rem" }}>Water Intake Details</div>
+            <div className="card" style={{ borderColor: "rgba(59, 130, 246, 0.3)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+              <div style={{ fontWeight: 700, color: "var(--blue-400)", marginBottom: "1rem" }}>Daily Hydration Target</div>
               <div>
-                <div style={{ color: "#ffffff", fontWeight: 800, fontSize: "2.5rem", marginBottom: "0.5rem" }}>{water} L</div>
-                <div style={{ color: "#93c5fd", fontWeight: 500 }}>per day</div>
+                <div style={{ color: "var(--text-primary)", fontWeight: 800, fontSize: "2.75rem", marginBottom: "0.25rem" }}>{water} L</div>
+                <div style={{ color: "var(--blue-500)", fontWeight: 500 }}>drink water!</div>
               </div>
             </div>
           </div>
 
-          <div style={{ marginTop: "2rem", display: "flex", flexDirection: "column", items: "center", justifyContent: "center", textAlign: "center", color: "#a3a3a3" }}>
-            <span style={{ marginBottom: "1.5rem", fontSize: "1.1rem" }}>
-              Stay consistent, eat clean, and trust the process. Runli's got your back <span style={{ color: "#facc15" }}>💪</span>
+          {/* AI Recommendations */}
+          <div style={{ marginTop: "1rem" }}>
+            <RecommendationSection recommendations={recommendations} />
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", color: "var(--text-secondary)" }}>
+            <span style={{ marginBottom: "1.5rem", fontSize: "1.0625rem" }}>
+              Stay consistent, eat clean, and trust the process. Runli's got your back. <span style={{ color: "var(--amber-400)" }}>💪</span>
             </span>
-            <button
-              style={{
-                padding: "1rem 3rem",
-                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                color: "white",
-                fontWeight: 800,
-                fontSize: "1.25rem",
-                borderRadius: "9999px",
-                border: "none",
-                boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.5), 0 8px 10px -6px rgba(16, 185, 129, 0.4)",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                alignSelf: "center",
-                marginBottom: "1rem"
-              }}
-              onMouseOver={(e) => {
-                e.target.style.transform = "translateY(-2px)";
-                e.target.style.boxShadow = "0 20px 35px -5px rgba(16, 185, 129, 0.6), 0 12px 15px -6px rgba(16, 185, 129, 0.5)";
-              }}
-              onMouseOut={(e) => {
-                e.target.style.transform = "translateY(0)";
-                e.target.style.boxShadow = "0 10px 25px -5px rgba(16, 185, 129, 0.5), 0 8px 10px -6px rgba(16, 185, 129, 0.4)";
-              }}
-              onClick={() => navigate("/diet-plan")}
-            >
-              Create Personalized Diet Plan
-            </button>
-            <button
-              style={{
-                padding: "1rem 3rem",
-                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                color: "white",
-                fontWeight: 800,
-                fontSize: "1.25rem",
-                borderRadius: "9999px",
-                border: "none",
-                boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.5), 0 8px 10px -6px rgba(16, 185, 129, 0.4)",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                alignSelf: "center"
-              }}
-              onMouseOver={(e) => {
-                e.target.style.transform = "translateY(-2px)";
-                e.target.style.boxShadow = "0 20px 35px -5px rgba(16, 185, 129, 0.6), 0 12px 15px -6px rgba(16, 185, 129, 0.5)";
-              }}
-              onMouseOut={(e) => {
-                e.target.style.transform = "translateY(0)";
-                e.target.style.boxShadow = "0 10px 25px -5px rgba(16, 185, 129, 0.5), 0 8px 10px -6px rgba(16, 185, 129, 0.4)";
-              }}
-              onClick={() => navigate("/dashboard")}
-            >
-              Continue to Dashboard
-            </button>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
+                <button
+                className="btn btn-secondary"
+                style={{ padding: "0.875rem 2rem", fontSize: "1.125rem" }}
+                onClick={() => navigate("/diet-plan")}
+                >
+                View Diet Plan
+                </button>
+                <button
+                className="btn btn-primary"
+                style={{ padding: "0.875rem 2.5rem", fontSize: "1.125rem" }}
+                onClick={() => navigate("/dashboard")}
+                >
+                Go to Dashboard
+                </button>
+            </div>
           </div>
         </div>
       </div>

@@ -9,6 +9,8 @@ import {
     getHabits, getTodayStatus, createHabit, logHabit,
     deleteHabit, updateHabit, getHabitLogs, HABIT_TEMPLATES
 } from '../services/habitApi';
+import usePlan from '../hooks/usePlan.js';
+import { LockBadge } from '../components/ProGate.jsx';
 
 const MOTIVATIONAL_QUOTES = [
     "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
@@ -24,6 +26,8 @@ const MOTIVATIONAL_QUOTES = [
 export default function HabitTracker() {
     const navigate = useNavigate();
     const { success, info, error: showError } = useToast();
+    const { isPro, triggerUpgrade } = usePlan();
+    const FREE_HABIT_LIMIT = 3;
     const [habits, setHabits] = useState([]);
     const [todayStatus, setTodayStatus] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -97,6 +101,11 @@ export default function HabitTracker() {
     };
 
     const handleCreateHabit = async (template) => {
+        // Gate: free users limited to 3 habits
+        if (!isPro && habits.length >= FREE_HABIT_LIMIT) {
+            triggerUpgrade('habits_unlimited');
+            return;
+        }
         try {
             await createHabit(template);
             success('New habit created! 🚀');
@@ -319,8 +328,15 @@ export default function HabitTracker() {
                                     <Plus size={24} strokeWidth={3} />
                                 </div>
                                 Add a New Habit
+                                {!isPro && habits.length >= FREE_HABIT_LIMIT && (
+                                    <LockBadge />
+                                )}
                             </h2>
-                            <p style={{ color: "#d1d5db", margin: 0, fontSize: "1.1rem" }}>Choose a template to start tracking instantly.</p>
+                            <p style={{ color: "#d1d5db", margin: 0, fontSize: "1.1rem" }}>
+                                {!isPro && habits.length >= FREE_HABIT_LIMIT
+                                    ? `Free plan: ${FREE_HABIT_LIMIT} habits max. Upgrade for unlimited.`
+                                    : 'Choose a template to start tracking instantly.'}
+                            </p>
                         </div>
 
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>

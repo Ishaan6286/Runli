@@ -1,11 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import {
     Play, Pause, RotateCcw, CheckCircle, Circle,
     Volume2, VolumeX, X, Clock, Dumbbell, Video, PlayCircle,
-    TrendingUp, AlertCircle, Calendar, Calculator, Disc
+    TrendingUp, AlertCircle, Calendar, Calculator, Disc, ScanLine
 } from 'lucide-react';
+import PoseCamera from '../components/PoseCamera.jsx';
 import { motivationalQuotes } from '../data/quotes';
+import usePlan from '../hooks/usePlan.js';
+import { LockBadge } from '../components/ProGate.jsx';
+import { usePersonalization } from '../context/PersonalizationContext';
+import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
+import { KeepAwake } from '@capacitor-community/keep-awake';
 
 // Workout Split Data (from PlanPage)
 const SPLITS = [
@@ -249,6 +257,8 @@ const playBeep = (freq = 440, duration = 0.1, type = 'sine') => {
 
 export default function GymMode() {
     const navigate = useNavigate();
+    const { isPro, triggerUpgrade } = usePlan();
+    const { adjustWorkout } = usePersonalization();
 
     // Stopwatch State
     const [time, setTime] = useState(0);
@@ -279,6 +289,9 @@ export default function GymMode() {
     // Tracker State
     const [trackerData, setTrackerData] = useState({}); // { exerciseId: { weight: 0, rpe: 0, notes: '' } }
     const [history, setHistory] = useState({}); // Loaded from localStorage
+
+    // Pose Camera State
+    const [activePose, setActivePose] = useState(null); // { workoutId, exerciseName }
 
     // Plank Timer State
     const [showPlankTimer, setShowPlankTimer] = useState(false);
@@ -312,7 +325,7 @@ export default function GymMode() {
 
             // Get today's workout (cycle through the split)
             const todaysWorkout = workoutSplit[dayIndex % workoutSplit.length];
-            setTodaysFocus(todaysWorkout.focus);
+            setTodaysFocus(adjustWorkout(todaysWorkout.focus, 'strength'));
 
             // Convert exercises to workout format
             const generatedWorkouts = [
@@ -324,9 +337,10 @@ export default function GymMode() {
                 const match = exercise.match(/^(.+?)\s+(\d+)x(\d+)(?:-(\d+))?/);
                 if (match) {
                     const [, name, sets, repsMin, repsMax] = match;
+                    const adjustedName = adjustWorkout(name.trim(), 'strength');
                     generatedWorkouts.push({
                         id: index + 2,
-                        name: name.trim(),
+                        name: adjustedName,
                         sets: parseInt(sets),
                         reps: repsMax ? parseInt(repsMax) : parseInt(repsMin),
                         completed: false,
@@ -390,7 +404,7 @@ export default function GymMode() {
 
                     const workoutSplit = getSplitByFrequency(frequency);
                     const todaysWorkout = workoutSplit[dayIndex % workoutSplit.length];
-                    setTodaysFocus(todaysWorkout.focus);
+                    setTodaysFocus(adjustWorkout(todaysWorkout.focus, 'strength'));
 
                     // Regenerate workouts
                     const generatedWorkouts = [
@@ -401,9 +415,10 @@ export default function GymMode() {
                         const match = exercise.match(/^(.+?)\s+(\d+)x(\d+)(?:-(\d+))?/);
                         if (match) {
                             const [, name, sets, repsMin, repsMax] = match;
+                            const adjustedName = adjustWorkout(name.trim(), 'strength');
                             generatedWorkouts.push({
                                 id: index + 2,
-                                name: name.trim(),
+                                name: adjustedName,
                                 sets: parseInt(sets),
                                 reps: repsMax ? parseInt(repsMax) : parseInt(repsMin),
                                 completed: false,
@@ -444,13 +459,42 @@ export default function GymMode() {
         return () => clearInterval(interval);
     }, []);
 
-    // Stopwatch Logic
+    // Stopwatch Logic with Native Background Support
     useEffect(() => {
         let interval;
+        let bgTime = 0;
+        let listenerPromise = null;
+
+        const setupBackgroundTimers = async () => {
+            if (isRunning && Capacitor.isNativePlatform()) {
+                await KeepAwake.keepAwake();
+                
+                listenerPromise = CapApp.addListener('appStateChange', ({ isActive }) => {
+                    if (!isActive) {
+                        bgTime = Date.now();
+                    } else if (bgTime > 0) {
+                        const elapsedSeconds = Math.floor((Date.now() - bgTime) / 1000);
+                        setTime(t => t + elapsedSeconds);
+                        bgTime = 0;
+                    }
+                });
+            }
+        };
+
         if (isRunning) {
             interval = setInterval(() => setTime(t => t + 1), 1000);
+            setupBackgroundTimers();
         }
-        return () => clearInterval(interval);
+
+        return () => {
+            clearInterval(interval);
+            if (Capacitor.isNativePlatform()) {
+                KeepAwake.allowSleep().catch(() => {});
+            }
+            if (listenerPromise) {
+                listenerPromise.then(l => l.remove()).catch(() => {});
+            }
+        };
     }, [isRunning]);
 
     // Rest Timer Logic with Audio Cues
@@ -608,208 +652,123 @@ export default function GymMode() {
     };
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            background: '#000000',
-            color: '#ffffff',
-            padding: '2rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '2rem'
-        }}>
+        <div className="page-wrapper" style={{ padding: 'clamp(1rem, 3vw, 2rem)', paddingTop: 'clamp(1.25rem, 4vw, 2rem)', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             {/* Header */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                borderBottom: '1px solid rgba(16, 185, 129, 0.2)',
+                borderBottom: '1px solid var(--border-subtle)',
                 paddingBottom: '1rem'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Dumbbell size={32} color="#10b981" />
+                    <Dumbbell size={32} color="var(--primary-500)" />
                     <div>
                         <h1 style={{
-                            fontSize: '2rem',
+                            fontSize: 'clamp(1.5rem, 5vw, 2rem)',
                             fontWeight: 800,
-                            background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            margin: 0
+                            color: 'var(--primary-400)',
+                            margin: 0,
+                            letterSpacing: '-0.02em'
                         }}>GYM MODE</h1>
                         <div style={{
-                            fontSize: '0.9rem',
-                            color: '#a3a3a3',
+                            fontSize: '0.9375rem',
+                            color: 'var(--text-secondary)',
                             marginTop: '0.25rem',
                             fontWeight: 600
                         }}>
-                            Today: <span style={{ color: '#10b981' }}>{todaysFocus}</span>
+                            Today: <span style={{ color: 'var(--primary-400)' }}>{todaysFocus}</span>
                         </div>
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
                     <button
+                        className="btn-icon"
                         onClick={() => setShowCalculator(!showCalculator)}
                         style={{
-                            background: '#ffffff', // Solid white for max visibility
-                            border: showCalculator ? '3px solid #10b981' : '3px solid rgba(16, 185, 129, 0.5)', // Green border
-                            borderRadius: '50%',
-                            width: '56px', // Larger size to match exit button
-                            height: '56px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            color: 'black',
-                            boxShadow: '0 0 20px rgba(255,255,255,0.5), 0 4px 12px rgba(0,0,0,0.3)'
-                        }}
-                        onMouseOver={(e) => {
-                            e.currentTarget.style.transform = 'scale(1.1)';
-                            e.currentTarget.style.background = '#10b981';
-                            e.currentTarget.style.border = '3px solid #10b981';
-                        }}
-                        onMouseOut={(e) => {
-                            e.currentTarget.style.transform = 'scale(1)';
-                            e.currentTarget.style.background = '#ffffff';
-                            e.currentTarget.style.border = showCalculator ? '3px solid #10b981' : '3px solid rgba(16, 185, 129, 0.5)';
+                            width: 48, height: 48,
+                            background: showCalculator ? 'var(--primary-500)' : 'var(--bg-raised)',
+                            color: showCalculator ? 'var(--text-inverse)' : 'var(--text-primary)',
+                            border: `2px solid ${showCalculator ? 'var(--primary-500)' : 'var(--border-strong)'}`
                         }}
                         title="Plate Calculator"
                     >
-                        <Calculator size={28} strokeWidth={2.5} />
+                        <Calculator size={24} strokeWidth={2.5} />
                     </button>
                     <button
+                        className="btn btn-primary"
                         onClick={() => setShowPlankTimer(true)}
-                        style={{
-                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                            border: 'none',
-                            borderRadius: '0.75rem',
-                            padding: '0.75rem 1.5rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            color: 'white',
-                            fontWeight: 'bold',
-                            fontSize: '0.9rem'
-                        }}
-                        onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                        onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        style={{ padding: '0 1.25rem', fontSize: '0.9375rem' }}
                     >
                         Plank Timer
                     </button>
                     <button
+                        className="btn-icon"
                         onClick={() => navigate('/')}
-                        style={{
-                            background: '#ffffff', // Solid white for max visibility
-                            border: '3px solid #ef4444', // Red border for exit button
-                            borderRadius: '50%',
-                            width: '56px', // Larger size
-                            height: '56px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            boxShadow: '0 0 20px rgba(255,255,255,0.5), 0 4px 12px rgba(0,0,0,0.3)'
-                        }}
-                        onMouseOver={(e) => {
-                            e.currentTarget.style.transform = 'scale(1.1)';
-                            e.currentTarget.style.background = '#ef4444';
-                        }}
-                        onMouseOut={(e) => {
-                            e.currentTarget.style.transform = 'scale(1)';
-                            e.currentTarget.style.background = '#ffffff';
-                        }}
+                        style={{ width: 48, height: 48, background: 'var(--red-500)', color: 'white', border: 'none' }}
                         title="Exit Gym Mode"
                     >
-                        <X size={32} color="black" strokeWidth={3} />
+                        <X size={24} strokeWidth={2.5} />
                     </button>
                 </div>
             </div>
 
             {/* Plate Calculator Modal/Section */}
             {showCalculator && (
-                <div style={{
-                    background: 'rgba(26, 26, 26, 0.95)',
-                    border: '1px solid #10b981',
-                    borderRadius: '1rem',
-                    padding: '1.5rem',
-                    marginBottom: '1rem',
-                    animation: 'fadeIn 0.3s ease-in-out'
-                }}>
-                    <h3 style={{ marginTop: 0, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="card" style={{ padding: '1.5rem', marginBottom: '1rem', borderColor: 'var(--primary-500)' }}>
+                    <h3 style={{ marginTop: 0, color: 'var(--primary-400)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Disc size={20} /> Plate Calculator
                     </h3>
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
                         <input
                             type="number"
-                            placeholder="Target Weight (kg)"
+                            placeholder="Target (kg)"
                             value={targetWeight}
                             onChange={(e) => setTargetWeight(e.target.value)}
-                            style={{
-                                background: 'rgba(0,0,0,0.3)',
-                                border: '1px solid rgba(255,255,255,0.2)',
-                                color: 'white',
-                                padding: '0.5rem',
-                                borderRadius: '0.5rem',
-                                fontSize: '1rem'
-                            }}
+                            className="input"
+                            style={{ flex: 1, maxWidth: 200 }}
                         />
-                        <button
-                            onClick={calculatePlates}
-                            style={{
-                                background: '#10b981',
-                                color: 'black',
-                                border: 'none',
-                                padding: '0.5rem 1rem',
-                                borderRadius: '0.5rem',
-                                fontWeight: 'bold',
-                                cursor: 'pointer'
-                            }}
-                        >
+                        <button className="btn btn-primary" onClick={calculatePlates}>
                             Calculate
                         </button>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                        <span style={{ color: '#a3a3a3', marginRight: '0.5rem' }}>Per Side:</span>
+                        <span style={{ color: 'var(--text-secondary)', marginRight: '0.5rem' }}>Per Side:</span>
                         {calculatedPlates.length > 0 ? calculatedPlates.map((plate, idx) => (
                             <div key={idx} style={{
                                 width: '3rem',
                                 height: '3rem',
                                 borderRadius: '50%',
-                                background: '#333',
-                                border: '2px solid #10b981',
+                                background: 'var(--bg-surface)',
+                                border: '2px solid var(--primary-500)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 fontWeight: 'bold',
                                 fontSize: '0.8rem',
-                                color: 'white'
+                                color: 'var(--text-primary)'
                             }}>
                                 {plate}
                             </div>
-                        )) : <span style={{ color: '#525252' }}>Enter weight (min 20kg bar)</span>}
+                        )) : <span style={{ color: 'var(--text-muted)' }}>Enter weight (min 20kg bar)</span>}
                     </div>
                 </div>
             )}
 
             {/* Daily Motivation */}
             <div style={{
-                background: 'linear-gradient(90deg, rgba(16, 185, 129, 0.1) 0%, rgba(0,0,0,0) 100%)',
-                borderLeft: '4px solid #10b981',
-                padding: '1rem',
-                borderRadius: '0 1rem 1rem 0',
-                fontStyle: 'italic',
-                color: '#d1d5db',
+                background: 'var(--bg-raised)',
+                borderLeft: '4px solid var(--primary-500)',
+                padding: '1rem 1.25rem',
+                borderRadius: 'var(--r-md)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '1rem'
             }}>
-                <Calendar size={24} color="#10b981" />
+                <Calendar size={24} color="var(--primary-400)" />
                 <div>
-                    <span style={{ color: '#10b981', fontWeight: 700, display: 'block', fontSize: '0.8rem', marginBottom: '0.2rem' }}>DAILY MOTIVATION</span>
-                    "{quote}"
+                    <span style={{ color: 'var(--primary-400)', fontWeight: 700, display: 'block', fontSize: '0.8rem', marginBottom: '0.2rem', textTransform: 'uppercase' }}>Daily Motivation</span>
+                    <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.9375rem' }}>"{quote}"</span>
                 </div>
             </div>
 
@@ -829,87 +788,48 @@ export default function GymMode() {
                         gap: '1rem'
                     }}>
                         {/* Workout Timer */}
-                        <div style={{
-                            background: 'rgba(26, 26, 26, 0.95)',
-                            borderRadius: '1.5rem',
-                            padding: '1.5rem',
-                            border: '1px solid rgba(16, 185, 129, 0.2)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '1rem'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#10b981' }}>
-                                <Clock size={28} strokeWidth={2.5} />
-                                <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>WORKOUT TIME</span>
+                        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary-400)' }}>
+                                <Clock size={24} strokeWidth={2.5} />
+                                <span style={{ fontWeight: 700, fontSize: '0.9375rem', letterSpacing: '0.05em' }}>WORKOUT TIME</span>
                             </div>
-                            <div style={{ fontSize: '3rem', fontWeight: 700, fontFamily: 'monospace', color: '#10b981' }}>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 700, fontFamily: 'monospace', color: 'var(--primary-400)' }}>
                                 {formatTime(time)}
                             </div>
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 <button
                                     onClick={() => setIsRunning(!isRunning)}
-                                    style={{
-                                        background: isRunning ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-                                        color: isRunning ? '#ef4444' : '#10b981',
-                                        border: 'none',
-                                        borderRadius: '0.75rem',
-                                        padding: '0.75rem 1.5rem',
-                                        cursor: 'pointer',
-                                        fontWeight: 600
-                                    }}
+                                    className="btn btn-primary"
+                                    style={{ background: isRunning ? 'var(--red-500)' : 'var(--primary-500)', borderColor: 'transparent' }}
                                 >
                                     {isRunning ? 'PAUSE' : 'START'}
                                 </button>
                                 <button
                                     onClick={() => { setIsRunning(false); setTime(0); }}
-                                    style={{
-                                        background: 'rgba(255, 255, 255, 0.1)',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '0.75rem',
-                                        padding: '0.75rem',
-                                        cursor: 'pointer'
-                                    }}
+                                    className="btn btn-secondary"
+                                    style={{ padding: '0.5rem 0.875rem' }}
                                 >
-                                    <RotateCcw size={20} />
+                                    <RotateCcw size={18} />
                                 </button>
                             </div>
                         </div>
 
                         {/* Rest Timer */}
-                        <div style={{
-                            background: 'rgba(26, 26, 26, 0.95)',
-                            borderRadius: '1.5rem',
-                            padding: '1.5rem',
-                            border: '1px solid rgba(16, 185, 129, 0.2)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '1rem'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#fbbf24' }}>
-                                <Clock size={28} strokeWidth={2.5} />
-                                <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>REST TIMER</span>
+                        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--amber-400)' }}>
+                                <Clock size={24} strokeWidth={2.5} />
+                                <span style={{ fontWeight: 700, fontSize: '0.9375rem', letterSpacing: '0.05em' }}>REST TIMER</span>
                             </div>
-                            <div style={{ fontSize: '3rem', fontWeight: 700, fontFamily: 'monospace', color: isResting ? '#fbbf24' : '#a3a3a3' }}>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 700, fontFamily: 'monospace', color: isResting ? 'var(--amber-400)' : 'var(--text-muted)' }}>
                                 {formatTime(restTime)}
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                                {[30, 60, 90, 120, 150].map(seconds => (
+                                {[30, 60, 90, 120].map(seconds => (
                                     <button
                                         key={seconds}
                                         onClick={() => startRest(seconds)}
-                                        style={{
-                                            background: 'rgba(255, 255, 255, 0.1)',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '0.5rem',
-                                            padding: '0.5rem 1rem',
-                                            cursor: 'pointer',
-                                            fontSize: '0.9rem',
-                                            fontWeight: 600
-                                        }}
+                                        className="btn btn-secondary"
+                                        style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
                                     >
                                         {seconds}s
                                     </button>
@@ -919,51 +839,39 @@ export default function GymMode() {
                     </div>
 
                     {/* Workout Checklist & Smart Tracker */}
-                    <div style={{
-                        background: 'rgba(26, 26, 26, 0.95)',
-                        borderRadius: '1.5rem',
-                        padding: '1.5rem',
-                        border: '1px solid rgba(16, 185, 129, 0.2)',
-                        flex: 1,
-                        overflowY: 'auto'
-                    }}>
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <CheckCircle size={24} color="#10b981" />
+                    <div className="card" style={{ flex: 1, overflowY: 'auto' }}>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <CheckCircle size={22} color="var(--primary-400)" />
                             TODAY'S WORKOUT
                         </h2>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             {workouts.map(workout => {
                                 const recommendation = getRecommendation(workout.name);
                                 const currentData = trackerData[workout.id] || {};
-                                const estimated1RM = calculate1RM(currentData.weight, currentData.rpe ? workout.reps : 0); // Using target reps for 1RM calc context if RPE is set, or better yet, just use weight if available. Actually, 1RM needs reps performed. I'll use workout.reps as a proxy for "reps performed" for now since we don't track actual reps yet.
 
                                 return (
                                     <div
                                         key={workout.id}
                                         style={{
                                             padding: '1rem',
-                                            background: workout.completed ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-                                            borderRadius: '1rem',
-                                            border: workout.completed ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
+                                            background: workout.completed ? 'var(--primary-dim)' : 'var(--bg-raised)',
+                                            borderRadius: 'var(--r-lg)',
+                                            border: `1px solid ${workout.completed ? 'rgba(16,185,129,0.3)' : 'var(--border-subtle)'}`,
                                             display: 'flex',
                                             flexDirection: 'column',
                                             gap: '1rem'
                                         }}
                                     >
-                                        {/* Header Row */}
-                                        <div
-                                            onClick={() => toggleWorkout(workout.id)}
-                                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
-                                        >
+                                        <div onClick={() => toggleWorkout(workout.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                                 {workout.completed ?
-                                                    <CheckCircle size={24} color="#10b981" /> :
-                                                    <Circle size={24} color="#525252" />
+                                                    <CheckCircle size={24} color="var(--primary-500)" /> :
+                                                    <Circle size={24} color="var(--text-muted)" />
                                                 }
                                                 <div>
                                                     <span style={{
-                                                        fontSize: '1.1rem',
-                                                        color: workout.completed ? '#10b981' : 'white',
+                                                        fontSize: '1.0625rem',
+                                                        color: workout.completed ? 'var(--primary-400)' : 'var(--text-primary)',
                                                         textDecoration: workout.completed ? 'line-through' : 'none',
                                                         fontWeight: 500,
                                                         display: 'block'
@@ -971,48 +879,30 @@ export default function GymMode() {
                                                         {workout.name}
                                                     </span>
                                                     {workout.type === 'strength' && (
-                                                        <span style={{ fontSize: '0.85rem', color: '#a3a3a3' }}>
+                                                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
                                                             {workout.sets} sets x {workout.reps} reps
                                                         </span>
                                                     )}
                                                 </div>
                                             </div>
 
-                                            {workout.videoKey && (
-                                                <button
-                                                    onClick={(e) => playVideo(e, workout)}
-                                                    style={{
-                                                        background: '#ffffff', // Bright white background for maximum visibility
-                                                        border: '3px solid #10b981', // Thick green border
-                                                        borderRadius: '50%',
-                                                        width: '48px', // Larger size
-                                                        height: '48px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        cursor: 'pointer',
-                                                        color: '#10b981', // Green icon
-                                                        transition: 'all 0.2s',
-                                                        boxShadow: '0 0 20px rgba(16, 185, 129, 0.6), 0 4px 12px rgba(0,0,0,0.3)',
-                                                        flexShrink: 0 // Prevent button from shrinking
-                                                    }}
-                                                    onMouseOver={(e) => {
-                                                        e.currentTarget.style.transform = 'scale(1.15)';
-                                                        e.currentTarget.style.boxShadow = '0 0 30px rgba(16, 185, 129, 0.8), 0 6px 16px rgba(0,0,0,0.4)';
-                                                        e.currentTarget.style.background = '#10b981';
-                                                        e.currentTarget.style.color = 'white';
-                                                    }}
-                                                    onMouseOut={(e) => {
-                                                        e.currentTarget.style.transform = 'scale(1)';
-                                                        e.currentTarget.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.6), 0 4px 12px rgba(0,0,0,0.3)';
-                                                        e.currentTarget.style.background = '#ffffff';
-                                                        e.currentTarget.style.color = '#10b981';
-                                                    }}
-                                                    title="Watch Form Video"
-                                                >
-                                                    <PlayCircle size={26} strokeWidth={2.5} />
-                                                </button>
-                                            )}
+                                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                                {workout.type === 'strength' && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setActivePose({ workoutId: workout.id, exerciseName: workout.name }); }}
+                                                        className="btn btn-secondary"
+                                                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', gap: '0.35rem', color: 'var(--primary-400)', borderColor: 'rgba(16,185,129,0.3)' }}
+                                                        title="Analyze Form (AI)"
+                                                    >
+                                                        <ScanLine size={14} /> Analyze
+                                                    </button>
+                                                )}
+                                                {workout.videoKey && (
+                                                    <button className="btn-icon" onClick={(e) => playVideo(e, workout)} style={{ width: 36, height: 36, color: 'var(--primary-500)' }} title="Watch Form Video">
+                                                        <PlayCircle size={22} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Smart Tracker Inputs (Only for Strength) */}
@@ -1020,22 +910,13 @@ export default function GymMode() {
                                             <div style={{
                                                 marginTop: '0.5rem',
                                                 paddingTop: '1rem',
-                                                borderTop: '1px solid rgba(255,255,255,0.1)',
+                                                borderTop: '1px solid var(--border-subtle)',
                                                 display: 'flex',
                                                 flexDirection: 'column',
                                                 gap: '0.75rem'
                                             }}>
                                                 {recommendation && (
-                                                    <div style={{
-                                                        fontSize: '0.9rem',
-                                                        color: recommendation.color,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.5rem',
-                                                        background: 'rgba(0,0,0,0.3)',
-                                                        padding: '0.5rem',
-                                                        borderRadius: '0.5rem'
-                                                    }}>
+                                                    <div style={{ fontSize: '0.875rem', color: recommendation.color, display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-overlay)', padding: '0.5rem', borderRadius: 'var(--r-md)' }}>
                                                         <TrendingUp size={16} />
                                                         Suggestion: {recommendation.text}
                                                     </div>
@@ -1043,65 +924,22 @@ export default function GymMode() {
 
                                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
                                                     <div>
-                                                        <label style={{ fontSize: '0.75rem', color: '#a3a3a3', display: 'block', marginBottom: '0.25rem' }}>Weight (kg)</label>
-                                                        <input
-                                                            type="number"
-                                                            placeholder="0"
-                                                            value={trackerData[workout.id]?.weight || ''}
-                                                            onChange={(e) => handleTrackerChange(workout.id, 'weight', e.target.value)}
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            style={{
-                                                                width: '100%',
-                                                                background: 'rgba(0,0,0,0.3)',
-                                                                border: '1px solid rgba(255,255,255,0.1)',
-                                                                color: 'white',
-                                                                padding: '0.5rem',
-                                                                borderRadius: '0.5rem'
-                                                            }}
-                                                        />
+                                                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>Weight (kg)</label>
+                                                        <input type="number" placeholder="0" value={trackerData[workout.id]?.weight || ''} onChange={(e) => handleTrackerChange(workout.id, 'weight', e.target.value)} onClick={(e) => e.stopPropagation()} className="input" style={{ width: '100%', padding: '0.4rem 0.6rem' }} />
                                                     </div>
                                                     <div>
-                                                        <label style={{ fontSize: '0.75rem', color: '#a3a3a3', display: 'block', marginBottom: '0.25rem' }}>RPE (1-10)</label>
-                                                        <input
-                                                            type="number"
-                                                            placeholder="-"
-                                                            max="10"
-                                                            value={trackerData[workout.id]?.rpe || ''}
-                                                            onChange={(e) => handleTrackerChange(workout.id, 'rpe', e.target.value)}
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            style={{
-                                                                width: '100%',
-                                                                background: 'rgba(0,0,0,0.3)',
-                                                                border: '1px solid rgba(255,255,255,0.1)',
-                                                                color: 'white',
-                                                                padding: '0.5rem',
-                                                                borderRadius: '0.5rem'
-                                                            }}
-                                                        />
+                                                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>RPE (1-10)</label>
+                                                        <input type="number" placeholder="-" max="10" value={trackerData[workout.id]?.rpe || ''} onChange={(e) => handleTrackerChange(workout.id, 'rpe', e.target.value)} onClick={(e) => e.stopPropagation()} className="input" style={{ width: '100%', padding: '0.4rem 0.6rem' }} />
                                                     </div>
                                                     <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                                                        <button
-                                                            onClick={(e) => saveSet(e, workout)}
-                                                            style={{
-                                                                width: '100%',
-                                                                background: '#10b981',
-                                                                color: 'black',
-                                                                border: 'none',
-                                                                padding: '0.5rem',
-                                                                borderRadius: '0.5rem',
-                                                                fontWeight: 600,
-                                                                cursor: 'pointer'
-                                                            }}
-                                                        >
-                                                            Log Set
-                                                        </button>
+                                                        <button className="btn btn-primary" onClick={(e) => saveSet(e, workout)} style={{ width: '100%', padding: '0.5rem' }}>Log Set</button>
                                                     </div>
                                                 </div>
 
-                                                {/* 1RM Estimate Display */}
+                                                {/* 1RM Estimate */}
                                                 {currentData.weight > 0 && (
-                                                    <div style={{ fontSize: '0.8rem', color: '#a3a3a3', textAlign: 'right', marginTop: '-0.25rem' }}>
-                                                        Est. 1RM: <span style={{ color: '#10b981', fontWeight: 'bold' }}>{calculate1RM(currentData.weight, workout.reps)}kg</span>
+                                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'right', marginTop: '-0.25rem' }}>
+                                                        Est. 1RM: <span style={{ color: 'var(--primary-400)', fontWeight: 700 }}>{calculate1RM(currentData.weight, workout.reps)}kg</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -1113,243 +951,71 @@ export default function GymMode() {
                     </div>
                 </div>
 
-                {/* Right Column: Media & Form */}
+                {/* Right Column: Media */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-
-                    {/* Video Player Placeholder */}
-                    <div style={{
-                        background: 'rgba(26, 26, 26, 0.95)',
-                        borderRadius: '1.5rem',
-                        padding: '1.5rem',
-                        border: '1px solid rgba(16, 185, 129, 0.2)',
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column'
-                    }}>
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <Video size={24} color="#10b981" />
-                            FORM GUIDE: <span style={{ color: '#10b981', fontWeight: 400 }}>{currentVideo.title}</span>
+                    <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <Video size={22} color="var(--primary-400)" />
+                            FORM GUIDE: <span style={{ color: 'var(--primary-400)', fontWeight: 400 }}>{currentVideo.title}</span>
                         </h2>
-                        <div style={{
-                            flex: 1,
-                            background: '#000',
-                            borderRadius: '1rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            minHeight: '300px'
-                        }}>
-                            <iframe
-                                width="100%"
-                                height="100%"
-                                src={currentVideo.url}
-                                title={currentVideo.title}
-                                frameBorder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                style={{ position: 'absolute', top: 0, left: 0 }}
-                            />
+                        <div style={{ flex: 1, background: '#000', borderRadius: 'var(--r-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', minHeight: '300px' }}>
+                            <iframe width="100%" height="100%" src={currentVideo.url} title={currentVideo.title} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ position: 'absolute', top: 0, left: 0 }} />
                         </div>
                     </div>
-
                 </div>
             </div>
 
-            {/* Fullscreen Plank Timer Modal */}
+            {/* Plank Timer Modal */}
             {showPlankTimer && (
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    background: '#000000',
-                    zIndex: 20000000, // Higher than Header (10000000)
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '2rem'
-                }}>
-                    {/* Close Button */}
-                    <button
-                        onClick={closePlankTimer}
-                        style={{
-                            position: 'absolute',
-                            top: '2rem',
-                            right: '2rem',
-                            background: '#ffffff', // Solid white for maximum visibility
-                            border: '4px solid #ef4444', // Thick red border
-                            borderRadius: '50%',
-                            width: '64px', // Much larger
-                            height: '64px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            color: 'black',
-                            transition: 'all 0.2s',
-                            boxShadow: '0 0 30px rgba(255, 255, 255, 0.9), 0 0 60px rgba(239, 68, 68, 0.5), 0 8px 16px rgba(0,0,0,0.4)',
-                            zIndex: 20000001 // Above modal content
-                        }}
-                        onMouseOver={(e) => {
-                            e.currentTarget.style.transform = 'scale(1.15) rotate(90deg)';
-                            e.currentTarget.style.background = '#ef4444';
-                            e.currentTarget.style.boxShadow = '0 0 40px rgba(239, 68, 68, 0.9), 0 8px 20px rgba(0,0,0,0.5)';
-                        }}
-                        onMouseOut={(e) => {
-                            e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
-                            e.currentTarget.style.background = '#ffffff';
-                            e.currentTarget.style.boxShadow = '0 0 30px rgba(255, 255, 255, 0.9), 0 0 60px rgba(239, 68, 68, 0.5), 0 8px 16px rgba(0,0,0,0.4)';
-                        }}
-                        title="Close Plank Timer"
-                    >
-                        <X size={36} color="black" strokeWidth={4} />
+                <div style={{ position: 'fixed', inset: 0, background: 'var(--bg-overlay)', backdropFilter: 'blur(20px)', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+                    <button className="btn-icon" onClick={closePlankTimer} style={{ position: 'absolute', top: '2rem', right: '2rem', width: 64, height: 64, background: 'var(--red-500)', color: 'white', border: 'none', zIndex: 101, boxShadow: 'var(--shadow-lg)' }}>
+                        <X size={32} strokeWidth={3} />
                     </button>
 
-                    {/* Title */}
-                    <h1 style={{
-                        fontSize: window.innerWidth < 768 ? '2rem' : '3rem', // Responsive font size
-                        fontWeight: 800,
-                        background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        marginBottom: '2rem',
-                        textAlign: 'center'
-                    }}>
-                        PLANK TIMER
-                    </h1>
+                    <h1 style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)', fontWeight: 800, color: 'var(--primary-400)', marginBottom: '2rem', textAlign: 'center' }}>PLANK TIMER</h1>
 
-                    {/* Duration Selector (only show when not running) */}
                     {!isPlankRunning && (
                         <div style={{ marginBottom: '3rem', textAlign: 'center' }}>
-                            <label style={{
-                                color: '#a3a3a3',
-                                fontSize: '1.2rem',
-                                display: 'block',
-                                marginBottom: '1rem',
-                                fontWeight: 600
-                            }}>
-                                Set Duration
-                            </label>
-                            <input
-                                type="range"
-                                min="30"
-                                max="300"
-                                step="10"
-                                value={plankDuration}
-                                onChange={(e) => {
-                                    const val = Number(e.target.value);
-                                    setPlankDuration(val);
-                                    setPlankTimeLeft(val);
-                                }}
-                                style={{
-                                    width: '300px',
-                                    height: '8px',
-                                    background: 'rgba(255, 255, 255, 0.2)',
-                                    borderRadius: '4px',
-                                    outline: 'none',
-                                    cursor: 'pointer'
-                                }}
-                            />
-                            <div style={{
-                                color: '#10b981',
-                                fontSize: '1.5rem',
-                                fontWeight: 700,
-                                marginTop: '1rem'
-                            }}>
-                                {formatTime(plankDuration)}
-                            </div>
+                            <label style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', display: 'block', marginBottom: '1rem', fontWeight: 600 }}>Set Duration</label>
+                            <input type="range" min="30" max="300" step="10" value={plankDuration} onChange={(e) => { const val = Number(e.target.value); setPlankDuration(val); setPlankTimeLeft(val); }} style={{ width: '300px', height: '8px', background: 'var(--bg-raised)', borderRadius: '4px', outline: 'none', cursor: 'pointer', accentColor: 'var(--primary-500)' }} />
+                            <div style={{ color: 'var(--primary-400)', fontSize: '1.5rem', fontWeight: 700, marginTop: '1rem' }}>{formatTime(plankDuration)}</div>
                         </div>
                     )}
 
-                    {/* Countdown Display */}
-                    <div style={{
-                        fontSize: window.innerWidth < 768 ? '6rem' : '12rem', // Responsive font size
-                        fontWeight: 900,
-                        fontFamily: 'monospace',
-                        color: plankTimeLeft <= 10 ? '#ef4444' : '#10b981',
-                        textShadow: '0 0 40px rgba(16, 185, 129, 0.5)',
-                        marginBottom: '3rem',
-                        lineHeight: 1
-                    }}>
+                    <div style={{ fontSize: 'clamp(5rem, 20vw, 12rem)', fontWeight: 900, fontFamily: 'monospace', color: plankTimeLeft <= 10 ? 'var(--red-500)' : 'var(--primary-400)', textShadow: '0 0 40px rgba(16, 185, 129, 0.4)', marginBottom: '3rem', lineHeight: 1 }}>
                         {formatTime(plankTimeLeft)}
                     </div>
 
-                    {/* Control Buttons */}
-                    <div style={{ display: 'flex', gap: '2rem' }}>
-                        <button
-                            onClick={isPlankRunning ? () => setIsPlankRunning(false) : startPlankTimer}
-                            style={{
-                                background: isPlankRunning
-                                    ? 'rgba(239, 68, 68, 0.2)'
-                                    : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                color: isPlankRunning ? '#ef4444' : 'white',
-                                border: 'none',
-                                borderRadius: '1rem',
-                                padding: window.innerWidth < 768 ? '1rem 2rem' : '1.5rem 4rem', // Responsive padding
-                                fontSize: '1.5rem',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '1rem'
-                            }}
-                            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                        >
-                            {isPlankRunning ? (
-                                <>
-                                    <Pause size={32} />
-                                    PAUSE
-                                </>
-                            ) : (
-                                <>
-                                    <Play size={32} />
-                                    START
-                                </>
-                            )}
+                    <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                        <button className="btn btn-primary" onClick={isPlankRunning ? () => setIsPlankRunning(false) : startPlankTimer} style={{ padding: '1rem 3rem', fontSize: '1.5rem', background: isPlankRunning ? 'var(--red-500)' : 'var(--primary-500)', borderColor: 'transparent' }}>
+                            {isPlankRunning ? <><Pause size={28} /> PAUSE</> : <><Play size={28} /> START</>}
                         </button>
-
-                        <button
-                            onClick={resetPlankTimer}
-                            style={{
-                                background: 'rgba(255, 255, 255, 0.1)',
-                                color: 'white',
-                                border: '1px solid rgba(255, 255, 255, 0.2)',
-                                borderRadius: '1rem',
-                                padding: '1.5rem 4rem',
-                                fontSize: '1.5rem',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '1rem'
-                            }}
-                            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                        >
-                            <RotateCcw size={32} />
-                            RESET
+                        <button className="btn btn-secondary" onClick={resetPlankTimer} style={{ padding: '1rem 3rem', fontSize: '1.5rem' }}>
+                            <RotateCcw size={28} /> RESET
                         </button>
                     </div>
-
-                    {/* Motivational Text */}
                     {isPlankRunning && (
-                        <div style={{
-                            marginTop: '3rem',
-                            fontSize: '1.5rem',
-                            color: '#a3a3a3',
-                            fontStyle: 'italic',
-                            textAlign: 'center',
-                            animation: 'pulse 2s ease-in-out infinite'
-                        }}>
+                        <div style={{ marginTop: '3rem', fontSize: '1.5rem', color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center' }}>
                             Stay strong! You've got this! 💪
                         </div>
                     )}
                 </div>
             )}
+
+            <AnimatePresence>
+                {activePose && isPro && (
+                    <PoseCamera
+                        key={activePose.workoutId}
+                        exerciseName={activePose.exerciseName}
+                        onClose={({ reps, overallScore }) => {
+                            if (reps > 0 || overallScore > 0) {
+                                setTrackerData(prev => ({ ...prev, [activePose.workoutId]: { ...prev[activePose.workoutId], reps, formScore: overallScore } }));
+                            }
+                            setActivePose(null);
+                        }}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }

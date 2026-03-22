@@ -1,48 +1,99 @@
-// tailwind.config.cjs
+// tailwind.config.cjs — Runli Neo-Glass Elite v2.0
 module.exports = {
   content: [
     "./index.html",
-    "./src/**/*.{js,jsx,ts,tsx}"
+    "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
     extend: {
       colors: {
+        bg: {
+          base:    "#0A0A0B",
+          surface: "#111113",
+          raised:  "#16161A",
+          overlay: "#1C1C21",
+        },
         primary: {
-          DEFAULT: "#7c3aed", // Violet 600
-          hover: "#6d28d9", // Violet 700
-          light: "#8b5cf6", // Violet 500
+          300: "#86efac",
+          400: "#4ade80",
+          500: "#22C55E",
+          600: "#16a34a",
+          700: "#15803d",
         },
-        secondary: {
-          DEFAULT: "#db2777", // Pink 600
-          hover: "#be185d", // Pink 700
+        blue: {
+          400: "#60a5fa",
+          500: "#3B82F6",
+          600: "#2563eb",
         },
-        accent: {
-          DEFAULT: "#06b6d4", // Cyan 500
-          hover: "#0891b2", // Cyan 600
+        purple: {
+          400: "#a78bfa",
+          500: "#8B5CF6",
+          600: "#7c3aed",
         },
-        dark: {
-          DEFAULT: "#030712", // Gray 950 (Main bg)
-          surface: "#111827", // Gray 900 (Cards/Surfaces)
-          lighter: "#1f2937", // Gray 800
+        amber: {
+          400: "#fbbf24",
+          500: "#f59e0b",
+        },
+        txt: {
+          primary:   "#F2F2F3",
+          secondary: "#8B8B96",
+          muted:     "#56565F",
+          inverse:   "#0A0A0B",
         },
       },
       fontFamily: {
-        sans: ["Outfit", "Inter", "sans-serif"],
-        heading: ["Outfit", "sans-serif"],
+        display: ["Plus Jakarta Sans", "Inter", "sans-serif"],
+        body:    ["Inter", "system-ui", "sans-serif"],
+        mono:    ["JetBrains Mono", "monospace"],
+      },
+      borderRadius: {
+        "4xl": "2rem",
+        "5xl": "2.5rem",
       },
       boxShadow: {
-        glass: "0 4px 30px rgba(0, 0, 0, 0.1)",
-        glow: "0 0 20px rgba(124, 58, 237, 0.5)",
+        "glow-primary": "0 0 0 1px rgba(34,197,94,0.2), 0 4px 20px rgba(34,197,94,0.12)",
+        "glow-blue":    "0 0 0 1px rgba(59,130,246,0.2), 0 4px 20px rgba(59,130,246,0.12)",
+        "glow-purple":  "0 0 0 1px rgba(139,92,246,0.2), 0 4px 20px rgba(139,92,246,0.12)",
+        "glow-amber":   "0 0 0 1px rgba(245,158,11,0.2),  0 4px 20px rgba(245,158,11,0.12)",
+        "card":         "0 4px 16px rgba(0,0,0,0.5)",
+        "card-hover":   "0 8px 32px rgba(0,0,0,0.55)",
+        "modal":        "0 16px 48px rgba(0,0,0,0.6)",
+      },
+      transitionTimingFunction: {
+        "out-expo":     "cubic-bezier(0.16, 1, 0.3, 1)",
+        "in-out-premium": "cubic-bezier(0.4, 0, 0.2, 1)",
       },
       animation: {
-        "float": "float 6s ease-in-out infinite",
-        "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "blob-drift-1": "blobDrift1 22s ease-in-out infinite alternate",
+        "blob-drift-2": "blobDrift2 28s ease-in-out infinite alternate-reverse",
+        "blob-drift-3": "blobDrift3 32s ease-in-out infinite alternate",
+        "fade-up":      "fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards",
+        "shimmer":      "shimmer 1.8s ease-in-out infinite",
       },
       keyframes: {
-        float: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-10px)" },
+        blobDrift1: {
+          from: { transform: "translate(0,0) scale(1)" },
+          to:   { transform: "translate(3%,5%) scale(1.05)" },
         },
+        blobDrift2: {
+          from: { transform: "translate(0,0) scale(1)" },
+          to:   { transform: "translate(-4%,-3%) scale(1.04)" },
+        },
+        blobDrift3: {
+          from: { transform: "translate(0,0) scale(1)" },
+          to:   { transform: "translate(2%,-4%) scale(1.06)" },
+        },
+        fadeUp: {
+          from: { opacity: 0, transform: "translateY(14px)" },
+          to:   { opacity: 1, transform: "translateY(0)" },
+        },
+        shimmer: {
+          "0%":   { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+      },
+      backdropBlur: {
+        xs: "4px",
       },
     },
   },

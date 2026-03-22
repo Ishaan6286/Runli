@@ -52,6 +52,25 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['Vegetarian', 'Non-Vegetarian', 'Eggetarian', null],
       default: 'Vegetarian'
+    },
+    // Monetisation
+    plan: {
+      type: String,
+      enum: ['free', 'pro'],
+      default: 'free',
+    },
+    planStartedAt: {
+      type: Date,
+      default: null,
+    },
+    planExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
     }
   },
   { timestamps: true }

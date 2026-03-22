@@ -1,26 +1,37 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 
-const Card = ({
-    children,
-    className = '',
-    hover = false,
-    ...props
-}) => {
-    return (
-        <motion.div
-            initial={hover ? { opacity: 0, y: 20 } : undefined}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={hover ? { y: -5, boxShadow: '0 0 25px rgba(124, 58, 237, 0.2)' } : undefined}
-            className={`
-        bg-dark-surface/50 backdrop-blur-xl border border-white/5 rounded-2xl p-6
-        ${className}
-      `}
-            {...props}
-        >
-            {children}
-        </motion.div>
-    );
+/**
+ * Card component — Neo-Glass Elite
+ *
+ * @param {string} variant - 'base' | 'glass' | 'featured' | 'stat'
+ */
+const variantClass = {
+  base:     'card',
+  glass:    'card-glass',
+  featured: 'card-featured',
+  stat:     'card-stat',
 };
 
+const Card = React.forwardRef(({
+  variant = 'base',
+  children,
+  className = '',
+  style = {},
+  ...props
+}, ref) => (
+  <div
+    ref={ref}
+    className={`${variantClass[variant] || 'card'} ${className}`}
+    style={style}
+    {...props}
+  >
+    {children}
+  </div>
+));
+
+Card.displayName = 'Card';
+
 export default Card;
+export const GlassCard    = (p) => <Card variant="glass"    {...p} />;
+export const FeaturedCard = (p) => <Card variant="featured" {...p} />;
+export const StatCard     = (p) => <Card variant="stat"     {...p} />;

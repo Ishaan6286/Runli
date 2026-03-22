@@ -6,6 +6,7 @@ import {
     RefreshCw, Save, Wallet, Flame, Target, DollarSign,
     Plus, X, Search, CheckCircle2, Sparkles, UtensilsCrossed
 } from "lucide-react";
+import { usePersonalization } from "../context/PersonalizationContext";
 
 // Helper functions
 function calcBMR(weight, height, age, gender) {
@@ -31,6 +32,7 @@ function proteinTarget(weight, target) {
 
 export default function DietPlan() {
     const navigate = useNavigate();
+    const { userContext, calculateDailyMacros } = usePersonalization();
     const [user, setUser] = useState({});
     const [isCustomMode, setIsCustomMode] = useState(false);
     const [generatedPlan, setGeneratedPlan] = useState({ breakfast: [], lunch: [], dinner: [], snacks: [] });
@@ -64,9 +66,7 @@ export default function DietPlan() {
                 const freq = freqMap[freqStr] || 4;
                 const target = userData.goal || "maintain";
 
-                const bmr = calcBMR(weight, height, age, gender);
-                const calories = caloriesTarget(bmr, freq, target);
-                const protein = proteinTarget(weight, target);
+                const { calories, protein } = calculateDailyMacros();
 
                 setTargetCalories(calories);
                 setTargetProtein(protein);

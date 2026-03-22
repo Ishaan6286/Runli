@@ -1,239 +1,225 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Dumbbell, Target } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Dumbbell, Salad, Brain, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo.png';
+
+const pageVariants = {
+  initial: { opacity: 0, y: 16, filter: 'blur(8px)' },
+  animate: {
+    opacity: 1, y: 0, filter: 'blur(0px)',
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+  },
+  exit: {
+    opacity: 0, y: -8,
+    transition: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+  },
+};
+
+const staggerContainer = {
+  animate: { transition: { staggerChildren: 0.09, delayChildren: 0.15 } },
+};
+
+const staggerItem = {
+  initial: { opacity: 0, y: 20 },
+  animate: {
+    opacity: 1, y: 0,
+    transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
+const FEATURES = [
+  { icon: Brain,    label: 'AI Coach',      desc: 'Plans built around your body' },
+  { icon: Dumbbell, label: 'Smart Training', desc: 'Adaptive workout sessions' },
+  { icon: Salad,    label: 'Nutrition OS',  desc: 'Macro tracking that thinks' },
+  { icon: Zap,      label: 'Daily Streaks', desc: 'XP, badges, and habit rings' },
+];
 
 const Hero = () => {
   const { user } = useAuth();
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "#000000",
-      color: "white",
-      position: "relative",
-      overflow: "hidden",
-      padding: "20px"
-    }}>
-
-      {/* Background Ambient Glow */}
-      <div style={{
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        width: "min(600px, 90vw)",
-        height: "min(600px, 90vw)",
-        background: "radial-gradient(circle, rgba(16,185,129,0.15) 0%, rgba(0,0,0,0) 70%)",
-        pointerEvents: "none",
-        zIndex: 0
-      }}></div>
-
-      <div style={{
-        textAlign: "center",
-        zIndex: 10,
-        maxWidth: "min(800px, 95vw)",
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "0 1rem"
-      }}>
-
-        {/* Central Logo with Glow */}
-        <div style={{
-          position: "relative",
-          marginBottom: "clamp(1rem, 4vw, 2rem)",
-          width: "100%",
-          display: "flex",
-          justifyContent: "center"
-        }}>
-          <div style={{
-            position: "absolute",
-            inset: 0,
-            background: "#10b981",
-            filter: "blur(40px)",
-            opacity: 0.4,
-            borderRadius: "50%",
-            zIndex: -1
-          }}></div>
+    <motion.div
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 'clamp(2rem, 6vw, 4rem) clamp(1.25rem, 5vw, 3rem)',
+        position: 'relative',
+        color: 'var(--text-primary)',
+      }}
+    >
+      {/* Content */}
+      <div
+        style={{
+          maxWidth: '760px',
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          gap: 'clamp(1.5rem, 4vw, 2.5rem)',
+        }}
+      >
+        {/* Logo */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }}
+        >
           <img
             src={logo}
-            alt="Runli Logo"
+            alt="Runli"
             style={{
-              width: "clamp(200px, 60vw, 360px)",
-              maxWidth: "100%",
-              height: "auto",
-              filter: "drop-shadow(0 0 30px rgba(16,185,129,0.4))"
+              width: 'clamp(180px, 50vw, 260px)',
+              height: 'auto',
+              filter: 'drop-shadow(0 0 24px rgba(34,197,94,0.22))',
             }}
           />
-        </div>
+        </motion.div>
 
-        <h1 style={{
-          fontSize: "clamp(2rem, 8vw, 4.5rem)",
-          fontWeight: "900",
-          color: "#10b981",
-          marginBottom: "clamp(0.75rem, 3vw, 1.5rem)",
-          letterSpacing: "-0.02em",
-          textShadow: "0 0 40px rgba(16,185,129,0.3)"
-        }}>
-          Runli Fitness
-        </h1>
+        {/* Eyebrow chip */}
+        <motion.div variants={staggerItem} initial="initial" animate="animate">
+          <span className="chip chip-primary">✦ AI Fitness Operating System</span>
+        </motion.div>
 
-        <p style={{
-          fontSize: "clamp(0.9rem, 2.5vw, 1.25rem)",
-          color: "#9ca3af",
-          marginBottom: "clamp(2rem, 5vw, 3.5rem)",
-          lineHeight: "1.6",
-          maxWidth: "min(600px, 90vw)",
-          padding: "0 1rem"
-        }}>
-          Your personal companion for tracking nutrition, calculating metrics, and managing your gym life. Simple, effective, and free.
-        </p>
-
-        {/* Feature Quick Links */}
-        <div style={{
-          display: "flex",
-          gap: "clamp(0.75rem, 2vw, 1.5rem)",
-          justifyContent: "center",
-          flexWrap: "wrap",
-          marginBottom: "clamp(1.5rem, 4vw, 2.5rem)",
-          marginTop: "clamp(0.25rem, 1vw, 0.5rem)",
-          width: "100%",
-          padding: "0 0.5rem"
-        }}>
-          {user && (
-            <Link to="/dashboard" style={{
-              display: "flex", alignItems: "center", gap: "0.5rem",
-              background: "rgba(16, 185, 129, 0.1)",
-              border: "1px solid rgba(16, 185, 129, 0.3)",
-              color: "#10b981", textDecoration: "none", fontWeight: "600",
-              padding: "clamp(0.6rem, 2vw, 0.8rem) clamp(1.2rem, 3vw, 2rem)",
-              borderRadius: "999px",
-              transition: "all 0.2s",
-              fontSize: "clamp(0.85rem, 2vw, 1rem)"
+        {/* Headline */}
+        <motion.h1
+          variants={staggerItem}
+          initial="initial"
+          animate="animate"
+          style={{
+            fontFamily: "'Plus Jakarta Sans', Inter, sans-serif",
+            fontSize: 'clamp(2.25rem, 7vw, 4.25rem)',
+            fontWeight: 800,
+            letterSpacing: '-0.03em',
+            lineHeight: 1.1,
+            margin: 0,
+          }}
+        >
+          Your body runs{' '}
+          <span
+            style={{
+              background: 'linear-gradient(135deg, var(--primary-400) 0%, var(--primary-600) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
             }}
-              onMouseOver={e => {
-                e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
-                e.currentTarget.style.transform = "translateY(-2px)";
-              }}
-              onMouseOut={e => {
-                e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
+          >
+            on Runli.
+          </span>
+        </motion.h1>
+
+        {/* Sub */}
+        <motion.p
+          variants={staggerItem}
+          initial="initial"
+          animate="animate"
+          style={{
+            fontSize: 'clamp(1rem, 2.5vw, 1.125rem)',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.65,
+            maxWidth: '560px',
+            margin: 0,
+          }}
+        >
+          One intelligent layer that learns your body, plans your nutrition, tracks your habits, and coaches your workouts — so every decision is backed by data.
+        </motion.p>
+
+        {/* CTAs */}
+        <motion.div
+          variants={staggerItem}
+          initial="initial"
+          animate="animate"
+          style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}
+        >
+          <Link
+            to={user ? '/userinfo' : '/login'}
+            className="btn btn-primary"
+            style={{ fontSize: '0.9375rem', padding: '0.875rem 1.75rem', borderRadius: 'var(--r-xl)' }}
+          >
+            Get your free AI fitness plan
+            <ArrowRight size={18} />
+          </Link>
+          {user && (
+            <Link
+              to="/dashboard"
+              className="btn btn-secondary"
+              style={{ fontSize: '0.9375rem', padding: '0.8125rem 1.5rem', borderRadius: 'var(--r-xl)' }}
             >
-              Go to Dashboard →
+              Go to Dashboard
             </Link>
           )}
+        </motion.div>
 
-          <Link to="/gym-mode" style={{
-            display: "flex", alignItems: "center", gap: "0.5rem",
-            background: "transparent",
-            border: "1px solid #10b981",
-            color: "#10b981", textDecoration: "none", fontWeight: "600",
-            padding: "clamp(0.6rem, 2vw, 0.8rem) clamp(1.2rem, 3vw, 2rem)",
-            borderRadius: "999px",
-            transition: "all 0.2s",
-            fontSize: "clamp(0.85rem, 2vw, 1rem)"
+        {/* Feature grid */}
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '0.75rem',
+            width: '100%',
+            maxWidth: '600px',
           }}
-            onMouseOver={e => {
-              e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
-              e.currentTarget.style.transform = "translateY(-2px)";
-            }}
-            onMouseOut={e => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
-          >
-            <Dumbbell size={20} /> Gym Mode
-          </Link>
-
-          <Link to="/habits" style={{
-            display: "flex", alignItems: "center", gap: "0.5rem",
-            background: "transparent",
-            border: "1px solid #3b82f6", // Blue specific for clarity
-            color: "#3b82f6", textDecoration: "none", fontWeight: "600",
-            padding: "clamp(0.6rem, 2vw, 0.8rem) clamp(1.2rem, 3vw, 2rem)",
-            borderRadius: "999px",
-            transition: "all 0.2s",
-            fontSize: "clamp(0.85rem, 2vw, 1rem)"
-          }}
-            onMouseOver={e => {
-              e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
-              e.currentTarget.style.transform = "translateY(-2px)";
-            }}
-            onMouseOut={e => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
-          >
-            <Target size={20} /> Habit Tracker
-          </Link>
-        </div>
-
-        {/* Main CTA Buttons - Conditional based on login status */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center", width: "100%" }}>
-          <Link to={user ? "/userinfo" : "/login"} style={{
-            padding: "clamp(0.8rem, 2.5vw, 1rem) clamp(2rem, 5vw, 3.5rem)",
-            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-            color: "#000",
-            textDecoration: "none",
-            borderRadius: "999px",
-            fontWeight: "800",
-            fontSize: "clamp(0.95rem, 2.5vw, 1.1rem)",
-            boxShadow: "0 0 30px rgba(16, 185, 129, 0.4)",
-            transition: "all 0.3s ease",
-            border: "1px solid rgba(255,255,255,0.1)",
-            textAlign: "center",
-            maxWidth: "min(400px, 90vw)"
-          }}
-            onMouseOver={e => {
-              e.currentTarget.style.transform = "scale(1.05)";
-              e.currentTarget.style.boxShadow = "0 0 40px rgba(16, 185, 129, 0.6)";
-            }}
-            onMouseOut={e => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.boxShadow = "0 0 30px rgba(16, 185, 129, 0.4)";
-            }}
-          >
-            {user ? "Generate a New Plan" : "Start my journey"}
-          </Link>
-
-          {user && (
-            <Link to="/plan" style={{
-              padding: "clamp(0.7rem, 2vw, 0.9rem) clamp(1.8rem, 4vw, 3rem)",
-              background: "transparent",
-              color: "#10b981",
-              textDecoration: "none",
-              borderRadius: "999px",
-              fontWeight: "700",
-              fontSize: "clamp(0.9rem, 2vw, 1rem)",
-              border: "2px solid #10b981",
-              transition: "all 0.3s ease",
-              textAlign: "center",
-              maxWidth: "min(350px, 85vw)"
-            }}
-              onMouseOver={e => {
-                e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
-                e.currentTarget.style.transform = "scale(1.05)";
-              }}
-              onMouseOut={e => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.transform = "scale(1)";
+        >
+          {FEATURES.map(({ icon: Icon, label, desc }) => (
+            <motion.div
+              key={label}
+              variants={staggerItem}
+              className="card"
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '0.75rem',
+                padding: '1rem 1.25rem',
+                textAlign: 'left',
+                cursor: 'default',
               }}
             >
-              View Plan Page
-            </Link>
-          )}
-        </div>
+              <span
+                style={{
+                  width: 36, height: 36,
+                  borderRadius: 'var(--r-lg)',
+                  background: 'var(--primary-dim)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Icon size={18} color="var(--primary-500)" />
+              </span>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.15rem' }}>
+                  {label}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  {desc}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
 
+        {/* Social proof */}
+        <motion.p
+          variants={staggerItem}
+          initial="initial"
+          animate="animate"
+          style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}
+        >
+          Free to start · No credit card required
+        </motion.p>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -287,3 +287,39 @@ export const getInsight = async () => {
     throw error;
   }
 };
+
+// Prediction API
+export const getPredictionData = async (days = 90) => {
+  try {
+    const response = await fetch(`${API_URL}/prediction/forecast?days=${days}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to fetch prediction data');
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Vision / Food Image Recognition API
+export const analyzeFood = async (imageFile) => {
+  try {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/vision/analyze`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Vision analysis failed');
+    return data;
+  } catch {
+    // Graceful client-side fallback when server is unreachable
+    const { analyzeImageFile } = await import('../utils/foodVisionEngine.js');
+    return analyzeImageFile(imageFile);
+  }
+};

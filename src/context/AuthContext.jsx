@@ -18,19 +18,19 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
-    const login = (userData, authToken) => {
+    const login = React.useCallback((userData, authToken) => {
         setUser(userData);
         setToken(authToken);
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("token", authToken);
-    };
+    }, []);
 
-    const logout = () => {
+    const logout = React.useCallback(() => {
         setUser(null);
         setToken(null);
         localStorage.removeItem("user");
         localStorage.removeItem("token");
-    };
+    }, []);
 
     return (
         <AuthContext.Provider value={{ user, token, login, logout, loading }}>

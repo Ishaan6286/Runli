@@ -15,6 +15,9 @@ import productRoutes from "./routes/productRoutes.js";
 import gymRoutes from "./routes/gymRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import habitRoutes from "./routes/habitRoutes.js";
+import predictionRoutes from "./routes/predictionRoutes.js";
+import visionRoutes from "./routes/visionRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
 
 import session from 'express-session';
 import passport from './config/passport.js';
@@ -61,6 +64,9 @@ app.use("/api/products", productRoutes);
 app.use("/api/gyms", gymRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/habits", habitRoutes);
+app.use("/api/prediction", predictionRoutes);
+app.use("/api/vision", visionRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
