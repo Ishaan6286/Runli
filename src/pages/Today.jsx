@@ -78,7 +78,7 @@ function getAISuggestions(wellness, userInfo, habits) {
   const goal = userInfo?.target || '';
   const sleep = wellness.sleep;
   const mood  = wellness.mood;
-  const completedCount = Object.values(habits).filter(Boolean).length;
+  const completedCount = habits?.summary?.completed || 0;
 
   if (sleep != null && sleep < 6) {
     tips.push({ id: 'sleep', icon: Moon, color: 'var(--blue-400)',    text: `Only ${sleep}h sleep — try a lighter workout and prioritize rest tonight.`, action: 'Switch to recovery' });
@@ -648,9 +648,9 @@ export default function Today() {
   };
   const { title, subtitle } = getGreetingState();
   const waterGoal = userInfo.weight ? Math.round(userInfo.weight * 35) : 3000;
-  const aiTips    = getAISuggestions(wellness, userInfo, habits);
+  const aiTips    = getAISuggestions(wellness, userInfo, todayHabitStatus);
   const name      = user?.displayName || userInfo?.name || '';
-  const habitsDoneCount = Object.values(habits).filter(Boolean).length;
+  const habitsDoneCount = todayHabitStatus?.summary?.completed || 0;
 
   // XP from progress
   let xp = 0;

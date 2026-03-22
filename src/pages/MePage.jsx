@@ -6,6 +6,7 @@ import {
   Dumbbell, Flame, Activity, Calculator, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { getUserCluster, CLUSTER_PROFILES } from '../utils/userClusterEngine.js';
 import usePlan, { } from '../hooks/usePlan.js';
 import { getProfile, updateProfile } from '../services/api';
@@ -271,7 +272,7 @@ export default function MePage() {
                   style={{ overflow: 'hidden' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.875rem', paddingTop: '0.875rem', borderTop: '1px solid var(--border-subtle)' }}>
-                    {cluster.allDistances.map(p => (
+                    {cluster.allDistances?.map(p => (
                       <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
                         <span style={{ fontSize: '1.1rem', width: 22, textAlign: 'center' }}>{p.emoji}</span>
                         <div style={{ flex: 1 }}>

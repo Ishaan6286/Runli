@@ -38,7 +38,8 @@ import { ProUpgradeModal } from "./components/ProGate.jsx";
 
 import BmiCalculator from "./components/BmiCalculator";
 import { ToastProvider } from "./context/ToastContext";
-import { PersonalizationProvider } from "./context/PersonalizationContext"; // <-- Added PersonalizationProvider
+import { PersonalizationProvider } from "./context/PersonalizationContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -86,7 +87,9 @@ function App() {
       <PersonalizationProvider>
         <Router>
           <AppBackground />
-          <AnimatedRoutes />
+          <ErrorBoundary>
+            <AnimatedRoutes />
+          </ErrorBoundary>
           <BottomNav />
           <ProUpgradeModal />
         </Router>
