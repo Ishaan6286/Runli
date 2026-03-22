@@ -95,7 +95,28 @@ export function fileToBase64(file) {
    Simulates a CNN food detector. Consistently returns 1-2
    food items based on image hash so UI is predictable.
 ───────────────────────────────────────────────────────── */
-function _runMockInference(hash) {
+function _runMockInference(hash, fileName = "") {
+  // Demo intelligence: guess food based on file name if possible
+  const lowerName = fileName.toLowerCase();
+  
+  if (lowerName.includes('cucumber')) {
+    return [{ name: 'Cucumber Slices', calories: 16, protein: 0.6, carbs: 3.6, fats: 0.1, servingSize: '1 cup (104g)', confidence: 0.94 }];
+  }
+  if (lowerName.includes('pizza')) {
+    return [{ name: 'Margherita Pizza', calories: 260, protein: 11, carbs: 33, fats: 10, servingSize: '1 slice (95g)', confidence: 0.88 }];
+  }
+  if (lowerName.includes('salad')) {
+    return [{ name: 'Garden Salad', calories: 120, protein: 3, carbs: 12, fats: 7, servingSize: '1 bowl', confidence: 0.91 }];
+  }
+  if (lowerName.includes('burger')) {
+    return [{ name: 'Cheeseburger', calories: 350, protein: 16, carbs: 32, fats: 18, servingSize: '1 burger', confidence: 0.95 }];
+  }
+
+  const exactMatch = FOOD_SEED.find(f => lowerName.includes(f.name.toLowerCase()));
+  if (exactMatch) {
+    return [{ ...exactMatch, confidence: 0.89 + (hash % 10) / 100 }];
+  }
+
   const primary   = hash % FOOD_SEED.length;
   const secondary = (hash + 7) % FOOD_SEED.length;
   const multiDetect = hash % 3 === 0; // ~33% chance of 2 detections
@@ -143,7 +164,7 @@ export async function analyzeImageFile(file) {
   await new Promise(r => setTimeout(r, 900 + Math.random() * 600)); // 0.9–1.5s
 
   const hash  = _hashFile(file);
-  const foods = _runMockInference(hash);
+  const foods = _runMockInference(hash, file.name);
 
   return {
     foods,
@@ -167,7 +188,7 @@ export async function analyzeImageBase64(b64, fileName = 'image.jpg') {
   await new Promise(r => setTimeout(r, 800 + Math.random() * 400));
 
   const hash  = _hashFile(syntheticFile);
-  const foods = _runMockInference(hash);
+  const foods = _runMockInference(hash, fileName);
 
   return {
     foods,

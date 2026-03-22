@@ -8,10 +8,11 @@ import {
   Flame, Activity, Lightbulb, Sparkles, TrendingUp, ArrowRight,
   Wind, Sun, Sunset, Stars
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import RecommendationSection from '../components/RecommendationSection';
 import { getRecommendations } from '../utils/recommendationEngine';
+import { useAuth } from '../context/AuthContext';
 import { usePersonalization } from '../context/PersonalizationContext';
+import { getDietPlan } from '../services/api';
+import { getHabits, getTodayStatus, logHabit } from '../services/habitApi';
 
 /* ═══════════════════════════════════════════════════════
    CONSTANTS & HELPERS
@@ -230,10 +231,7 @@ const WorkoutCard = ({ workout, navigate }) => (
 );
 
 /* Meal Summary Card */
-const MealCard = ({ userInfo, navigate }) => {
-  const goal = userInfo?.target || '';
-  const key = /gain|bulk/i.test(goal) ? 'bulk' : /lose|cut|shred/i.test(goal) ? 'cut' : 'default';
-  const meals = MEAL_SUGGESTIONS[key];
+const MealCard = ({ userInfo, dietPlan, navigate }) => {
   const [done, setDone] = useState(() => {
     try { return JSON.parse(localStorage.getItem(`runliMealsDone_${new Date().toISOString().split('T')[0]}`)) || {}; } catch { return {}; }
   });
@@ -245,6 +243,19 @@ const MealCard = ({ userInfo, navigate }) => {
   };
 
   const doneCount = Object.values(done).filter(Boolean).length;
+  const mealsCount = dietPlan ? dietPlan.meals.length : 4;
+
+  const displayMeals = dietPlan ? dietPlan.meals.map(m => {
+    let icon = m.name.toLowerCase().includes('break') ? '🌅' : m.name.toLowerCase().includes('lunch') ? '☀️' : m.name.toLowerCase().includes('din') ? '🌙' : '🍎';
+    let time = m.name.toLowerCase().includes('break') ? '7–9 AM' : m.name.toLowerCase().includes('lunch') ? '1–2 PM' : m.name.toLowerCase().includes('din') ? '7–8 PM' : 'Anytime';
+    let itemsStr = m.items.map(i => i.food).join(', ');
+    return { key: m.name, icon, label: m.name, time, meal: itemsStr };
+  }) : [
+    { key: 'b', icon: '🌅', label: 'Breakfast', time: '7–9 AM', meal: 'Oats + berries' },
+    { key: 'l', icon: '☀️', label: 'Lunch',     time: '1–2 PM', meal: 'Dal rice + salad' },
+    { key: 'd', icon: '🌙', label: 'Dinner',    time: '7–8 PM', meal: 'Chicken + roti' },
+    { key: 's', icon: '🍎', label: 'Snack',     time: 'Anytime', meal: 'Banana + peanut butter' },
+  ];
 
   return (
     <div className="card">
@@ -253,19 +264,14 @@ const MealCard = ({ userInfo, navigate }) => {
           <Salad size={17} color="var(--primary-500)" /> Today's Meals
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{doneCount}/4 done</span>
-          <button onClick={() => navigate('/eat')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{doneCount}/{mealsCount} done</span>
+          <button onClick={() => navigate('/diet-plan')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
             <ChevronRight size={16} />
           </button>
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        {[
-          { key: 'b', icon: '🌅', label: 'Breakfast', time: '7–9 AM', meal: meals.b },
-          { key: 'l', icon: '☀️', label: 'Lunch',     time: '1–2 PM', meal: meals.l },
-          { key: 'd', icon: '🌙', label: 'Dinner',    time: '7–8 PM', meal: meals.d },
-          { key: 's', icon: '🍎', label: 'Snack',     time: 'Anytime', meal: meals.s },
-        ].map(m => (
+        {displayMeals.map(m => (
           <div
             key={m.key}
             onClick={() => toggle(m.key)}
@@ -389,10 +395,10 @@ const WaterCard = ({ waterGoal }) => {
 };
 
 /* Habits Checklist */
-const HabitsCard = ({ habitsDone, onToggle }) => {
-  const doneCount = Object.values(habitsDone).filter(Boolean).length;
-  const total = DEFAULT_HABITS.length;
-  const pct = (doneCount / total) * 100;
+const HabitsCard = ({ realHabits, todayHabitStatus, onToggle, navigate }) => {
+  const doneCount = todayHabitStatus?.summary?.completed || 0;
+  const total = todayHabitStatus?.summary?.total || 0;
+  const pct = total > 0 ? (doneCount / total) * 100 : 0;
 
   return (
     <div className="card">
@@ -400,12 +406,16 @@ const HabitsCard = ({ habitsDone, onToggle }) => {
         <h2 style={{ margin: 0, fontSize: '1.0625rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <CheckCircle2 size={17} color="var(--primary-500)" /> Daily Habits
         </h2>
-        <span style={{ fontSize: '0.75rem', color: doneCount === total ? 'var(--primary-500)' : 'var(--text-secondary)', fontWeight: doneCount === total ? 700 : 400 }}>
-          {doneCount}/{total} {doneCount === total ? '🎉' : ''}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '0.75rem', color: doneCount === total && total > 0 ? 'var(--primary-500)' : 'var(--text-secondary)', fontWeight: doneCount === total && total > 0 ? 700 : 400 }}>
+            {doneCount}/{total} {(doneCount === total && total > 0) ? '🎉' : ''}
+          </span>
+          <button onClick={() => navigate('/habits')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary-500)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', marginLeft: '0.4rem' }}>
+            Edit <ChevronRight size={12} />
+          </button>
+        </div>
       </div>
 
-      {/* Progress bar */}
       <div className="progress-track" style={{ marginBottom: '1rem' }}>
         <motion.div
           className="progress-fill progress-fill-primary"
@@ -415,29 +425,34 @@ const HabitsCard = ({ habitsDone, onToggle }) => {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-        {DEFAULT_HABITS.map(habit => {
-          const done = habitsDone[habit.id];
+        {total === 0 && (
+           <p style={{fontSize:'0.8rem', color:'var(--text-muted)'}}>No habits added yet!</p>
+        )}
+        {todayHabitStatus?.habits?.map(habitStatus => {
+          const habitDef = realHabits.find(h => h._id === habitStatus.habitId);
+          if (!habitDef) return null;
+          const done = habitStatus.completed;
           return (
             <motion.div
-              key={habit.id}
-              onClick={() => onToggle(habit.id)}
-              whileTap={{ scale: 0.98 }}
+              key={habitDef._id}
+              onClick={() => { if (!done) onToggle(habitDef._id, habitStatus.value, habitStatus.goal, habitDef.goalType); }}
+              whileTap={{ scale: done ? 1 : 0.98 }}
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.75rem',
                 padding: '0.625rem 0.75rem', borderRadius: 'var(--r-lg)',
                 background: done ? 'var(--primary-dim)' : 'var(--bg-raised)',
                 border: `1px solid ${done ? 'rgba(34,197,94,0.25)' : 'var(--border-subtle)'}`,
-                cursor: 'pointer', transition: 'background 200ms, border 200ms',
+                cursor: done ? 'default' : 'pointer', transition: 'background 200ms, border 200ms',
               }}
             >
-              <span style={{ fontSize: '1rem', flexShrink: 0 }}>{habit.icon}</span>
+              <span style={{ fontSize: '1rem', flexShrink: 0 }}>{habitDef.icon || '📌'}</span>
               <span style={{
                 flex: 1, fontSize: '0.875rem', fontWeight: 500,
                 color: done ? 'var(--text-secondary)' : 'var(--text-primary)',
                 textDecoration: done ? 'line-through' : 'none',
                 transition: 'all 200ms',
               }}>
-                {habit.label}
+                {habitDef.name}
               </span>
               <AnimatePresence mode="wait">
                 {done ? (
@@ -454,6 +469,44 @@ const HabitsCard = ({ habitsDone, onToggle }) => {
           );
         })}
       </div>
+    </div>
+  );
+};
+
+const GymCheckin = () => {
+  const [wentToGym, setWentToGym] = useState(false);
+  useEffect(() => {
+     try {
+       const today = new Date().toISOString().split('T')[0];
+       const prog = JSON.parse(localStorage.getItem('runliProgress')) || {};
+       if (prog[today]?.wentToGym) setWentToGym(true);
+     } catch {}
+  }, []);
+
+  const toggleGym = () => {
+      const next = !wentToGym;
+      setWentToGym(next);
+      try {
+         const today = new Date().toISOString().split('T')[0];
+         const prog = JSON.parse(localStorage.getItem('runliProgress')) || {};
+         if (!prog[today]) prog[today] = {};
+         prog[today].wentToGym = next;
+         localStorage.setItem('runliProgress', JSON.stringify(prog));
+      } catch {}
+  };
+
+  return (
+    <div className="card" onClick={toggleGym} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', background: wentToGym ? 'var(--primary-dim)' : 'var(--bg-surface)' }}>
+       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ width: 40, height: 40, borderRadius: 'var(--r-md)', background: wentToGym ? 'var(--primary-500)' : 'var(--bg-raised)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+             <Dumbbell size={20} color={wentToGym ? '#000' : 'var(--text-muted)'} />
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 600 }}>Gym Check-in</h3>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{wentToGym ? 'Workout logged for today! 💪' : 'Did you go to the gym today?'}</p>
+          </div>
+       </div>
+       {wentToGym ? <CheckCircle2 size={24} color="var(--primary-500)" /> : <Circle size={24} color="var(--text-muted)" />}
     </div>
   );
 };
@@ -534,24 +587,57 @@ export default function Today() {
 
   const [userInfo, setUserInfo] = useState({});
   const [wellness, setWellness] = useState({ sleep: null, mood: null, steps: 0 });
-  const [habits, setHabits]     = useState({});
+  const [dietPlan, setDietPlan] = useState(null);
+  const [realHabits, setRealHabits] = useState([]);
+  const [todayHabitStatus, setTodayHabitStatus] = useState(null);
   const [date] = useState(() => new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }));
-
-  // Recommendation engine — runs synchronously so it's always available on first render
-  const recommendations = React.useMemo(() => getRecommendations(), []);
 
   useEffect(() => {
     try { setUserInfo(JSON.parse(localStorage.getItem('runliUserInfo')) || {}); } catch {}
     setWellness(loadWellness());
-    setHabits(loadTodayHabits());
+
+    getDietPlan().then(r => r.dietPlan && setDietPlan(r.dietPlan)).catch(console.error);
+    Promise.all([getHabits(), getTodayStatus()]).then(([hab, tod]) => {
+      if (hab.success) setRealHabits(hab.habits);
+      if (tod.success) setTodayHabitStatus(tod);
+    }).catch(console.error);
   }, []);
 
-  const toggleHabit = useCallback((id) => {
-    setHabits(prev => {
-      const updated = { ...prev, [id]: !prev[id] };
-      saveTodayHabits(updated);
-      return updated;
-    });
+  // Auto-sync dashboard progress to backend
+  useEffect(() => {
+    if (!user) return;
+    const sync = async () => {
+      try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const waterIntake = parseInt(localStorage.getItem(`runliWater_${todayStr}`) || '0', 10);
+        const mealsDone = JSON.parse(localStorage.getItem(`runliMealsDone_${todayStr}`)) || {};
+        const mealCompletion = Object.values(mealsDone).filter(Boolean).length;
+        const wentToGym = (JSON.parse(localStorage.getItem('runliProgress')) || {})[todayStr]?.wentToGym || false;
+        
+        // Dynamically import updateProgress to avoid circular deps if any, or just use it
+        const { updateProgress } = await import('../services/api.js');
+        await updateProgress(todayStr, { waterIntake, wentToGym, mealCompletion });
+      } catch (e) {
+        console.error('Failed to sync progress to API', e);
+      }
+    };
+    
+    sync(); // Initial sync
+    const interval = setInterval(sync, 15000); // Poll every 15s while on dashboard
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const toggleRealHabit = useCallback(async (habitId, currentValue, goalValue, goalType) => {
+    try {
+      await logHabit(habitId, {
+        date: new Date().toISOString().split('T')[0],
+        completed: true,
+        value: goalValue
+      });
+      getTodayStatus().then(tod => {
+        if (tod.success) setTodayHabitStatus(tod);
+      });
+    } catch (e) { console.error('Error logging habit', e); }
   }, []);
 
   // Derived values
@@ -620,14 +706,14 @@ export default function Today() {
           <WorkoutCard workout={workout} navigate={navigate} />
         </motion.div>
 
-        {/* AI Recommendations */}
+        {/* Gym Check-in */}
         <motion.div variants={fadeUp}>
-          <RecommendationSection recommendations={recommendations} />
+          <GymCheckin />
         </motion.div>
 
         {/* Meals */}
         <motion.div variants={fadeUp}>
-          <MealCard userInfo={userInfo} navigate={navigate} />
+          <MealCard userInfo={userInfo} dietPlan={dietPlan} navigate={navigate} />
         </motion.div>
 
         {/* Water Tracker */}
@@ -637,7 +723,7 @@ export default function Today() {
 
         {/* Habits Checklist */}
         <motion.div variants={fadeUp}>
-          <HabitsCard habitsDone={habits} onToggle={toggleHabit} />
+          <HabitsCard realHabits={realHabits} todayHabitStatus={todayHabitStatus} onToggle={toggleRealHabit} navigate={navigate} />
         </motion.div>
 
         {/* Wellness Snapshot */}
@@ -648,9 +734,9 @@ export default function Today() {
         {/* Bottom motivational line */}
         <motion.div variants={fadeUp} style={{ textAlign: 'center', paddingTop: '0.5rem', paddingBottom: '0.5rem' }}>
           <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-            {habitsDoneCount === DEFAULT_HABITS.length
+            {todayHabitStatus?.summary?.completed === todayHabitStatus?.summary?.total && todayHabitStatus?.summary?.total > 0
               ? '🎉 You nailed every habit today. Absolutely locked in.'
-              : `${DEFAULT_HABITS.length - habitsDoneCount} habit${DEFAULT_HABITS.length - habitsDoneCount > 1 ? 's' : ''} left — you've got this.`}
+              : `${todayHabitStatus?.summary?.total - (todayHabitStatus?.summary?.completed || 0)} habit${(todayHabitStatus?.summary?.total - (todayHabitStatus?.summary?.completed || 0)) > 1 ? 's' : ''} left — you've got this.`}
           </p>
         </motion.div>
       </motion.div>

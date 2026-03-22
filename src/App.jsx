@@ -36,7 +36,7 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import Upgrade       from "./pages/Upgrade";
 import { ProUpgradeModal } from "./components/ProGate.jsx";
 
-import Chatbot from "./components/Chatbot";
+import BmiCalculator from "./components/BmiCalculator";
 import { ToastProvider } from "./context/ToastContext";
 import { PersonalizationProvider } from "./context/PersonalizationContext"; // <-- Added PersonalizationProvider
 
@@ -52,6 +52,7 @@ const AnimatedRoutes = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/userinfo"        element={<UserInfo />} />
         <Route path="/auth/callback"   element={<AuthCallback />} />
+        <Route path="/bmi"             element={<BmiCalculator />} />
 
         {/* ── Primary OS routes ── */}
         <Route path="/today"    element={<Today />} />
@@ -87,7 +88,6 @@ function App() {
           <AppBackground />
           <AnimatedRoutes />
           <BottomNav />
-          <Chatbot />
           <ProUpgradeModal />
         </Router>
       </PersonalizationProvider>

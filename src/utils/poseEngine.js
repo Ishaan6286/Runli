@@ -174,19 +174,75 @@ function _getSimFn(exerciseName) {
    PUBLIC API
 ───────────────────────────────────────────────────────── */
 
+import * as tf from '@tensorflow/tfjs-core';
+import '@tensorflow/tfjs-backend-webgl';
+import '@tensorflow/tfjs-backend-wasm';
+import * as poseDetection from '@tensorflow-models/pose-detection';
+
 /**
  * Create a pose detector for the given exercise.
  * Returns an object with:
- *   getFrame() → PoseFrame
+ *   getFrame(videoEl?) → Promise<PoseFrame>
  *   destroy()  → void
  */
-export function createPoseDetector(exerciseName = 'squat') {
+export async function createPoseDetector(exerciseName = 'squat') {
   const simFn = _getSimFn(exerciseName);
   let destroyed = false;
+  let tfDetector = null;
+
+  try {
+    await tf.ready();
+    const detectorConfig = { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING };
+    tfDetector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, detectorConfig);
+    console.log('[PoseEngine] MoveNet initialized for real-time tracking');
+  } catch (err) {
+    console.error('[PoseEngine] MoveNet failed to initialize, falling back to mock.', err);
+  }
 
   return {
-    getFrame() {
+    async getFrame(videoEl = null) {
       if (destroyed) return null;
+      
+      // Real ML branch
+      if (tfDetector && videoEl) {
+        try {
+          const poses = await tfDetector.estimatePoses(videoEl);
+          if (poses && poses.length > 0) {
+            const rawKps = poses[0].keypoints;
+            // MoveNet returns keypoints with {name, x, y, score} but we might need indices
+            // We map them to our LANDMARKS constant format based on name
+            const keypoints = rawKps.map(kp => {
+                // Find matching index from LANDMARKS or fallback
+                let idx = -1;
+                const upperName = kp.name ? kp.name.toUpperCase() : '';
+                if (LANDMARKS[upperName] !== undefined) {
+                    idx = LANDMARKS[upperName];
+                } else if (kp.name === 'left_eye' || kp.name === 'right_eye' || kp.name === 'left_ear' || kp.name === 'right_ear') {
+                    // Ignore face internal points if we don't care, but keep standard format
+                    idx = 100;
+                }
+                
+                return {
+                    name: kp.name,
+                    index: idx,
+                    x: kp.x / videoEl.videoWidth || kp.x / 640,
+                    y: kp.y / videoEl.videoHeight || kp.y / 480,
+                    score: kp.score
+                };
+            }).filter(kp => kp.index !== -1);
+            
+            return {
+              keypoints,
+              timestamp: Date.now(),
+              method: 'movenet',
+            };
+          }
+        } catch (err) {
+            // Ignore frame errors silently and fallback to mock below
+        }
+      }
+
+      // Mock branch (Fallback)
       const t = Date.now() / 1000;
       const raw = simFn(t);
 
@@ -208,6 +264,7 @@ export function createPoseDetector(exerciseName = 'squat') {
 
     destroy() {
       destroyed = true;
+      if (tfDetector) tfDetector.dispose();
     },
   };
 }

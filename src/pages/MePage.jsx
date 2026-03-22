@@ -6,9 +6,9 @@ import {
   Dumbbell, Flame, Activity, Calculator, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { getUserCluster, CLUSTER_PROFILES } from '../utils/userClusterEngine.js';
 import usePlan, { } from '../hooks/usePlan.js';
+import { getProfile, updateProfile } from '../services/api';
 import { LockBadge } from '../components/ProGate.jsx';
 
 /* ── Motion variants ── */
@@ -92,10 +92,21 @@ export default function MePage() {
   const { isPro, triggerUpgrade } = usePlan();
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem('runliUserInfo')) || {};
-      setInfo(stored);
-    } catch {}
+    const loadProfile = async () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem('runliUserInfo')) || {};
+        setInfo(stored);
+
+        const res = await getProfile();
+        if (res.user) {
+          const fresh = { ...stored, ...res.user };
+          setInfo(fresh);
+          localStorage.setItem('runliUserInfo', JSON.stringify(fresh));
+        }
+      } catch (e) { console.error('Error syncing profile', e); }
+    };
+    loadProfile();
+
     // Derive XP from activity data
     try {
       const progress = JSON.parse(localStorage.getItem('runliProgress')) || {};
@@ -117,15 +128,20 @@ export default function MePage() {
   const bmi = calcBMI(info.weight, info.height);
   const bmiCat = bmiCategory(bmi);
   const level = xpLevel(xp);
-  const displayName = user?.displayName || user?.email?.split('@')[0] || 'Athlete';
+  const displayName = info.name || user?.displayName || user?.email?.split('@')[0] || 'Athlete';
 
-  const logWeight = () => {
+  const logWeight = async () => {
     const w = parseFloat(newWeight);
     if (!isNaN(w) && w > 0) {
       const updated = { ...info, weight: w };
       setInfo(updated);
       localStorage.setItem('runliUserInfo', JSON.stringify(updated));
       setNewWeight('');
+      try {
+        await updateProfile(updated);
+      } catch (e) {
+        console.error("Failed to sync weight to backend", e);
+      }
     }
   };
 

@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon-192.png', 'icon-512.png', 'favicon.ico'],
+      includeAssets: ['icon-192.png', 'icon-512.png', 'vite.svg'],
       manifest: {
         name: 'Runli - Your Personal Fitness Companion',
         short_name: 'Runli',

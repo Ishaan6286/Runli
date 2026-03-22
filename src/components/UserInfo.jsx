@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
+import { ArrowLeft } from "lucide-react";
 import { getProfile, updateProfile } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -16,6 +17,7 @@ export default function UserInfo() {
   const isEditMode = location.state?.editMode || false;
 
   const [data, setData] = useState({
+    name: "",
     age: "",
     gender: "",
     height: "",
@@ -37,6 +39,7 @@ export default function UserInfo() {
         // Map backend fields to form fields
         if (profile) {
           setData({
+            name: profile.name || "",
             age: profile.age || "",
             gender: profile.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : "",
             height: profile.height || "",
@@ -133,6 +136,7 @@ export default function UserInfo() {
     try {
       // Save to backend
       await updateProfile({
+        name: data.name,
         age: parseInt(data.age),
         gender: data.gender.toLowerCase(),
         height: parseFloat(data.height),
@@ -185,9 +189,29 @@ export default function UserInfo() {
         padding: "2.5rem 2rem",
         width: "90%",
         maxWidth: 480,
-        color: "#ffffff",
         position: "relative"
       }}>
+        {isEditMode && (
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              position: "absolute",
+              top: "1.5rem",
+              left: "1.5rem",
+              background: "transparent",
+              border: "none",
+              color: "#a3a3a3",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "0.5rem",
+              borderRadius: "50%"
+            }}
+          >
+            <ArrowLeft size={24} />
+          </button>
+        )}
         <h1 style={{
           fontWeight: 900,
           fontSize: "2rem",
@@ -270,6 +294,35 @@ export default function UserInfo() {
             gap: "1.25rem"
           }}>
             {/* All span/label and input/select are block and width 100% */}
+            <label style={{ width: "100%", display: "block" }}>
+              <span style={{
+                fontWeight: 600,
+                color: "#e5e5e5",
+                display: "block",
+                marginBottom: "0.5rem",
+                fontSize: "0.95rem"
+              }}>Name</span>
+              <input
+                type="text" name="name" value={data.name} onChange={handleChange}
+                placeholder="Your name"
+                style={{
+                  width: "100%",
+                  height: 48,
+                  fontSize: "1rem",
+                  borderRadius: "0.75rem",
+                  background: "#1a1a1a",
+                  border: "1px solid rgba(16, 185, 129, 0.2)",
+                  padding: "0 1rem",
+                  color: "white",
+                  fontWeight: 600,
+                  boxSizing: "border-box",
+                  outline: "none",
+                  transition: "border-color 0.2s"
+                }}
+                onFocus={(e) => e.target.style.borderColor = "#10b981"}
+                onBlur={(e) => e.target.style.borderColor = "rgba(16, 185, 129, 0.2)"}
+              />
+            </label>
             <label style={{ width: "100%", display: "block" }}>
               <span style={{
                 fontWeight: 600,

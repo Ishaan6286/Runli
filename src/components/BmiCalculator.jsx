@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function BmiCalculator() {
+  const navigate = useNavigate();
   const [gender, setGender] = useState("");
   const [years, setYears] = useState("");
   const [months, setMonths] = useState("");
@@ -99,11 +101,29 @@ export default function BmiCalculator() {
           border: "1px solid rgba(16, 185, 129, 0.1)",
           padding: "49px 39px 35px 39px",
           color: "#ffffff",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center"
+          alignItems: "center",
+          position: "relative"
         }}
       >
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            position: "absolute",
+            top: "1.5rem",
+            left: "1.5rem",
+            background: "transparent",
+            border: "none",
+            color: "#a3a3a3",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "0.5rem",
+            borderRadius: "50%"
+          }}
+        >
+          <ArrowLeft size={24} />
+        </button>
         <div style={{
           fontWeight: 900,
           fontSize: "2.2rem",
@@ -194,7 +214,7 @@ export default function BmiCalculator() {
               min={0}
               max={250}
               value={heightCm}
-              onChange={e => setHeightCm(e.target.value)}
+              onChange={e => { setHeightCm(e.target.value); setHeightFt(""); setHeightIn(""); }}
               placeholder="cm"
               style={{
                 border: "1px solid rgba(16, 185, 129, 0.3)",
@@ -209,13 +229,13 @@ export default function BmiCalculator() {
               }}
             />
             <span style={{ color: "#10b981", fontWeight: 700 }}>or</span>
-            <input type="number" min={0} value={heightFt} onChange={e => setHeightFt(e.target.value)} placeholder="ft"
+            <input type="number" min={0} value={heightFt} onChange={e => { setHeightFt(e.target.value); setHeightCm(""); }} placeholder="ft"
               style={{
                 border: "1px solid rgba(16, 185, 129, 0.3)", background: "#1a1a1a", color: "#ffffff", borderRadius: 12,
                 fontWeight: 700, padding: "8px 10px", fontSize: 18, width: 54, outline: "none"
               }}
             />
-            <input type="number" min={0} value={heightIn} onChange={e => setHeightIn(e.target.value)} placeholder="in"
+            <input type="number" min={0} value={heightIn} onChange={e => { setHeightIn(e.target.value); setHeightCm(""); }} placeholder="in"
               style={{
                 border: "1px solid rgba(16, 185, 129, 0.3)", background: "#1a1a1a", color: "#ffffff", borderRadius: 12,
                 fontWeight: 700, padding: "8px 10px", fontSize: 18, width: 54, outline: "none"
@@ -236,7 +256,7 @@ export default function BmiCalculator() {
               min={0}
               max={200}
               value={weightKg}
-              onChange={e => setWeightKg(e.target.value)}
+              onChange={e => { setWeightKg(e.target.value); setWeightLbs(""); }}
               placeholder="kg"
               style={{
                 border: "1px solid rgba(16, 185, 129, 0.3)",
@@ -255,7 +275,7 @@ export default function BmiCalculator() {
               type="number"
               min={0}
               value={weightLbs}
-              onChange={e => setWeightLbs(e.target.value)}
+              onChange={e => { setWeightLbs(e.target.value); setWeightKg(""); }}
               placeholder="lbs"
               style={{
                 border: "1px solid rgba(16, 185, 129, 0.3)",

@@ -141,15 +141,14 @@ export default function PoseCamera({ exerciseName, onClose }) {
         videoRef.current.srcObject = s;
         await videoRef.current.play();
       }
-      // Simulate model load (1.2s)
-      await new Promise(r => setTimeout(r, 1200));
-      detectorRef.current = createPoseDetector(exerciseName);
+      // Load real TensorFlow MoveNet model
+      detectorRef.current = await createPoseDetector(exerciseName);
       analyzerRef.current = createFormAnalyzer(exerciseName);
       setPhase('active');
       startTimer();
     } catch {
-      // Camera not available — run in mock-only mode
-      detectorRef.current = createPoseDetector(exerciseName);
+      // Camera not available or model failed — run in mock-only mode
+      detectorRef.current = await createPoseDetector(exerciseName);
       analyzerRef.current = createFormAnalyzer(exerciseName);
       setPhase('active');
       startTimer();
@@ -168,23 +167,36 @@ export default function PoseCamera({ exerciseName, onClose }) {
   useEffect(() => {
     if (phase !== 'active') return;
 
-    const loop = () => {
-      if (paused) return;
+    let isRunning = true;
+
+    const loop = async () => {
+      if (!isRunning || paused) {
+        if (isRunning) rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
       const canvas  = canvasRef.current;
       const detector = detectorRef.current;
       const analyzer = analyzerRef.current;
-      if (!canvas || !detector || !analyzer) return;
+      
+      if (!canvas || !detector || !analyzer) {
+        rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
 
       const ctx = canvas.getContext('2d');
       const W = canvas.width  = canvas.offsetWidth;
       const H = canvas.height = canvas.offsetHeight;
       ctx.clearRect(0, 0, W, H);
 
+      let videoEl = null;
+
       // If real camera: draw video frame
-      if (videoRef.current?.readyState >= 2) {
+      if (videoRef.current && videoRef.current.readyState >= 2) {
+        videoEl = videoRef.current;
         ctx.save();
         ctx.scale(-1, 1); // mirror
-        ctx.drawImage(videoRef.current, -W, 0, W, H);
+        ctx.drawImage(videoEl, -W, 0, W, H);
         ctx.restore();
       } else {
         // No camera — draw a dark bg
@@ -194,19 +206,30 @@ export default function PoseCamera({ exerciseName, onClose }) {
         ctx.fillRect(0, 0, W, H);
       }
 
-      // Pose + analysis
-      const frame = detector.getFrame();
-      if (frame) {
-        const fb = analyzer.analyze(frame);
-        if (fb) setFeedback(fb);
-        drawPose(ctx, frame.keypoints, fb?.issues || [], W, H);
+      // Pose + analysis (Asynchronous capability for Real ML)
+      if (videoEl) {
+         const frame = await detector.getFrame(videoEl);
+         if (frame) {
+           const fb = analyzer.analyze(frame);
+           if (fb) setFeedback(fb);
+           drawPose(ctx, frame.keypoints, fb?.issues || [], W, H);
+         }
+      } else {
+         const frame = await detector.getFrame(); // fallback mock
+         if (frame) {
+           const fb = analyzer.analyze(frame);
+           if (fb) setFeedback(fb);
+           drawPose(ctx, frame.keypoints, fb?.issues || [], W, H);
+         }
       }
 
       rafRef.current = requestAnimationFrame(loop);
     };
 
-    rafRef.current = requestAnimationFrame(loop);
+    loop();
+
     return () => {
+      isRunning = false;
       cancelAnimationFrame(rafRef.current);
     };
   }, [phase, paused]);
@@ -306,7 +329,7 @@ export default function PoseCamera({ exerciseName, onClose }) {
       {/* ── Camera / Canvas Area ── */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         {/* Hidden video for camera input */}
-        <video ref={videoRef} muted playsInline
+        <video ref={videoRef} autoPlay muted playsInline
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0 }} />
 
         {/* Canvas (skeleton overlay) */}

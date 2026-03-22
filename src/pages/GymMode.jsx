@@ -15,71 +15,15 @@ import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 
-// Workout Split Data (from PlanPage)
+// Workout Split Data (Synced exactly with Today.jsx)
 const SPLITS = [
-    {
-        focus: "Chest + Triceps",
-        exercises: [
-            "Barbell Bench Press 4x8-12",
-            "Incline Dumbbell Press 4x10-12",
-            "Cable Flyes 3x12-15",
-            "Triceps Rope Pushdown 3x12-15"
-        ]
-    },
-    {
-        focus: "Back + Biceps",
-        exercises: [
-            "Pull-Ups / Lat Pulldowns 4x8-12",
-            "Seated Cable Row 4x10-12",
-            "Barbell Bicep Curl 3x10-12",
-            "Face Pulls 3x12-15"
-        ]
-    },
-    {
-        focus: "Legs + Core",
-        exercises: [
-            "Barbell Squat 4x8-12",
-            "Hamstring Curl 3x12",
-            "Leg Press 3x10-12",
-            "Hanging Leg Raises 3x15"
-        ]
-    },
-    {
-        focus: "Shoulders + Abs",
-        exercises: [
-            "Overhead Dumbbell Press 4x10-12",
-            "Lateral Raises 3x12-15",
-            "Rear Delt Flyes 3x15",
-            "Plank (90 sec) x3"
-        ]
-    },
-    {
-        focus: "Full Body or HIIT",
-        exercises: [
-            "Deadlift 4x6",
-            "Push-Ups 3x20",
-            "Walking Lunges 3x20",
-            "Mountain Climbers (40sec) x3"
-        ]
-    },
-    {
-        focus: "Active Recovery",
-        exercises: [
-            "Yoga Flow 30min",
-            "Foam Rolling 10min",
-            "Walking 40min",
-            "Light Core (Bird Dog, Dead Bug) 3x12"
-        ]
-    },
-    {
-        focus: "Upper Body Circuit",
-        exercises: [
-            "Chin-Ups 3x8",
-            "Push-Ups 3x20",
-            "Front Dumbbell Raise 3x12",
-            "Cable Triceps Extension 3x15"
-        ]
-    }
+    { focus: 'Chest + Triceps', emoji: '💪', exercises: ['Bench Press 4×8-12', 'Incline DB Press 4×10', 'Cable Flyes 3×15', 'Tricep Pushdowns 3×12'] },
+    { focus: 'Back + Biceps',   emoji: '🦾', exercises: ['Pull-Ups 4×8-10', 'Seated Cable Row 4×10', 'Barbell Curl 3×12', 'Face Pulls 3×15'] },
+    { focus: 'Legs + Core',     emoji: '🦵', exercises: ['Barbell Squat 4×8-12', 'Leg Press 3×12', 'Hamstring Curl 3×12', 'Hanging Leg Raises 3×15'] },
+    { focus: 'Shoulders + Abs', emoji: '⚡', exercises: ['OHP 4×10', 'Lateral Raises 3×15', 'Rear Delt Fly 3×15', 'Plank 90s ×3'] },
+    { focus: 'Full Body HIIT',  emoji: '🔥', exercises: ['Deadlift 4×6', 'Push-Ups 3×20', 'Walking Lunges 3×20', 'Mountain Climbers 40s×3'] },
+    { focus: 'Active Recovery', emoji: '🧘', exercises: ['Yoga Flow 30min', 'Foam Rolling 10min', 'Walking 40min', 'Light Core 3×12'] },
+    { focus: 'Upper Circuit',   emoji: '💥', exercises: ['Chin-Ups 3×8', 'Push-Ups 3×20', 'Front Raise 3×12', 'Tricep Extensions 3×15'] },
 ];
 
 const DAYNAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -333,8 +277,8 @@ export default function GymMode() {
             ];
 
             todaysWorkout.exercises.forEach((exercise, index) => {
-                // Parse exercise string like "Barbell Bench Press 4x8-12"
-                const match = exercise.match(/^(.+?)\s+(\d+)x(\d+)(?:-(\d+))?/);
+                // Parse exercise string like "Barbell Bench Press 4x8-12" or "Bench Press 4×8-12"
+                const match = exercise.match(/^(.+?)\s+(\d+)[x×](\d+)(?:-(\d+))?/);
                 if (match) {
                     const [, name, sets, repsMin, repsMax] = match;
                     const adjustedName = adjustWorkout(name.trim(), 'strength');
@@ -348,7 +292,7 @@ export default function GymMode() {
                         type: "strength"
                     });
                 } else {
-                    // For exercises without set/rep format (like "Plank (90 sec) x3")
+                    // For exercises without set/rep format (like "Plank 90s ×3")
                     generatedWorkouts.push({
                         id: index + 2,
                         name: exercise,
@@ -412,7 +356,7 @@ export default function GymMode() {
                     ];
 
                     todaysWorkout.exercises.forEach((exercise, index) => {
-                        const match = exercise.match(/^(.+?)\s+(\d+)x(\d+)(?:-(\d+))?/);
+                        const match = exercise.match(/^(.+?)\s+(\d+)[x×](\d+)(?:-(\d+))?/);
                         if (match) {
                             const [, name, sets, repsMin, repsMax] = match;
                             const adjustedName = adjustWorkout(name.trim(), 'strength');
@@ -898,12 +842,19 @@ export default function GymMode() {
                                                     </button>
                                                 )}
                                                 {workout.videoKey && (
-                                                    <button className="btn-icon" onClick={(e) => playVideo(e, workout)} style={{ width: 36, height: 36, color: 'var(--primary-500)' }} title="Watch Form Video">
+                                                    <button className="btn-icon" onClick={(e) => playVideo(e, workout)} style={{ width: 36, height: 36, color: 'var(--primary-500)', background: currentVideo.title === workout.name ? 'var(--primary-dim)' : 'transparent' }} title="Watch Form Video">
                                                         <PlayCircle size={22} />
                                                     </button>
                                                 )}
                                             </div>
                                         </div>
+
+                                        {/* Inline Video Player matching currentVideo on mobile */}
+                                        {currentVideo.title === workout.name && window.innerWidth < 768 && (
+                                            <div style={{ marginTop: '0.5rem', background: '#000', borderRadius: 'var(--r-lg)', overflow: 'hidden', minHeight: '220px', position: 'relative' }}>
+                                                <iframe width="100%" height="100%" src={currentVideo.url} title={currentVideo.title} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ position: 'absolute', top: 0, left: 0 }} />
+                                            </div>
+                                        )}
 
                                         {/* Smart Tracker Inputs (Only for Strength) */}
                                         {workout.type === 'strength' && !workout.completed && (
