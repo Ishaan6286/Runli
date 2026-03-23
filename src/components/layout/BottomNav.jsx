@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, TrendingUp, ClipboardList, Dumbbell, UserCircle2 } from 'lucide-react';
+import { Home, TrendingUp, ClipboardList, Dumbbell, UserCircle2, Salad } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { spring } from '../../utils/motion.js';
 import QuickActionFAB from './QuickActionFAB';
@@ -47,11 +47,35 @@ const BottomNav = () => {
             >
               {({ isActive }) => (
                 <>
-                  <span
+                  {/* Animated active background pill */}
+                  {isActive && (
+                    <motion.span
+                      layoutId="bottom-nav-pill"
+                      transition={spring.snappy}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        borderRadius: 'var(--r-lg)',
+                        background: 'var(--primary-dim)',
+                        zIndex: 0,
+                      }}
+                    />
+                  )}
+                  <motion.span
                     className="nav-icon"
                     aria-hidden="true"
-                    style={{ height: 20, width: 20, display: 'block' }} // Invisible spacer reserving icon height behind the FAB
-                  />
+                    animate={isActive
+                      ? { scale: 1.15, y: -2, rotate: [-5, 5, 0] }
+                      : { scale: 1, y: 0, rotate: 0 }
+                    }
+                    transition={{ ...spring.snappy, duration: 0.3 }}
+                    style={{ position: 'relative', zIndex: 1 }}
+                  >
+                    <Salad
+                      size={20}
+                      strokeWidth={isActive ? 2.5 : 1.75}
+                    />
+                  </motion.span>
                   <motion.span
                     animate={isActive
                       ? { color: 'var(--primary-400)', fontWeight: 700, opacity: 1 }
