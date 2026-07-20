@@ -51,10 +51,18 @@ router.post('/', async (req, res) => {
         }
 
         // Convert frontend history format to Gemini format
-        const chatHistory = history.map(msg => ({
+        let chatHistory = history.map(msg => ({
             role: msg.type === 'user' ? 'user' : 'model',
             parts: [{ text: msg.text }]
         }));
+
+        // Gemini startChat requires the history to start with a 'user' message
+        const firstUserIdx = chatHistory.findIndex(m => m.role === 'user');
+        if (firstUserIdx !== -1) {
+            chatHistory = chatHistory.slice(firstUserIdx);
+        } else {
+            chatHistory = [];
+        }
 
         const chat = model.startChat({
             history: chatHistory,

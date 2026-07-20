@@ -42,34 +42,22 @@ const generateViaGroq = async (prompt) => {
     return { response: { text: () => data.choices[0].message.content } };
 };
 
-// Try Gemini first, then Groq fallback with retry on 429
-const generateWithRetry = async (prompt, maxRetries = 2) => {
-    let lastError;
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+// Try Gemini first (with 10s timeout), then Groq fallback immediately
+const generateWithRetry = async (prompt) => {
+    try {
+        return await Promise.race([
+            model.generateContent(prompt),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Gemini Timeout')), 10000))
+        ]);
+    } catch (error) {
+        console.warn('Gemini failed or timed out, attempting Groq fallback immediately:', error.message || error);
         try {
-            return await model.generateContent(prompt);
-        } catch (error) {
-            lastError = error;
-            if (error.status === 429 && attempt < maxRetries) {
-                const retryInfo = Array.isArray(error.errorDetails)
-                    ? error.errorDetails.find(d => d['@type']?.includes('RetryInfo'))
-                    : null;
-                const delaySec = retryInfo?.retryDelay ? parseInt(retryInfo.retryDelay) + 3 : 25;
-                console.warn(`Gemini rate limit hit (429). Waiting ${delaySec}s before retry ${attempt + 1}/${maxRetries}...`);
-                await new Promise(resolve => setTimeout(resolve, delaySec * 1000));
-                continue;
-            }
-            console.warn('Gemini failed, attempting Groq fallback:', error.message);
-            try {
-                const groqResult = await generateViaGroq(prompt);
-                return groqResult;
-            } catch (groqErr) {
-                console.error('Groq fallback also failed:', groqErr);
-                throw lastError;
-            }
+            return await generateViaGroq(prompt);
+        } catch (groqErr) {
+            console.error('Groq fallback also failed:', groqErr);
+            throw error; // throw original Gemini error/timeout
         }
     }
-    throw lastError;
 };
 
 // Middleware to verify token (optional for chat — chat can work for guests too)
@@ -190,7 +178,7 @@ router.post('/chat', authMiddleware, async (req, res) => {
 
         const finalSystemPrompt = (systemPrompt || `You are Runli Coach — a personal AI fitness coach. You are concise, warm, science-backed, and deeply personal. Never be generic. Replies must be SHORT (2-4 sentences max) unless the user explicitly asks for a full plan. Never mention OpenAI, ChatGPT, or Gemini.`) + emotionalHint;
 
-        const chatHistory = history
+        let chatHistory = history
             .filter(m => m.text?.trim())
             .slice(-10)
             .map(m => ({
@@ -198,13 +186,24 @@ router.post('/chat', authMiddleware, async (req, res) => {
                 parts: [{ text: m.text }],
             }));
 
+        // Gemini startChat requires the history to start with a 'user' message
+        const firstUserIdx = chatHistory.findIndex(m => m.role === 'user');
+        if (firstUserIdx !== -1) {
+            chatHistory = chatHistory.slice(firstUserIdx);
+        } else {
+            chatHistory = [];
+        }
+
         const chat = model.startChat({
             history: chatHistory,
             systemInstruction: { parts: [{ text: finalSystemPrompt }] },
             generationConfig: { maxOutputTokens: 300, temperature: 0.75, topP: 0.9 },
         });
 
-        const result = await chat.sendMessage(message);
+        const result = await Promise.race([
+            chat.sendMessage(message),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Gemini Chat Timeout')), 12000))
+        ]);
         const text = (await result.response).text().trim();
 
         return res.json({ 
