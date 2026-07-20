@@ -13,7 +13,7 @@ const getModel = () => {
     }
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     return genAI.getGenerativeModel({
-        model: "models/gemini-pro",
+        model: "gemini-1.5-flash",
         systemInstruction: `
 You are the Runli Fitness Assistant, a helpful and motivating AI coach for the Runli app.
 Your goal is to help users with fitness, nutrition, wellness, and navigating the Runli app.

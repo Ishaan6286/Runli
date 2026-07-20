@@ -414,37 +414,67 @@ export default function DietPlan() {
                                 {user.dietPreference || "Vegetarian"} Plan • {user.goal || "Fitness Goal"}
                             </p>
                         </div>
-                        <div style={{ display: "flex", gap: "0.5rem", background: "rgba(0,0,0,0.3)", padding: "0.5rem", borderRadius: "999px" }}>
-                            <button
-                                onClick={() => setIsCustomMode(false)}
-                                style={{
-                                    padding: "0.75rem 1.5rem",
-                                    borderRadius: "999px",
-                                    border: "none",
-                                    background: !isCustomMode ? "#10b981" : "transparent",
-                                    color: "white",
-                                    fontWeight: "bold",
-                                    cursor: "pointer",
-                                    transition: "all 0.2s"
-                                }}
-                            >
-                                Auto-Generate
-                            </button>
-                            <button
-                                onClick={() => setIsCustomMode(true)}
-                                style={{
-                                    padding: "0.75rem 1.5rem",
-                                    borderRadius: "999px",
-                                    border: "none",
-                                    background: isCustomMode ? "#10b981" : "transparent",
-                                    color: "white",
-                                    fontWeight: "bold",
-                                    cursor: "pointer",
-                                    transition: "all 0.2s"
-                                }}
-                            >
-                                Custom Build
-                            </button>
+                        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
+                            {/* Regenerate button */}
+                            {!isCustomMode && (
+                                <button
+                                    onClick={handleRegenerate}
+                                    disabled={generating}
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "0.4rem",
+                                        padding: "0.65rem 1.25rem",
+                                        borderRadius: "0.75rem",
+                                        border: "1px solid rgba(16,185,129,0.4)",
+                                        background: generating ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.15)",
+                                        color: "#10b981",
+                                        fontWeight: "bold",
+                                        fontSize: "0.9rem",
+                                        cursor: generating ? "not-allowed" : "pointer",
+                                        opacity: generating ? 0.6 : 1,
+                                        transition: "all 0.2s"
+                                    }}
+                                    onMouseOver={e => !generating && (e.currentTarget.style.background = 'rgba(16,185,129,0.25)')}
+                                    onMouseOut={e => e.currentTarget.style.background = generating ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.15)'}
+                                >
+                                    <RefreshCw size={16} style={{ animation: generating ? 'spin 1s linear infinite' : 'none' }} />
+                                    {generating ? 'Generating…' : 'Regenerate Plan'}
+                                </button>
+                            )}
+                            {/* Mode toggle */}
+                            <div style={{ display: "flex", gap: "0.5rem", background: "rgba(0,0,0,0.3)", padding: "0.5rem", borderRadius: "999px" }}>
+                                <button
+                                    onClick={() => setIsCustomMode(false)}
+                                    style={{
+                                        padding: "0.65rem 1.25rem",
+                                        borderRadius: "999px",
+                                        border: "none",
+                                        background: !isCustomMode ? "#10b981" : "transparent",
+                                        color: "white",
+                                        fontWeight: "bold",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s"
+                                    }}
+                                >
+                                    Auto-Generate
+                                </button>
+                                <button
+                                    onClick={() => setIsCustomMode(true)}
+                                    style={{
+                                        padding: "0.65rem 1.25rem",
+                                        borderRadius: "999px",
+                                        border: "none",
+                                        background: isCustomMode ? "#10b981" : "transparent",
+                                        color: "white",
+                                        fontWeight: "bold",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s"
+                                    }}
+                                >
+                                    Custom Build
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -481,82 +511,67 @@ export default function DietPlan() {
                 {/* Budget Control */}
                 {!isCustomMode && (
                     <div style={cardStyle}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1.5rem" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                                <Wallet color="#eab308" size={32} />
-                                <div>
-                                    <h3 style={{ fontSize: "1.25rem", fontWeight: "bold", margin: "0 0 0.25rem 0" }}>Monthly Budget</h3>
-                                    <p style={{ color: "#a3a3a3", margin: 0 }}>Daily Cap: <span style={{ color: "#eab308", fontWeight: "bold" }}>₹{dailyBudget}</span></p>
-                                </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.25rem" }}>
+                            <Wallet color="#eab308" size={28} />
+                            <div style={{ flex: 1 }}>
+                                <h3 style={{ fontSize: "1.1rem", fontWeight: "bold", margin: "0 0 0.15rem 0" }}>Monthly Food Budget</h3>
+                                <p style={{ color: "#a3a3a3", margin: 0, fontSize: "0.875rem" }}>
+                                    Daily cap: <span style={{ color: "#eab308", fontWeight: "bold" }}>₹{dailyBudget}</span>
+                                    <span style={{ color: "#666", margin: "0 0.4rem" }}>•</span>
+                                    <span style={{ color: "#eab308", fontWeight: "bold" }}>₹{monthlyBudget.toLocaleString('en-IN')}/month</span>
+                                </p>
                             </div>
-                            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                                {[3000, 5000, 10000].map(amt => (
-                                    <button
-                                        key={amt}
-                                        onClick={() => handleBudgetPreset(amt)}
-                                        style={{
-                                            padding: "0.75rem 1.25rem",
-                                            borderRadius: "0.75rem",
-                                            border: monthlyBudget === amt ? "2px solid #eab308" : "1px solid rgba(255,255,255,0.1)",
-                                            background: monthlyBudget === amt ? "rgba(234, 179, 8, 0.1)" : "transparent",
-                                            color: monthlyBudget === amt ? "#eab308" : "#a3a3a3",
-                                            fontWeight: "bold",
-                                            cursor: "pointer",
-                                            transition: "all 0.2s"
-                                        }}
-                                    >
-                                        ₹{amt / 1000}k
-                                    </button>
-                                ))}
-                                <input
-                                    type="number"
-                                    value={monthlyBudget}
-                                    min={3000}
-                                    max={10000}
-                                    step={100}
-                                    onChange={(e) => {
-                                        const raw = Number(e.target.value);
-                                        // Allow typing freely; clamp only on blur/enter
-                                        setMonthlyBudget(raw || 3000);
-                                        setDailyBudget(Math.round((raw || 3000) / 30));
-                                    }}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            handleCustomBudgetGenerate(e.target.value);
-                                        }
-                                    }}
-                                    onBlur={(e) => handleCustomBudgetGenerate(e.target.value)}
-                                    style={{
-                                        background: "rgba(255,255,255,0.05)",
-                                        border: "1px solid rgba(255,255,255,0.1)",
-                                        borderRadius: "0.75rem",
-                                        padding: "0.75rem 1rem",
-                                        color: "white",
-                                        fontWeight: "bold",
-                                        width: "120px"
-                                    }}
-                                    placeholder="Custom"
-                                />
+                        </div>
+
+                        {/* Range slider */}
+                        <div style={{ marginBottom: "1rem" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", fontSize: "0.78rem", color: "#666" }}>
+                                <span>₹3,000</span>
+                                <span>₹10,000</span>
+                            </div>
+                            <input
+                                type="range"
+                                min={3000}
+                                max={10000}
+                                step={100}
+                                value={monthlyBudget}
+                                onChange={(e) => {
+                                    const val = Number(e.target.value);
+                                    setMonthlyBudget(val);
+                                    setDailyBudget(Math.round(val / 30));
+                                }}
+                                onMouseUp={(e) => handleCustomBudgetGenerate(e.target.value)}
+                                onTouchEnd={(e) => handleCustomBudgetGenerate(e.target.value)}
+                                style={{
+                                    width: "100%",
+                                    accentColor: "#eab308",
+                                    cursor: "pointer",
+                                    height: "6px",
+                                }}
+                            />
+                        </div>
+
+                        {/* Quick preset chips */}
+                        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                            {[3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000].map(amt => (
                                 <button
-                                    onClick={() => runGenerate(user.dietPreference || "Vegetarian", targetCalories, targetProtein, dailyBudget, false)}
-                                    disabled={generating}
+                                    key={amt}
+                                    onClick={() => handleBudgetPreset(amt)}
                                     style={{
-                                        padding: "0.75rem 1.25rem",
-                                        borderRadius: "0.75rem",
-                                        border: "none",
-                                        background: generating ? "rgba(16, 185, 129, 0.3)" : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                                        color: "white",
-                                        fontWeight: "bold",
-                                        cursor: generating ? "not-allowed" : "pointer",
-                                        transition: "all 0.2s",
-                                        opacity: generating ? 0.6 : 1
+                                        padding: "0.4rem 0.85rem",
+                                        borderRadius: "999px",
+                                        border: monthlyBudget === amt ? "2px solid #eab308" : "1px solid rgba(255,255,255,0.1)",
+                                        background: monthlyBudget === amt ? "rgba(234,179,8,0.12)" : "rgba(255,255,255,0.04)",
+                                        color: monthlyBudget === amt ? "#eab308" : "#a3a3a3",
+                                        fontWeight: 600,
+                                        fontSize: "0.8rem",
+                                        cursor: "pointer",
+                                        transition: "all 0.15s"
                                     }}
-                                    onMouseOver={(e) => !generating && (e.currentTarget.style.transform = 'scale(1.05)')}
-                                    onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                                 >
-                                    {generating ? "..." : "Generate"}
+                                    ₹{amt / 1000}k
                                 </button>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 )}
