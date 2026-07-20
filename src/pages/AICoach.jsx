@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { sendCoachMessage } from '../services/api';
 import Navbar from '../components/layout/Navbar';
 import BottomNav from '../components/layout/BottomNav';
-import ErrorBoundary from '../components/ErrorBoundary';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 const AICoach = () => {
   const [messages, setMessages] = useState(() => {
