@@ -234,20 +234,58 @@ function _getRuleSet(exerciseName) {
   return RULES.squat;
 }
 
+export function inferExercise(keypoints) {
+  if (!keypoints || keypoints.length === 0) return 'squat'; // fallback
+  
+  const lw = getKP(keypoints, L.LEFT_WRIST);
+  const ls = getKP(keypoints, L.LEFT_SHOULDER);
+  const lh = getKP(keypoints, L.LEFT_HIP);
+  const lk = getKP(keypoints, L.LEFT_KNEE);
+  const la = getKP(keypoints, L.LEFT_ANKLE);
+  
+  if (lw && ls && lh && lk && la) {
+    // If wrists are above shoulders -> Shoulder Press
+    if (lw.y < ls.y - 0.1) return 'shoulder_press';
+    
+    // If shoulders and hips are roughly horizontal to the floor -> Push Up
+    if (Math.abs(ls.y - lh.y) < 0.1 && Math.abs(lh.y - lk.y) < 0.1) return 'push_up';
+    
+    // If wrists are down near hips/knees -> Deadlift or Curl starting position
+    if (lw.y > lh.y) {
+       // If torso is bent forward -> Deadlift
+       if (Math.abs(ls.x - lh.x) > 0.1) return 'deadlift';
+       return 'bicep_curl';
+    }
+  }
+  
+  return 'squat'; // Default
+}
+
 /* ─────────────────────────────────────────────────────────
    PUBLIC API
 ───────────────────────────────────────────────────────── */
 
 export function createFormAnalyzer(exerciseName = 'squat') {
-  const ruleSet = _getRuleSet(exerciseName);
+  let ruleSet = null;
+  const isAutoDetect = exerciseName === 'Auto-Detect';
+  if (!isAutoDetect) {
+    ruleSet = _getRuleSet(exerciseName);
+  }
+  
   let reps = 0;
   let phase = 'up';
   let prevPhase = 'up';
+  let detectedExerciseName = isAutoDetect ? null : exerciseName;
 
   return {
     analyze(poseFrame) {
       if (!poseFrame) return null;
       const { keypoints } = poseFrame;
+
+      if (isAutoDetect && !ruleSet) {
+        detectedExerciseName = inferExercise(keypoints);
+        ruleSet = _getRuleSet(detectedExerciseName);
+      }
 
       // Phase detection + rep counting
       phase = ruleSet.detectPhase(keypoints, phase);
@@ -264,17 +302,25 @@ export function createFormAnalyzer(exerciseName = 'squat') {
       const errorCount = issues.filter(i => i.severity === 'error').length;
       const overallScore = Math.max(0, 100 - warnCount * 10 - errorCount * 20);
 
-      return { reps, phase, issues, overallScore };
+      return { reps, phase, issues, overallScore, detectedExerciseName };
     },
 
     reset() {
       reps = 0;
       phase = 'up';
       prevPhase = 'up';
+      if (isAutoDetect) {
+        ruleSet = null;
+        detectedExerciseName = null;
+      }
     },
 
     getReps() {
       return reps;
     },
+    
+    getDetectedExercise() {
+      return detectedExerciseName;
+    }
   };
 }

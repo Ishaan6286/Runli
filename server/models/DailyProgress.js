@@ -33,6 +33,25 @@ const dailyProgressSchema = new mongoose.Schema({
     dietPlanCompleted: {
         type: [String],
         default: []
+    },
+    // Wellness / recovery fields (previously only in localStorage)
+    sleepHours: {
+        type: Number,    // hours, e.g. 7.5
+        default: null
+    },
+    moodScore: {
+        type: Number,    // 1-5 (1=awful, 5=amazing)
+        min: 1,
+        max: 5,
+        default: null
+    },
+    steps: {
+        type: Number,    // daily step count
+        default: null
+    },
+    recoveryScore: {
+        type: Number,    // 0-100 optional HRV/readiness
+        default: null
     }
 }, { timestamps: true });
 

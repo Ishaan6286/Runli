@@ -149,7 +149,7 @@ const Header = () => {
                       textAlign: "center",
                     }}
                   >
-                    Shopping
+                  Marketplace
                   </Link>
                   <Link
                     to="/videos"
@@ -286,7 +286,7 @@ const Header = () => {
           onMouseEnter={(e) => (e.target.style.transform = "scale(1.08)")}
           onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
         >
-          Shopping
+          Marketplace
         </Link>
         <Link
           to="/videos"
@@ -438,7 +438,7 @@ const Header = () => {
               {[
                 { to: "/", label: "Home" },
                 { to: "/dashboard", label: "Dashboard" },
-                { to: "/shopping", label: "Shopping" },
+                { to: "/shopping", label: "Marketplace" },
                 { to: "/videos", label: "Video Dashboard" },
               ].map((link) => (
                 <Link

@@ -2,6 +2,7 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import FoodLog from "../models/FoodLog.js";
+import DailyProgress from "../models/DailyProgress.js";
 
 const router = express.Router();
 
@@ -56,6 +57,24 @@ router.post("/", authMiddleware, async (req, res) => {
             foodLog.totalFats += food.fats || 0;
             await foodLog.save();
         }
+
+        // Synchronize with DailyProgress
+        await DailyProgress.findOneAndUpdate(
+            { userId: req.userId, date: logDate },
+            { 
+                $inc: { 
+                    caloriesConsumed: food.calories || 0,
+                    proteinIntake: food.protein || 0
+                }
+            },
+            { upsert: true, new: true }
+        );
+
+        // --- RAG INGESTION (Fire and forget) ---
+        import('../services/ragService.js').then(({ ingestNutrition }) => {
+            const dateStr = logDate.toISOString().slice(0, 10);
+            ingestNutrition(req.userId, dateStr, foodLog._id, foodLog.totalCalories, foodLog.totalProtein, foodLog.foods);
+        }).catch(err => console.error("Failed to load ragService:", err));
 
         res.status(201).json({
             message: "Food logged successfully",
@@ -135,6 +154,17 @@ router.delete("/:date/:foodId", authMiddleware, async (req, res) => {
         // Remove food item
         foodItem.remove();
         await foodLog.save();
+
+        // Synchronize with DailyProgress (decrement)
+        await DailyProgress.findOneAndUpdate(
+            { userId: req.userId, date: logDate },
+            { 
+                $inc: { 
+                    caloriesConsumed: -(foodItem.calories || 0),
+                    proteinIntake: -(foodItem.protein || 0)
+                }
+            }
+        );
 
         res.json({
             message: "Food item deleted successfully",

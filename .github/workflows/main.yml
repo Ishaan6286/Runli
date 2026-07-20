@@ -1,0 +1,175 @@
+name: Runli CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com
+  SERVER_IMAGE: runli-server
+  CLIENT_IMAGE: runli-client
+  AI_IMAGE: runli-ai-service
+
+jobs:
+  # ─────────────────────────────────────────────────────────
+  # JOB 1: Lint & Build
+  # ─────────────────────────────────────────────────────────
+  build-and-test:
+    name: Build & Validate
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install Client & Server Dependencies
+      run: npm install
+
+    - name: Build React Client
+      run: npm run build
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install AI Service Dependencies
+      run: |
+        cd ai-service
+        pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Validate Docker Compose
+      run: docker-compose config
+
+  # ─────────────────────────────────────────────────────────
+  # JOB 2: Build Docker Images & Push to ECR
+  # (Only runs on push to main, not on PRs)
+  # ─────────────────────────────────────────────────────────
+  docker-push:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build & Push Server Image
+      run: |
+        docker build -f Dockerfile.server -t $ECR_REGISTRY/$SERVER_IMAGE:${{ github.sha }} -t $ECR_REGISTRY/$SERVER_IMAGE:latest .
+        docker push $ECR_REGISTRY/$SERVER_IMAGE:${{ github.sha }}
+        docker push $ECR_REGISTRY/$SERVER_IMAGE:latest
+
+    - name: Build & Push Client Image
+      run: |
+        docker build -f Dockerfile.client -t $ECR_REGISTRY/$CLIENT_IMAGE:${{ github.sha }} -t $ECR_REGISTRY/$CLIENT_IMAGE:latest .
+        docker push $ECR_REGISTRY/$CLIENT_IMAGE:${{ github.sha }}
+        docker push $ECR_REGISTRY/$CLIENT_IMAGE:latest
+
+    - name: Build & Push AI Service Image
+      run: |
+        docker build -f ai-service/Dockerfile -t $ECR_REGISTRY/$AI_IMAGE:${{ github.sha }} -t $ECR_REGISTRY/$AI_IMAGE:latest ./ai-service
+        docker push $ECR_REGISTRY/$AI_IMAGE:${{ github.sha }}
+        docker push $ECR_REGISTRY/$AI_IMAGE:latest
+
+  # ─────────────────────────────────────────────────────────
+  # JOB 3: Run E2E Tests Against Docker Compose Stack
+  # ─────────────────────────────────────────────────────────
+  e2e-tests:
+    name: E2E Integration Tests
+    runs-on: ubuntu-latest
+    needs: docker-push
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Create .env file for CI
+      run: |
+        echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
+        echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+        echo "AI_SERVICE_URL=http://ai-service:8000" >> .env
+
+    - name: Start Docker Compose Stack
+      run: |
+        docker-compose up -d --build
+        echo "Waiting for services to be ready..."
+        sleep 20
+
+    - name: Set up Node.js for test runner
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Run E2E Tests
+      run: node scripts/e2e-test.js
+      env:
+        SERVER_URL: http://localhost:5001
+        AI_SERVICE_URL: http://localhost:8000
+
+    - name: Dump Logs on Failure
+      if: failure()
+      run: docker-compose logs
+
+    - name: Tear Down Stack
+      if: always()
+      run: docker-compose down
+
+  # ─────────────────────────────────────────────────────────
+  # JOB 4: Deploy to AWS ECS (Production)
+  # ─────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to AWS ECS
+    runs-on: ubuntu-latest
+    needs: e2e-tests
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Force New Deployment on ECS — Server
+      run: |
+        aws ecs update-service \
+          --cluster runli-production \
+          --service runli-server-service \
+          --force-new-deployment \
+          --region ${{ env.AWS_REGION }}
+
+    - name: Force New Deployment on ECS — AI Service
+      run: |
+        aws ecs update-service \
+          --cluster runli-production \
+          --service runli-ai-service \
+          --force-new-deployment \
+          --region ${{ env.AWS_REGION }}
+
+    - name: Notify Deployment Success
+      run: echo "🚀 Runli v${{ github.sha }} deployed to production on AWS ECS!"

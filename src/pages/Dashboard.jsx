@@ -10,6 +10,7 @@ import Papa from 'papaparse';
 import Select from 'react-select';
 import { useAuth } from '../context/AuthContext';
 import { getProgress, updateProgress, getInsight, getDietPlan, getProgressRange } from '../services/api';
+import FitnessTwin from '../components/dashboard/FitnessTwin';
 
 /* ── Helper functions (unchanged) ─────────────────────── */
 function calcBMR(weight, height, age, gender) {
@@ -370,6 +371,11 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
+        </motion.div>
+
+        {/* ── Fitness Twin ──────────────────────────── */}
+        <motion.div variants={staggerItem} initial="initial" animate="animate">
+          <FitnessTwin />
         </motion.div>
 
         {/* ── Quick Actions ─────────────────────────── */}

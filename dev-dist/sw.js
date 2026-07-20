@@ -67,7 +67,7 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-21a80088'], (function (workbox) { 'use strict';
+define(['./workbox-30ad1a2e'], (function (workbox) { 'use strict';
 
   self.skipWaiting();
   workbox.clientsClaim();
@@ -79,7 +79,7 @@ define(['./workbox-21a80088'], (function (workbox) { 'use strict';
    */
   workbox.precacheAndRoute([{
     "url": "index.html",
-    "revision": "0.49rpm1c8bgs"
+    "revision": "0.o3jpo4g0ngc"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
@@ -102,6 +102,10 @@ define(['./workbox-21a80088'], (function (workbox) { 'use strict';
     }), new workbox.CacheableResponsePlugin({
       statuses: [0, 200]
     })]
+  }), 'GET');
+  workbox.registerRoute(/\/api\/ai\/chat/i, new workbox.NetworkOnly({
+    "cacheName": "ai-chat-cache",
+    plugins: []
   }), 'GET');
   workbox.registerRoute(/\/api\/.*/i, new workbox.NetworkFirst({
     "cacheName": "api-cache",

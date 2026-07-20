@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.git/
+.env
+.dist/
+dev-dist/
+build-error.log
+err.txt
+server.log
+server_5001.log

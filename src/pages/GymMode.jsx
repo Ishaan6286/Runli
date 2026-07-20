@@ -11,19 +11,17 @@ import { motivationalQuotes } from '../data/quotes';
 import usePlan from '../hooks/usePlan.js';
 import { LockBadge } from '../components/ProGate.jsx';
 import { usePersonalization } from '../context/PersonalizationContext';
-import { Capacitor } from '@capacitor/core';
-import { App as CapApp } from '@capacitor/app';
-import { KeepAwake } from '@capacitor-community/keep-awake';
+
 
 // Workout Split Data (Synced exactly with Today.jsx)
 const SPLITS = [
     { focus: 'Chest + Triceps', emoji: '💪', exercises: ['Bench Press 4×8-12', 'Incline DB Press 4×10', 'Cable Flyes 3×15', 'Tricep Pushdowns 3×12'] },
-    { focus: 'Back + Biceps',   emoji: '🦾', exercises: ['Pull-Ups 4×8-10', 'Seated Cable Row 4×10', 'Barbell Curl 3×12', 'Face Pulls 3×15'] },
-    { focus: 'Legs + Core',     emoji: '🦵', exercises: ['Barbell Squat 4×8-12', 'Leg Press 3×12', 'Hamstring Curl 3×12', 'Hanging Leg Raises 3×15'] },
+    { focus: 'Back + Biceps', emoji: '🦾', exercises: ['Pull-Ups 4×8-10', 'Seated Cable Row 4×10', 'Barbell Curl 3×12', 'Face Pulls 3×15'] },
+    { focus: 'Legs + Core', emoji: '🦵', exercises: ['Barbell Squat 4×8-12', 'Leg Press 3×12', 'Hamstring Curl 3×12', 'Hanging Leg Raises 3×15'] },
     { focus: 'Shoulders + Abs', emoji: '⚡', exercises: ['OHP 4×10', 'Lateral Raises 3×15', 'Rear Delt Fly 3×15', 'Plank 90s ×3'] },
-    { focus: 'Full Body HIIT',  emoji: '🔥', exercises: ['Deadlift 4×6', 'Push-Ups 3×20', 'Walking Lunges 3×20', 'Mountain Climbers 40s×3'] },
+    { focus: 'Full Body HIIT', emoji: '🔥', exercises: ['Deadlift 4×6', 'Push-Ups 3×20', 'Walking Lunges 3×20', 'Mountain Climbers 40s×3'] },
     { focus: 'Active Recovery', emoji: '🧘', exercises: ['Yoga Flow 30min', 'Foam Rolling 10min', 'Walking 40min', 'Light Core 3×12'] },
-    { focus: 'Upper Circuit',   emoji: '💥', exercises: ['Chin-Ups 3×8', 'Push-Ups 3×20', 'Front Raise 3×12', 'Tricep Extensions 3×15'] },
+    { focus: 'Upper Circuit', emoji: '💥', exercises: ['Chin-Ups 3×8', 'Push-Ups 3×20', 'Front Raise 3×12', 'Tricep Extensions 3×15'] },
 ];
 
 const DAYNAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -201,7 +199,7 @@ const playBeep = (freq = 440, duration = 0.1, type = 'sine') => {
 
 export default function GymMode() {
     const navigate = useNavigate();
-    const { isPro, triggerUpgrade } = usePlan();
+    const { isPro, isElite, triggerUpgrade } = usePlan();
     const { adjustWorkout } = usePersonalization();
 
     // Stopwatch State
@@ -410,9 +408,9 @@ export default function GymMode() {
         let listenerPromise = null;
 
         const setupBackgroundTimers = async () => {
-            if (isRunning && Capacitor.isNativePlatform()) {
+            if (isRunning && window.Capacitor && window.Capacitor.isNativePlatform()) {
                 await KeepAwake.keepAwake();
-                
+
                 listenerPromise = CapApp.addListener('appStateChange', ({ isActive }) => {
                     if (!isActive) {
                         bgTime = Date.now();
@@ -432,11 +430,11 @@ export default function GymMode() {
 
         return () => {
             clearInterval(interval);
-            if (Capacitor.isNativePlatform()) {
-                KeepAwake.allowSleep().catch(() => {});
+            if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+                KeepAwake.allowSleep().catch(() => { });
             }
             if (listenerPromise) {
-                listenerPromise.then(l => l.remove()).catch(() => {});
+                listenerPromise.then(l => l.remove()).catch(() => { });
             }
         };
     }, [isRunning]);
@@ -641,6 +639,13 @@ export default function GymMode() {
                     </button>
                     <button
                         className="btn btn-primary"
+                        onClick={() => { if (!isElite) { triggerUpgrade('pose_detection'); return; } setActivePose({ workoutId: 'auto', exerciseName: 'Auto-Detect' }); }}
+                        style={{ padding: '0 1.25rem', fontSize: '0.9375rem', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: isElite ? 1 : 0.6 }}
+                    >
+                        <ScanLine size={16} /> Auto-Detect
+                    </button>
+                    <button
+                        className="btn btn-primary"
                         onClick={() => setShowPlankTimer(true)}
                         style={{ padding: '0 1.25rem', fontSize: '0.9375rem' }}
                     >
@@ -833,10 +838,10 @@ export default function GymMode() {
                                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                                 {workout.type === 'strength' && (
                                                     <button
-                                                        onClick={(e) => { e.stopPropagation(); setActivePose({ workoutId: workout.id, exerciseName: workout.name }); }}
+                                                        onClick={(e) => { e.stopPropagation(); if (!isElite) { triggerUpgrade('pose_detection'); return; } setActivePose({ workoutId: workout.id, exerciseName: workout.name }); }}
                                                         className="btn btn-secondary"
-                                                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', gap: '0.35rem', color: 'var(--primary-400)', borderColor: 'rgba(16,185,129,0.3)' }}
-                                                        title="Analyze Form (AI)"
+                                                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', gap: '0.35rem', color: isElite ? 'var(--primary-400)' : 'var(--text-muted)', borderColor: isElite ? 'rgba(16,185,129,0.3)' : 'var(--border-subtle)' }}
+                                                        title={isElite ? 'Analyze Form (AI)' : 'Elite feature'}
                                                     >
                                                         <ScanLine size={14} /> Analyze
                                                     </button>
@@ -954,7 +959,7 @@ export default function GymMode() {
             )}
 
             <AnimatePresence>
-                {activePose && isPro && (
+                {activePose && isElite && (
                     <PoseCamera
                         key={activePose.workoutId}
                         exerciseName={activePose.exerciseName}

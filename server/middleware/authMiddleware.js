@@ -13,6 +13,8 @@ const authMiddleware = (req, res, next) => {
         req.userId = decoded.id;       // Keep req.userId for backward compatibility
         next();
     } catch (err) {
+        console.error("JWT Verify Error:", err.message);
+        console.error("JWT_SECRET exists?", !!process.env.JWT_SECRET);
         return res.status(401).json({ message: "Invalid token" });
     }
 };

@@ -18,7 +18,12 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
-  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+  
+  const handleGoogleSignup = () => {
+    const API_BASE = import.meta.env.VITE_API_URL || "/api";
+    const redirect = encodeURIComponent(window.location.origin);
+    window.location.href = `${API_BASE}/auth/google?redirect=${redirect}`;
+  };
 
   const handleSignup = async () => {
     if (!name || !email || !password || !cpassword) {
@@ -102,9 +107,7 @@ export default function SignUp() {
 
         {/* Google Signup Button */}
         <button
-          onClick={() => {
-            window.location.href = `${API_BASE}/auth/google`;
-          }}
+          onClick={handleGoogleSignup}
           style={{
             width: "100%",
             border: "1px solid rgba(148, 163, 184, 0.2)",

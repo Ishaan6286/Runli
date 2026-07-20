@@ -1,0 +1,14 @@
+FROM node:20-alpine
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install --omit=dev
+
+# Copy server files
+COPY server/ ./server/
+
+EXPOSE 5001
+
+# Run the node application
+CMD ["node", "server/app.js"]

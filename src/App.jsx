@@ -9,10 +9,11 @@ import Today    from "./pages/Today";
 import Progress from "./pages/Progress";
 import Plan     from "./pages/Plan";
 import Gym      from "./pages/Gym";
-import Profile  from "./pages/Profile";
+import Profile  from "./pages/MePage";
 
 // ── Wellness page ─────────────────────────────────────
 import Wellness from "./pages/Wellness";
+import AICoach from "./pages/AICoach";
 
 // ── Auth + onboarding ─────────────────────────────────
 import Hero           from "./components/Hero";
@@ -29,11 +30,11 @@ import GymMode       from "./pages/GymMode";
 import HabitTracker  from "./pages/HabitTracker";
 import PlanPage      from "./pages/PlanPage";
 import VideoDashboard from "./pages/VideoDashboard";
-import Shopping      from "./pages/Shopping";
 import Eat           from "./pages/Eat";
 import Analytics     from "./pages/Analytics";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import Upgrade       from "./pages/Upgrade";
+import BillingDashboard from "./pages/BillingDashboard";
 import { ProUpgradeModal } from "./components/ProGate.jsx";
 
 import BmiCalculator from "./components/BmiCalculator";
@@ -62,6 +63,7 @@ const AnimatedRoutes = () => {
         <Route path="/gym"      element={<Gym />} />
         <Route path="/profile"  element={<Profile />} />
         <Route path="/wellness" element={<Wellness />} />
+        <Route path="/coach"    element={<AICoach />} />
 
         {/* ── Legacy redirects ── */}
         <Route path="/dashboard"  element={<Today />} />
@@ -69,13 +71,13 @@ const AnimatedRoutes = () => {
         <Route path="/gym-mode"   element={<GymMode />} />
         <Route path="/habits"     element={<HabitTracker />} />
         <Route path="/videos"     element={<VideoDashboard />} />
-        <Route path="/shopping"   element={<Shopping />} />
         <Route path="/me"         element={<Profile />} />
         <Route path="/eat"        element={<Eat />} />
         <Route path="/train"      element={<GymMode />} />
         <Route path="/analytics"        element={<Analytics />} />
         <Route path="/admin/analytics"  element={<AdminAnalytics />} />
         <Route path="/upgrade"          element={<Upgrade />} />
+        <Route path="/billing"           element={<BillingDashboard />} />
       </Routes>
     </AnimatePresence>
   );
@@ -85,14 +87,14 @@ function App() {
   return (
     <ToastProvider>
       <PersonalizationProvider>
-        <Router>
-          <AppBackground />
-          <ErrorBoundary>
-            <AnimatedRoutes />
-          </ErrorBoundary>
-          <BottomNav />
-          <ProUpgradeModal />
-        </Router>
+          <Router>
+            <AppBackground />
+            <ErrorBoundary>
+              <AnimatedRoutes />
+            </ErrorBoundary>
+            <BottomNav />
+            <ProUpgradeModal />
+          </Router>
       </PersonalizationProvider>
     </ToastProvider>
   );

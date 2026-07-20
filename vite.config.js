@@ -55,6 +55,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MiB — covers the current bundle
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -85,6 +86,13 @@ export default defineConfig({
             }
           },
           {
+            urlPattern: /\/api\/ai\/chat/i,
+            handler: 'NetworkOnly',
+            options: {
+              cacheName: 'ai-chat-cache', // Though NetworkOnly doesn't use cache, workbox requires an options block usually
+            }
+          },
+          {
             urlPattern: /\/api\/.*/i,
             handler: 'NetworkFirst',
             options: {
@@ -103,5 +111,14 @@ export default defineConfig({
       }
     })
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  }
 })
 

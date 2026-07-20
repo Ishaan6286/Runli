@@ -65,7 +65,7 @@ const BottomNav = () => {
                     className="nav-icon"
                     aria-hidden="true"
                     animate={isActive
-                      ? { scale: 1.15, y: -2, rotate: [-5, 5, 0] }
+                      ? { scale: 1.15, y: -2, rotate: 0 }
                       : { scale: 1, y: 0, rotate: 0 }
                     }
                     transition={{ ...spring.snappy, duration: 0.3 }}
@@ -119,7 +119,7 @@ const BottomNav = () => {
                   className="nav-icon"
                   aria-hidden="true"
                   animate={isActive
-                    ? { scale: 1.15, y: -2, rotate: [-5, 5, 0] }
+                    ? { scale: 1.15, y: -2, rotate: 0 }
                     : { scale: 1, y: 0, rotate: 0 }
                   }
                   transition={{ ...spring.snappy, duration: 0.3 }}

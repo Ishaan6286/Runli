@@ -1,5 +1,7 @@
 import express from 'express';
 import axios from 'axios';
+import { authenticateToken } from '../middleware/auth.js';
+import ExerciseHistory from '../models/ExerciseHistory.js';
 
 const router = express.Router();
 
@@ -159,5 +161,41 @@ function getMockGyms(lat, lng) {
         isMockData: true
     };
 }
+
+// POST /api/gym/history
+router.post('/history', authenticateToken, async (req, res) => {
+    try {
+        const { exerciseName, reps, formScore } = req.body;
+        const newEntry = new ExerciseHistory({
+            userId: req.user.userId,
+            exerciseName,
+            reps,
+            formScore
+        });
+        await newEntry.save();
+
+        // --- RAG INGESTION (Fire and forget) ---
+        import('../services/ragService.js').then(({ ingestWorkout }) => {
+            const dateStr = new Date().toISOString().slice(0, 10);
+            ingestWorkout(req.user.userId, dateStr, newEntry._id, exerciseName, reps, formScore);
+        }).catch(err => console.error("Failed to load ragService:", err));
+
+        res.status(201).json({ message: 'History saved successfully', entry: newEntry });
+    } catch (error) {
+        console.error('Error saving exercise history:', error);
+        res.status(500).json({ message: 'Error saving history' });
+    }
+});
+
+// GET /api/gym/history
+router.get('/history', authenticateToken, async (req, res) => {
+    try {
+        const history = await ExerciseHistory.find({ userId: req.user.userId }).sort({ date: -1 }).limit(100);
+        res.json({ history });
+    } catch (error) {
+        console.error('Error fetching exercise history:', error);
+        res.status(500).json({ message: 'Error fetching history' });
+    }
+});
 
 export default router;

@@ -6,13 +6,16 @@ import {
   Zap, Dumbbell, Salad, Droplets, CheckCircle2, Circle,
   Moon, Footprints, SmilePlus, ChevronRight, Plus, Minus,
   Flame, Activity, Lightbulb, Sparkles, TrendingUp, ArrowRight,
-  Wind, Sun, Sunset, Stars
+  Wind, Sun, Sunset, Stars, Mic
 } from 'lucide-react';
 import { getRecommendations } from '../utils/recommendationEngine';
 import { useAuth } from '../context/AuthContext';
 import { usePersonalization } from '../context/PersonalizationContext';
-import { getDietPlan } from '../services/api';
+import { getDietPlan, updateProgress } from '../services/api';
 import { getHabits, getTodayStatus, logHabit } from '../services/habitApi';
+import { useFitnessScore } from '../hooks/useFitnessScore';
+import FitnessScoreCard from '../components/dashboard/FitnessScoreCard';
+import FitnessScoreTrend from '../components/dashboard/FitnessScoreTrend';
 
 /* ═══════════════════════════════════════════════════════
    CONSTANTS & HELPERS
@@ -584,6 +587,7 @@ export default function Today() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { userContext, getGreetingState, adjustWorkout } = usePersonalization();
+  const { score, history, loading: scoreLoading, refresh: refreshScore } = useFitnessScore({ autoRefresh: true });
 
   const [userInfo, setUserInfo] = useState({});
   const [wellness, setWellness] = useState({ sleep: null, mood: null, steps: 0 });
@@ -614,8 +618,6 @@ export default function Today() {
         const mealCompletion = Object.values(mealsDone).filter(Boolean).length;
         const wentToGym = (JSON.parse(localStorage.getItem('runliProgress')) || {})[todayStr]?.wentToGym || false;
         
-        // Dynamically import updateProgress to avoid circular deps if any, or just use it
-        const { updateProgress } = await import('../services/api.js');
         await updateProgress(todayStr, { waterIntake, wentToGym, mealCompletion });
       } catch (e) {
         console.error('Failed to sync progress to API', e);
@@ -701,6 +703,16 @@ export default function Today() {
           <AISuggestionCard tips={aiTips} navigate={navigate} />
         </motion.div>
 
+        {/* Fitness Score */}
+        <motion.div variants={fadeUp}>
+          <FitnessScoreCard score={score} loading={scoreLoading} onRefresh={refreshScore} />
+        </motion.div>
+
+        {/* Score Trend */}
+        <motion.div variants={fadeUp}>
+          <FitnessScoreTrend history={history} loading={scoreLoading} />
+        </motion.div>
+
         {/* Today's Workout */}
         <motion.div variants={fadeUp}>
           <WorkoutCard workout={workout} navigate={navigate} />
@@ -740,6 +752,34 @@ export default function Today() {
           </p>
         </motion.div>
       </motion.div>
+
+      {/* AI Coach FAB */}
+      <button
+        onClick={() => navigate('/coach')}
+        style={{
+          position: 'fixed',
+          bottom: '80px',
+          right: '20px',
+          zIndex: 40,
+          background: 'var(--primary-600)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '50%',
+          width: '56px',
+          height: '56px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
+          cursor: 'pointer',
+          transition: 'transform 0.2s'
+        }}
+        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
+        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+      >
+        <Sparkles size={24} />
+      </button>
+
     </motion.div>
   );
 }

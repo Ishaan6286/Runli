@@ -27,7 +27,6 @@ const Navbar = () => {
         { name: "Plan", path: "/plan", private: true },
         { name: "Diet", path: "/diet-plan", private: true },
         { name: "Videos", path: "/videos", private: true },
-        { name: "Shopping", path: "/shopping" },
     ];
 
     const filteredLinks = navLinks.filter(link => !link.private || user);

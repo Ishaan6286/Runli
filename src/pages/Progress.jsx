@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp, TrendingDown, Minus, Scale, Flame,
   Zap, Calendar, Award, Activity, ChevronLeft, ChevronRight,
-  Target, Clock, Sparkles, Brain, Dumbbell, Utensils,
+  Target, Clock, Sparkles, Brain, Dumbbell, Utensils, ScanLine,
 } from 'lucide-react';
 import {
   predictWeightChange,
@@ -12,7 +12,7 @@ import {
   buildCalorieSeries,
   computeConsistencyFactor,
 } from '../utils/predictionEngine.js';
-import { getPredictionData } from '../services/api.js';
+import { getPredictionData, getExerciseHistory } from '../services/api.js';
 
 /* ── Motion ─────────────────────────────────────────── */
 const pageVariants = {
@@ -571,6 +571,82 @@ const PredictionPanel = ({ weightLog, gymProgress, userInfo }) => {
   );
 };
 
+/* ── Form Mastery Panel ─────────────────────────────────
+   Displays historical form scores from Elite AI Pose Coach
+═══════════════════════════════════════════════════════ */
+const FormMasteryPanel = () => {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getExerciseHistory()
+      .then(res => {
+        if (!cancelled && res.history) setHistory(res.history);
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (loading) return null;
+  if (!history.length) return (
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="card">
+      <h2 style={{ margin: '0 0 1rem', fontSize: '1.0625rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <ScanLine size={17} color="var(--primary-500)" />
+        AI Form Mastery
+      </h2>
+      <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem', padding: '1rem 0' }}>
+        Use the Elite AI Pose Coach in Gym Mode to track your form over time.
+      </div>
+    </motion.div>
+  );
+
+  // Group by exercise
+  const byExercise = history.reduce((acc, entry) => {
+    if (!acc[entry.exerciseName]) acc[entry.exerciseName] = [];
+    acc[entry.exerciseName].push(entry);
+    return acc;
+  }, {});
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="card">
+      <h2 style={{ margin: '0 0 1.25rem', fontSize: '1.0625rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <Target size={17} color="var(--primary-500)" />
+        AI Form Mastery
+      </h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+        {Object.entries(byExercise).map(([exercise, entries]) => {
+          const sorted = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
+          const latest = sorted[sorted.length - 1];
+          const best = Math.max(...sorted.map(s => s.formScore));
+          
+          return (
+            <div key={exercise} style={{
+              background: 'var(--bg-raised)', padding: '1rem', borderRadius: 'var(--r-md)',
+              border: '1px solid var(--border-subtle)'
+            }}>
+              <div style={{ fontWeight: 600, fontSize: '0.9375rem', marginBottom: '0.5rem' }}>{exercise}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '1rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Latest Score</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: latest.formScore >= 80 ? 'var(--primary-500)' : latest.formScore >= 60 ? 'var(--amber-500)' : 'var(--red-500)', lineHeight: 1 }}>
+                    {latest.formScore}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                   <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Best</div>
+                   <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)' }}>{best}</div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+};
+
 /* ═══════════════════════════════════════════════════════
    PROGRESS PAGE
 ═══════════════════════════════════════════════════════ */
@@ -891,6 +967,9 @@ export default function Progress() {
             </div>
           </motion.div>
         )}
+
+        {/* ── Form Mastery ── */}
+        <FormMasteryPanel />
 
       </div>
     </motion.div>

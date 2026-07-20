@@ -20,6 +20,9 @@ import {
 } from 'lucide-react';
 import { createPoseDetector, SKELETON_CONNECTIONS } from '../utils/poseEngine.js';
 import { createFormAnalyzer } from '../utils/formAnalyzer.js';
+import { saveExerciseHistory } from '../services/api.js';
+
+const AI_SERVICE_URL = import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000';
 
 /* ─────────────────────────────────────────────────────────
    CONSTANTS
@@ -120,13 +123,15 @@ export default function PoseCamera({ exerciseName, onClose }) {
   const detectorRef = useRef(null);
   const analyzerRef = useRef(null);
 
-  const [phase,    setPhase]    = useState('permission'); // permission|loading|active|paused|error
-  const [feedback, setFeedback] = useState(null);       // FormFeedback
+  const [phase,    setPhase]    = useState('permission');
+  const [feedback, setFeedback] = useState(null);
   const [paused,   setPaused]   = useState(false);
   const [stream,   setStream]   = useState(null);
   const [elapsed,  setElapsed]  = useState(0);
+  const [cloudFeedback, setCloudFeedback] = useState(null); // from YOLOv8 Python API
   const elapsedRef = useRef(0);
   const timerRef   = useRef(null);
+  const cloudIntervalRef = useRef(null);
 
   /* ── start camera & model ── */
   const startCamera = useCallback(async () => {
@@ -146,14 +151,40 @@ export default function PoseCamera({ exerciseName, onClose }) {
       analyzerRef.current = createFormAnalyzer(exerciseName);
       setPhase('active');
       startTimer();
+      startCloudAnalysis();
     } catch {
-      // Camera not available or model failed — run in mock-only mode
       detectorRef.current = await createPoseDetector(exerciseName);
       analyzerRef.current = createFormAnalyzer(exerciseName);
       setPhase('active');
       startTimer();
+      startCloudAnalysis();
     }
   }, [exerciseName]);
+
+  /* ── cloud analysis via Python YOLOv8 (every 2s) ── */
+  const startCloudAnalysis = () => {
+    cloudIntervalRef.current = setInterval(async () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const form = new FormData();
+        form.append('file', blob, 'frame.jpg');
+        try {
+          const res = await fetch(`${AI_SERVICE_URL}/vision/analyze-pose`, {
+            method: 'POST',
+            body: form,
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setCloudFeedback(data);
+          }
+        } catch (e) {
+          // Silently fail — local detection still runs
+        }
+      }, 'image/jpeg', 0.75);
+    }, 2000);
+  };
 
   /* ── timer ── */
   const startTimer = () => {
@@ -211,14 +242,18 @@ export default function PoseCamera({ exerciseName, onClose }) {
          const frame = await detector.getFrame(videoEl);
          if (frame) {
            const fb = analyzer.analyze(frame);
-           if (fb) setFeedback(fb);
+             if (fb) {
+               setFeedback(fb);
+             }
            drawPose(ctx, frame.keypoints, fb?.issues || [], W, H);
          }
       } else {
          const frame = await detector.getFrame(); // fallback mock
          if (frame) {
            const fb = analyzer.analyze(frame);
-           if (fb) setFeedback(fb);
+           if (fb) {
+             setFeedback(fb);
+           }
            drawPose(ctx, frame.keypoints, fb?.issues || [], W, H);
          }
       }
@@ -239,6 +274,7 @@ export default function PoseCamera({ exerciseName, onClose }) {
     return () => {
       cancelAnimationFrame(rafRef.current);
       clearInterval(timerRef.current);
+      clearInterval(cloudIntervalRef.current);
       stream?.getTracks().forEach(t => t.stop());
       detectorRef.current?.destroy();
     };
@@ -252,14 +288,28 @@ export default function PoseCamera({ exerciseName, onClose }) {
   });
 
   /* ── done ── */
-  const handleDone = () => {
+  const handleDone = async () => {
     clearInterval(timerRef.current);
     stream?.getTracks().forEach(t => t.stop());
     detectorRef.current?.destroy();
-    onClose?.({
-      reps:         feedback?.reps || 0,
-      overallScore: feedback?.overallScore || 0,
-    });
+    const reps  = feedback?.reps || 0;
+    const score = feedback?.overallScore || 0;
+    const actualExerciseName = analyzerRef.current?.getDetectedExercise() || exerciseName;
+    
+    // Save to backend history
+    if (reps > 0) {
+      try {
+        await saveExerciseHistory({
+          exerciseName: actualExerciseName,
+          reps,
+          formScore: score
+        });
+      } catch (err) {
+        console.error('Failed to save exercise history:', err);
+      }
+    }
+    
+    onClose?.({ reps, overallScore: score, exerciseName: actualExerciseName });
   };
 
   /* ── reset ── */
@@ -302,7 +352,9 @@ export default function PoseCamera({ exerciseName, onClose }) {
             boxShadow: phase === 'active' && !paused ? '0 0 8px #10b981' : 'none',
             animation: phase === 'active' && !paused ? 'pulse 1.5s infinite' : 'none',
           }} />
-          <span style={{ fontWeight: 700, fontSize: '0.9375rem' }}>{exerciseName}</span>
+          <span style={{ fontWeight: 700, fontSize: '0.9375rem' }}>
+            {feedback?.detectedExerciseName || exerciseName}
+          </span>
           <span style={{ color: 'var(--text-muted, #737373)', fontSize: '0.75rem' }}>Form Analysis</span>
         </div>
 
@@ -406,8 +458,22 @@ export default function PoseCamera({ exerciseName, onClose }) {
 
         {/* Score ring (top-right) */}
         {phase === 'active' && feedback && (
-          <div style={{ position: 'absolute', top: 12, right: 12 }}>
+          <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
             <ScoreRing score={feedback.overallScore} />
+            {/* Cloud YOLOv8 badge */}
+            {cloudFeedback && (
+              <div style={{
+                background: 'rgba(0,0,0,0.8)',
+                border: `1px solid ${cloudFeedback.form_score >= 80 ? '#10b981' : cloudFeedback.form_score >= 50 ? '#f59e0b' : '#ef4444'}`,
+                borderRadius: 10, padding: '0.4rem 0.75rem',
+                fontSize: '0.7rem', fontWeight: 700,
+                color: cloudFeedback.form_score >= 80 ? '#10b981' : cloudFeedback.form_score >= 50 ? '#f59e0b' : '#ef4444',
+                maxWidth: 160, textAlign: 'right',
+              }}>
+                <div style={{ fontSize: '0.6rem', color: '#6b7280', marginBottom: '0.15rem' }}>☁ Cloud AI (YOLOv8)</div>
+                {cloudFeedback.feedback}
+              </div>
+            )}
           </div>
         )}
       </div>

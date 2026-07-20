@@ -4,6 +4,7 @@ import {
   UserCircle2, Scale, TrendingUp, Award, ShoppingBag,
   Settings, LogOut, ChevronRight, Star, Zap, Target,
   Dumbbell, Flame, Activity, Calculator, ChevronDown, ChevronUp,
+  CreditCard, Crown,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -90,7 +91,7 @@ export default function MePage() {
   const [newWeight, setNewWeight] = useState('');
   const [cluster, setCluster] = useState(null);
   const [showBreakdown, setShowBreakdown] = useState(false);
-  const { isPro, triggerUpgrade } = usePlan();
+  const { isPro, isElite, plan, triggerUpgrade } = usePlan();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -152,12 +153,12 @@ export default function MePage() {
 
   return (
     <motion.div
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
+      initial={{ opacity: 1, y: 0 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.3 }}
       className="page-wrapper"
-      style={{ padding: 'clamp(1rem, 3vw, 1.5rem)', paddingTop: 'clamp(1.25rem, 4vw, 2rem)' }}
+      style={{ padding: 'clamp(1rem, 3vw, 1.5rem)', paddingTop: 'clamp(1.25rem, 4vw, 2rem)', opacity: 1 }}
     >
       <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
@@ -175,8 +176,8 @@ export default function MePage() {
               <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>
                 {displayName}
               </h1>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                {info.goal || 'Fitness Goal'} · {info.frequency ? `${info.frequency}x / wk` : 'Set your plan'}
+              <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500, letterSpacing: '0.01em' }}>
+                {info.target || info.goal || 'Fitness Goal'} · {info.frequency ? `${info.frequency}x / wk` : 'Set your plan'}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span className="chip chip-primary">
@@ -195,6 +196,27 @@ export default function MePage() {
             <div className="progress-track">
               <div className="progress-fill progress-fill-primary" style={{ width: `${level.pct}%` }} />
             </div>
+          </div>
+          {/* Plan badge row */}
+          <div style={{ marginTop: '0.875rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+            <div>
+              {isElite
+                ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.35)', color: '#f59e0b', borderRadius: 99, padding: '0.2rem 0.65rem', fontSize: '0.7rem', fontWeight: 700 }}><Crown size={10} fill="#f59e0b" /> Runli Elite</span>
+                : isPro
+                  ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', color: '#10b981', borderRadius: 99, padding: '0.2rem 0.65rem', fontSize: '0.7rem', fontWeight: 700 }}><Zap size={10} fill="#10b981" /> Runli Pro</span>
+                  : <span style={{ display: 'inline-flex', background: 'var(--bg-raised)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', borderRadius: 99, padding: '0.2rem 0.65rem', fontSize: '0.7rem', fontWeight: 600 }}>Free Plan</span>
+              }
+            </div>
+            {!isElite && (
+              <button onClick={() => navigate('/upgrade')} style={{
+                background: isPro ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)',
+                border: isPro ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(16,185,129,0.3)',
+                color: isPro ? '#f59e0b' : '#10b981',
+                borderRadius: 99, padding: '0.2rem 0.85rem', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer',
+              }}>
+                {isPro ? '⬆ Upgrade to Elite' : '⚡ Upgrade to Pro'}
+              </button>
+            )}
           </div>
         </motion.div>
 
@@ -229,7 +251,7 @@ export default function MePage() {
               </div>
               <div style={{ height: 6, borderRadius: 99, background: 'var(--bg-raised)', overflow: 'hidden' }}>
                 <motion.div
-                  initial={{ width: 0 }} animate={{ width: `${cluster.confidence * 100}%` }}
+                  initial={{ width: 0 }} animate={{ width: `${(cluster.confidence || 0) * 100}%` }}
                   transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
                   style={{ height: '100%', borderRadius: 99, background: `linear-gradient(90deg, ${cluster.color}, ${cluster.color}aa)` }}
                 />
@@ -238,7 +260,7 @@ export default function MePage() {
 
             {/* Trait chips */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.75rem' }}>
-              {cluster.traits.map(t => (
+              {cluster.traits?.map(t => (
                 <span key={t} style={{
                   fontSize: '0.6875rem', fontWeight: 600, padding: '0.2rem 0.55rem',
                   borderRadius: 99, background: `${cluster.color}18`,
@@ -387,8 +409,9 @@ export default function MePage() {
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.2 } }} className="card">
           <h2 style={{ fontSize: '1.0625rem', fontWeight: 600, margin: '0 0 0.5rem' }}>More</h2>
           <NavRow icon={Calculator}  label="BMI Calculator"  sub="Check your body mass index" onClick={() => navigate('/bmi')}         accent="var(--blue-500)" />
-          <NavRow icon={ShoppingBag} label="Shopping"        sub="Supplements, gear & more"   onClick={() => navigate('/shopping')}    accent="var(--amber-500)" />
+          <NavRow icon={ShoppingBag} label="AI Marketplace"   sub="Curated supplements & gear"  onClick={() => navigate('/shopping')}    accent="var(--amber-500)" />
           <NavRow icon={TrendingUp}  label="Habit Tracker"   sub="Build lasting habits"       onClick={() => navigate('/habits')}      accent="var(--purple-500)" />
+          <NavRow icon={CreditCard}  label="Billing & Usage" sub="Manage your plan and limits" onClick={() => navigate('/billing')}    accent="#10b981" />
           <NavRow icon={Settings}    label="Edit Profile"    sub="Update your info & goals"   onClick={() => navigate('/userinfo')}    accent="var(--text-secondary)" />
           <div style={{ height: '0.5rem' }} />
           <button

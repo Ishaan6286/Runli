@@ -154,7 +154,7 @@ export function ProUpgradeModal() {
               }}
             >
               <Zap size={16} fill="#fff" color="#fff" />
-              Go Pro — ₹299/mo
+              Go Pro — ₹99/mo
               <ChevronRight size={16} />
             </button>
 
@@ -167,7 +167,7 @@ export function ProUpgradeModal() {
                 fontSize: '0.8125rem', cursor: 'pointer', fontWeight: 600,
               }}
             >
-              See Annual Plan — ₹1,999/yr
+              See Elite Plan — ₹199/mo
             </button>
 
             <button

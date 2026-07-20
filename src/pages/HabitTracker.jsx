@@ -200,7 +200,7 @@ export default function HabitTracker() {
         : 0;
 
     return (
-        <div style={{ background: "#000000", minHeight: "100vh", padding: "2rem 1rem", color: "white", fontFamily: "Poppins, sans-serif" }}>
+        <div style={{ background: "#000000", minHeight: "100vh", padding: "2rem 1rem 6rem", color: "white", fontFamily: "Poppins, sans-serif" }}>
             <div style={{ maxWidth: "1200px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "2rem" }}>
 
                 {/* Header */}

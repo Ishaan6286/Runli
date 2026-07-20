@@ -50,23 +50,57 @@ const userSchema = new mongoose.Schema(
     },
     dietPreference: {
       type: String,
-      enum: ['Vegetarian', 'Non-Vegetarian', 'Eggetarian', null],
+      enum: ['Vegetarian', 'Non-Vegetarian', 'Eggetarian', 'Vegan', null],
       default: 'Vegetarian'
     },
+    // Extended onboarding fields
+    targetWeight: { type: Number, default: null },
+    physiqueImage: { type: String, default: null },
+    bodyFatEstimate: { type: Number, default: null },
+    workoutEnvironment: { 
+      type: String, 
+      enum: ['Gym', 'Home', 'Outdoors', null], 
+      default: null 
+    },
+    experience: {
+      type: String,
+      enum: ['Beginner', 'Intermediate', 'Advanced', 'Athlete', null],
+      default: null
+    },
+    stressLevel: {
+      type: String,
+      enum: ['Low', 'Moderate', 'High', 'Very High', null],
+      default: null
+    },
+    sleepHours: { type: String, default: null },
+    mealFrequency: { type: String, default: null },
+    months: { type: String, default: null },
+    injuries: { type: [String], default: [] },
+    allergies: { type: [String], default: [] },
     // Monetisation
     plan: {
       type: String,
-      enum: ['free', 'pro'],
+      enum: ['free', 'pro', 'elite'],
       default: 'free',
     },
-    planStartedAt: {
-      type: Date,
-      default: null,
+    planStartedAt: { type: Date, default: null },
+    planExpiresAt: { type: Date, default: null },
+    planStatus: {
+      type: String,
+      enum: ['active', 'cancelled', 'past_due', 'none'],
+      default: 'none'
     },
-    planExpiresAt: {
-      type: Date,
-      default: null,
+    razorpayCustomerId: { type: String, default: null },
+    razorpaySubscriptionId: { type: String, default: null },
+    razorpayOrderId: { type: String, default: null },
+    // Usage Tracking
+    usage: {
+      voiceMinutes: { type: Number, default: 0 },
+      aiRequests: { type: Number, default: 0 },
+      poseAnalyses: { type: Number, default: 0 },
+      nutritionScans: { type: Number, default: 0 }
     },
+    usageResetDate: { type: Date, default: null },
     role: {
       type: String,
       enum: ['user', 'admin'],

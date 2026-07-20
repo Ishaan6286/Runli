@@ -7,7 +7,7 @@ import { logFood, getFoodLog } from "../services/api";
 
 const MEALS = ["Breakfast", "Brunch", "Lunch", "Dinner", "Snacks"];
 const FOOD_CSV_PATH = "/foods.csv";
-
+ 
 export default function FoodLog() {
   const { user } = useAuth();
   const [foods, setFoods] = useState([]);

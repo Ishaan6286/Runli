@@ -1,8 +1,11 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import DailyProgress from '../models/DailyProgress.js';
+import dotenv from 'dotenv';
 
+dotenv.config();
 const router = express.Router();
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
 // JWT Middleware
 const authMiddleware = (req, res, next) => {
@@ -71,12 +74,24 @@ router.post('/:date', authMiddleware, async (req, res) => {
         if (wentToGym !== undefined) updateData.wentToGym = wentToGym;
         if (req.body.weight !== undefined) updateData.weight = req.body.weight;
         if (req.body.dietPlanCompleted !== undefined) updateData.dietPlanCompleted = req.body.dietPlanCompleted;
+        // Wellness / recovery fields
+        if (req.body.sleepHours !== undefined) updateData.sleepHours = req.body.sleepHours;
+        if (req.body.moodScore !== undefined) updateData.moodScore = req.body.moodScore;
+        if (req.body.steps !== undefined) updateData.steps = req.body.steps;
+        if (req.body.recoveryScore !== undefined) updateData.recoveryScore = req.body.recoveryScore;
 
         const progress = await DailyProgress.findOneAndUpdate(
             { userId: req.userId, date: date },
             { $set: updateData },
             { new: true, upsert: true, setDefaultsOnInsert: true }
         );
+        
+        // --- RAG INGESTION (Fire and forget) ---
+        import('../services/ragService.js').then(({ ingestProgress }) => {
+            ingestProgress(req.userId, dateStr, progress);
+        }).catch(err => console.error("Failed to load ragService:", err));
+
+
         res.json({ progress });
     } catch (err) {
         console.error(err);

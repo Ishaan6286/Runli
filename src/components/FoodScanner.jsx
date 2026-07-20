@@ -13,10 +13,9 @@ import {
   Camera, Upload, Zap, X, CheckCircle2,
   Flame, Beef, Wheat, Droplets, ChevronDown, RotateCcw, ScanLine,
 } from 'lucide-react';
-import { analyzeFood, logFood } from '../services/api.js';
+import { analyzeFood, logFood, recalculateFitnessScore, learnTwin } from '../services/api.js';
 import { validateImageFile } from '../utils/foodVisionEngine.js';
-import { Capacitor } from '@capacitor/core';
-import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { useAuth } from '../context/AuthContext';
 
 /* ── helpers ── */
 const MEALS = ['Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Snacks'];
@@ -65,6 +64,7 @@ const MacroPill = ({ icon: Icon, label, value, color }) => (
    FOOD SCANNER
 ═══════════════════════════════════════════════════════ */
 export default function FoodScanner({ onFoodLogged }) {
+  const { user }  = useAuth();
   const [open,      setOpen]      = useState(false);
   const [phase,     setPhase]     = useState('idle');   // idle | analyzing | results | error
   const [preview,   setPreview]   = useState(null);     // object URL
@@ -77,6 +77,9 @@ export default function FoodScanner({ onFoodLogged }) {
   const [logging,   setLogging]   = useState(false);
 
   const inputRef = useRef();
+
+  // Derive protein target from user profile (1.8g/kg bodyweight, default 150g)
+  const targetProtein = user?.weight ? Math.round(user.weight * 1.8) : 150;
 
   /* ── cleanup ── */
   const reset = () => {
@@ -119,7 +122,9 @@ export default function FoodScanner({ onFoodLogged }) {
     try {
       let mealType = meal.toLowerCase();
       if (mealType === 'snacks') mealType = 'snack';
-      await logFood(new Date(), {
+
+      // 1. Log food to diary (also syncs DailyProgress via updated foodRoutes)
+      const logResult = await logFood(new Date(), {
         name: food.name,
         quantity: food.servingSize || '1 serving',
         calories: food.calories,
@@ -128,8 +133,16 @@ export default function FoodScanner({ onFoodLogged }) {
         fats: food.fats,
         mealType,
       });
+
       setLogged(true);
       onFoodLogged?.({ ...food, mealType: meal });
+
+      // 2. Background cascade: re-score and re-learn the Twin
+      //    Fire-and-forget — don't block the UI
+      recalculateFitnessScore().catch(() => {});
+      learnTwin().catch(() => {});
+
+      // 3. (Removed Voice Coach hook)
     } catch {
       // Silently allow — user might not be logged in
       setLogged(true);
@@ -138,34 +151,12 @@ export default function FoodScanner({ onFoodLogged }) {
     }
   };
 
-  /* ── native camera ── */
+  /* ── web camera ── */
   const handleNativeCamera = async (e) => {
     e.stopPropagation();
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const photo = await CapCamera.getPhoto({
-          quality: 90,
-          allowEditing: false,
-          resultType: CameraResultType.Uri,
-          source: CameraSource.Camera
-        });
-        
-        // Convert to File object for existing pipeline
-        const response = await fetch(photo.webPath);
-        const blob = await response.blob();
-        const f = new File([blob], `scanned_food_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        handleFile(f);
-      } catch (err) {
-        if (err.message !== 'User cancelled photos app') {
-          setError('Camera failed. Please try again.');
-          setPhase('error');
-        }
-      }
-    } else {
-      // Trigger Web fallback
-      const hiddenInput = e.currentTarget.querySelector('input[type="file"]');
-      if (hiddenInput) hiddenInput.click();
-    }
+    // Trigger HTML5 Web Camera
+    const hiddenInput = e.currentTarget.querySelector('input[type="file"]');
+    if (hiddenInput) hiddenInput.click();
   };
 
   /* ── confidence color ── */
@@ -285,14 +276,12 @@ export default function FoodScanner({ onFoodLogged }) {
                       }}
                     >
                       <Camera size={13} color="var(--text-secondary)" /> Camera
-                      {!Capacitor.isNativePlatform() && (
-                        <input
-                          type="file" accept="image/*" capture="environment"
-                          style={{ display: 'none' }}
-                          onChange={e => e.target.files[0] && handleFile(e.target.files[0])}
-                          onClick={e => e.stopPropagation()} // Prevent double trigger
-                        />
-                      )}
+                      <input
+                        type="file" accept="image/*" capture="environment"
+                        style={{ display: 'none' }}
+                        onChange={e => e.target.files[0] && handleFile(e.target.files[0])}
+                        onClick={e => e.stopPropagation()} // Prevent double trigger
+                      />
                     </button>
                   </div>
                   <input

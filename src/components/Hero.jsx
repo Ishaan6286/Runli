@@ -41,10 +41,6 @@ const Hero = () => {
 
   return (
     <motion.div
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
       style={{
         minHeight: '100vh',
         display: 'flex',

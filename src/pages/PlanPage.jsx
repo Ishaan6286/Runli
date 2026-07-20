@@ -1,9 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import RecommendationSection from '../components/RecommendationSection';
 import { getRecommendations } from '../utils/recommendationEngine';
-
-
 // SPLIT GENERATOR BASED ON FREQUENCY
 const SPLITS = [
   {
@@ -125,30 +122,80 @@ function waterTarget(weight) {
   return Math.round(weight * 0.035 * 10) / 10;
 }
 
+// Map DB activityLevel → workout days per week
+function activityToFreq(activityLevel) {
+  const map = { sedentary: 2, light: 3, moderate: 4, active: 5, very_active: 6 };
+  return map[activityLevel] || 4;
+}
+// Map DB goal → human-readable label
+function goalLabel(goal) {
+  const map = { lose_weight: "Lose Weight", maintain: "Maintain", gain_muscle: "Gain Muscle" };
+  return map[goal] || goal || "";
+}
+
 export default function Plan() {
   const navigate = useNavigate();
-  let user = {};
-  try { user = JSON.parse(localStorage.getItem("runliUserInfo")) || {}; } catch { }
-  const age = Number(user.age);
+  const [user, setUser] = React.useState({});
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    // Try to load from API first, fall back to localStorage
+    const token = localStorage.getItem("token");
+    if (token && token !== "null" && token !== "undefined") {
+      fetch("/api/user/profile", { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.json())
+        .then(data => {
+          if (data.user) setUser(data.user);
+          else {
+            // fallback to old localStorage key
+            try { setUser(JSON.parse(localStorage.getItem("runliUserInfo")) || {}); } catch {}
+          }
+        })
+        .catch(() => {
+          try { setUser(JSON.parse(localStorage.getItem("runliUserInfo")) || {}); } catch {}
+        })
+        .finally(() => setLoading(false));
+    } else {
+      try { setUser(JSON.parse(localStorage.getItem("runliUserInfo")) || {}); } catch {}
+      setLoading(false);
+    }
+  }, []);
+
+  const recommendations = React.useMemo(() => getRecommendations(), []);
+
+  const age    = Number(user.age);
   const weight = Number(user.weight);
   const height = Number(user.height);
   const gender = user.gender || "";
-  const freq = Number(user.frequency) || 4;
+  // Support both DB field names and old localStorage field names
+  const freq   = user.activityLevel ? activityToFreq(user.activityLevel) : (Number(user.frequency) || 4);
+  const targetPhysique = user.goal ? goalLabel(user.goal) : (user.target || "");
+  const targetWeight   = user.targetWeight || null;
+  const targetDuration = user.months || user.targetDuration || null;
 
-  const recommendations = React.useMemo(() => getRecommendations(), []);
-  const targetPhysique = user.target || "";
-  const protein = proteinTarget(weight, targetPhysique);
-  const bmiVal = weight && height ? Number(calculateBMI(weight, height)).toFixed(1) : null;
-  const bmr = calcBMR(weight, height, age, gender);
+  const protein  = proteinTarget(weight, targetPhysique);
+  const bmiVal   = weight && height ? Number(calculateBMI(weight, height)).toFixed(1) : null;
+  const bmr      = calcBMR(weight, height, age, gender);
   const calories = caloriesTarget(bmr, freq, targetPhysique);
-  const water = waterTarget(weight);
-  const split = getSplitByFrequency(freq);
+  const water    = waterTarget(weight);
+  const split    = getSplitByFrequency(freq);
 
   let mainGoal = "-";
-  if (user.targetWeight && user.targetDuration) {
-    mainGoal = `Reach ${user.targetWeight}kg in ${user.targetDuration} month${user.targetDuration > 1 ? "s" : ""}`;
+  if (targetWeight && targetDuration) {
+    mainGoal = `Reach ${targetWeight}kg in ${targetDuration} month${Number(targetDuration) > 1 ? "s" : ""}`;
   } else if (targetPhysique) {
     mainGoal = targetPhysique;
+  }
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center", color: "var(--text-secondary)" }}>
+          <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>⚙️</div>
+          <p>Loading your plan…</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -263,9 +310,6 @@ export default function Plan() {
           </div>
 
           {/* AI Recommendations */}
-          <div style={{ marginTop: "1rem" }}>
-            <RecommendationSection recommendations={recommendations} />
-          </div>
 
           {/* Action Buttons */}
           <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", color: "var(--text-secondary)" }}>

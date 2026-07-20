@@ -1,0 +1,21 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+fastapi
+uvicorn
+google-generativeai
+pydantic
+python-dotenv
+chromadb
+sentence-transformers
+scikit-learn
+xgboost
+pandas
+numpy
+opencv-python-headless
+ultralytics
+python-multipart
+groq
+websockets
+requests
+httpx

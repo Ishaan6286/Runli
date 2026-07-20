@@ -35,3 +35,23 @@ backups/
 # Build artifacts
 .dist
 build/
+
+# Server-specific env
+server/.env
+
+# Python / AI Service
+ai-service/__pycache__/
+ai-service/*.pyc
+ai-service/.venv/
+ai-service/venv/
+ai-service/chroma_data/
+
+# Terraform state (contains secrets — use remote state in production)
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/terraform.tfvars
+
+# Docker
+.docker/
