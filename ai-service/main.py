@@ -71,21 +71,24 @@ except Exception as e:
 
 
 def generate_with_fallback(prompt: str) -> str:
-    """Try Gemini first; if it fails or rate-limits, fall back to Groq Llama3."""
+    """Try Groq first; if it fails or isn't configured, fall back to Gemini."""
+    if groq_client:
+        try:
+            chat = groq_client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=1024,
+                temperature=0.7
+            )
+            return chat.choices[0].message.content.strip()
+        except Exception as groq_err:
+            print(f"[Groq failed] {groq_err} — falling back to Gemini...")
     try:
         response = gemini_model.generate_content(prompt)
         return response.text.strip()
     except Exception as gemini_err:
-        print(f"[Gemini failed] {gemini_err} — falling back to Groq...")
-        if groq_client:
-            chat = groq_client.chat.completions.create(
-                model=GROQ_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=512,
-                temperature=0.7
-            )
-            return chat.choices[0].message.content.strip()
-        raise RuntimeError("Both Gemini and Groq unavailable")
+        print(f"[Gemini failed] {gemini_err}")
+        raise RuntimeError("Both Groq and Gemini unavailable")
 
 
 # ═══════════════════════════════════════════════════════

@@ -15,12 +15,23 @@ const router = express.Router();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-// Helper: fallback to Groq LLM when Gemini is unavailable
-const generateViaGroq = async (prompt) => {
+// Helper: Groq LLM generation (supports single prompt or OpenAI-style messages array)
+const generateViaGroq = async (promptOrMessages, systemInstruction = '') => {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
         throw new Error('GROQ_API_KEY not configured');
     }
+    
+    let messages = [];
+    if (Array.isArray(promptOrMessages)) {
+        messages = promptOrMessages;
+    } else {
+        if (systemInstruction) {
+            messages.push({ role: 'system', content: systemInstruction });
+        }
+        messages.push({ role: 'user', content: promptOrMessages });
+    }
+
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -29,8 +40,9 @@ const generateViaGroq = async (prompt) => {
         },
         body: JSON.stringify({
             model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
-            messages: [{ role: 'user', content: prompt }],
+            messages,
             temperature: 0.7,
+            max_tokens: 1000,
         }),
     });
     if (!response.ok) {
@@ -38,25 +50,27 @@ const generateViaGroq = async (prompt) => {
         throw new Error(`Groq request failed: ${response.status} ${err}`);
     }
     const data = await response.json();
-    // Groq returns choices[0].message.content
-    return { response: { text: () => data.choices[0].message.content } };
+    const content = data.choices?.[0]?.message?.content || '';
+    return { response: { text: () => content } };
 };
 
-// Try Gemini first (with 10s timeout), then Groq fallback immediately
-const generateWithRetry = async (prompt) => {
+// Primary: Groq LLM, Secondary Fallback: Gemini LLM
+const generateWithRetry = async (prompt, systemInstruction = '') => {
+    if (process.env.GROQ_API_KEY) {
+        try {
+            return await generateViaGroq(prompt, systemInstruction);
+        } catch (groqErr) {
+            console.warn('Groq failed, attempting Gemini fallback:', groqErr.message || groqErr);
+        }
+    }
     try {
         return await Promise.race([
             model.generateContent(prompt),
             new Promise((_, reject) => setTimeout(() => reject(new Error('Gemini Timeout')), 10000))
         ]);
     } catch (error) {
-        console.warn('Gemini failed or timed out, attempting Groq fallback immediately:', error.message || error);
-        try {
-            return await generateViaGroq(prompt);
-        } catch (groqErr) {
-            console.error('Groq fallback also failed:', groqErr);
-            throw error; // throw original Gemini error/timeout
-        }
+        console.error('All AI providers failed:', error.message || error);
+        throw error;
     }
 };
 
@@ -155,12 +169,12 @@ router.post('/chat', authMiddleware, async (req, res) => {
                 }
                 return res.json(data);
             }
-            console.warn(`[RAG] Python service failed: ${response.status} — falling back to legacy Gemini`);
+            console.warn(`[RAG] Python service failed: ${response.status} — falling back to Node direct LLM`);
         } catch (e) {
-            console.warn(`[RAG] Python service error: ${e.message} — falling back to legacy Gemini`);
+            console.warn(`[RAG] Python service error: ${e.message} — falling back to Node direct LLM`);
         }
 
-        // 2. Legacy Fallback: Gemini direct (no RAG)
+        // 2. Direct LLM Fallback (Groq primary, Gemini secondary)
         // ── Emotional tone detection (server-side reinforcement) ──
         const msg = message.toLowerCase();
         let emotionalHint = '';
@@ -178,33 +192,60 @@ router.post('/chat', authMiddleware, async (req, res) => {
 
         const finalSystemPrompt = (systemPrompt || `You are Runli Coach — a personal AI fitness coach. You are concise, warm, science-backed, and deeply personal. Never be generic. Replies must be SHORT (2-4 sentences max) unless the user explicitly asks for a full plan. Never mention OpenAI, ChatGPT, or Gemini.`) + emotionalHint;
 
-        let chatHistory = history
-            .filter(m => m.text?.trim())
-            .slice(-10)
-            .map(m => ({
-                role: m.type === 'user' ? 'user' : 'model',
-                parts: [{ text: m.text }],
-            }));
+        let text = '';
 
-        // Gemini startChat requires the history to start with a 'user' message
-        const firstUserIdx = chatHistory.findIndex(m => m.role === 'user');
-        if (firstUserIdx !== -1) {
-            chatHistory = chatHistory.slice(firstUserIdx);
-        } else {
-            chatHistory = [];
+        // Try Groq Chat first
+        if (process.env.GROQ_API_KEY) {
+            try {
+                const groqMessages = [
+                    { role: 'system', content: finalSystemPrompt }
+                ];
+                history.slice(-10).forEach(m => {
+                    if (m.text?.trim()) {
+                        groqMessages.push({
+                            role: m.type === 'user' ? 'user' : 'assistant',
+                            content: m.text
+                        });
+                    }
+                });
+                groqMessages.push({ role: 'user', content: message });
+
+                const groqRes = await generateViaGroq(groqMessages);
+                text = groqRes.response.text().trim();
+            } catch (groqErr) {
+                console.warn('Groq chat fallback failed, attempting Gemini:', groqErr.message || groqErr);
+            }
         }
 
-        const chat = model.startChat({
-            history: chatHistory,
-            systemInstruction: { parts: [{ text: finalSystemPrompt }] },
-            generationConfig: { maxOutputTokens: 300, temperature: 0.75, topP: 0.9 },
-        });
+        // Secondary fallback to Gemini
+        if (!text) {
+            let chatHistory = history
+                .filter(m => m.text?.trim())
+                .slice(-10)
+                .map(m => ({
+                    role: m.type === 'user' ? 'user' : 'model',
+                    parts: [{ text: m.text }],
+                }));
 
-        const result = await Promise.race([
-            chat.sendMessage(message),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Gemini Chat Timeout')), 12000))
-        ]);
-        const text = (await result.response).text().trim();
+            const firstUserIdx = chatHistory.findIndex(m => m.role === 'user');
+            if (firstUserIdx !== -1) {
+                chatHistory = chatHistory.slice(firstUserIdx);
+            } else {
+                chatHistory = [];
+            }
+
+            const chat = model.startChat({
+                history: chatHistory,
+                systemInstruction: { parts: [{ text: finalSystemPrompt }] },
+                generationConfig: { maxOutputTokens: 300, temperature: 0.75, topP: 0.9 },
+            });
+
+            const result = await Promise.race([
+                chat.sendMessage(message),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Gemini Chat Timeout')), 12000))
+            ]);
+            text = (await result.response).text().trim();
+        }
 
         return res.json({ 
             text, 

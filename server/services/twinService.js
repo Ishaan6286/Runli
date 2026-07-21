@@ -68,8 +68,34 @@ export const generateTwinInsights = async (userId) => {
         }
         `;
 
-        const result = await model.generateContent(prompt);
-        let text = result.response.text().trim();
+        let text = '';
+        if (process.env.GROQ_API_KEY) {
+            try {
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+                    },
+                    body: JSON.stringify({
+                        model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
+                        messages: [{ role: 'user', content: prompt }],
+                        temperature: 0.7,
+                    }),
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    text = data.choices?.[0]?.message?.content?.trim() || '';
+                }
+            } catch (groqErr) {
+                console.warn("Groq failed in twinService, attempting Gemini:", groqErr.message);
+            }
+        }
+
+        if (!text) {
+            const result = await model.generateContent(prompt);
+            text = result.response.text().trim();
+        }
         
         if (text.startsWith('```json')) text = text.substring(7);
         if (text.startsWith('```')) text = text.substring(3);
