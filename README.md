@@ -342,22 +342,4 @@ The compose stack includes: `client` (Nginx), `server` (Node.js), `mongodb`, `re
 
 ---
 
-## Contributing
-
-Pull requests are welcome. Please open an issue first to discuss what you would like to change.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-
-## License
-
-Distributed under the **ISC License**. See `package.json` for details.
-
----
-
 <p align="center">Built with ❤️ by <a href="https://github.com/Ishaan6286">Ishaan6286</a></p>
