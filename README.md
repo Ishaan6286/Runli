@@ -1,259 +1,363 @@
-# Runli - Fitness Tracker PWA
+﻿# Runli
 
-A comprehensive fitness tracking Progressive Web App built with React, featuring workout tracking, habit monitoring, diet planning, and more.
+> **Your AI-powered fitness companion** — personalized workout tracking, intelligent diet planning, real-time pose analysis, and a RAG-augmented coach that remembers your history.
 
-![Runli App](public/icon-512.png)
-
-## 🌟 Features
-
-### 📊 Dashboard
-- Daily progress tracking (water, calories, protein, gym attendance)
-- Weekly streak visualization
-- Monthly activity calendar
-- AI-powered daily insights
-- Quick access to all features
-
-### 🏋️ Gym Mode
-- Dynamic workout split based on training frequency (2-7 days/week)
-- Exercise tracking with weight and RPE logging
-- Workout timer and rest timer (30s - 150s)
-- Fullscreen plank timer (30s - 5min)
-- Plate calculator for barbell exercises
-- Exercise form videos
-
-### 🎯 Habit Tracker
-- Create custom habits
-- Track daily completion
-- Streak calculations
-- Visual progress indicators
-- Toast notifications for achievements
-
-### 🍽️ Diet Plan Generator
-- AI-powered meal plans
-- Budget-based filtering (₹1k - ₹50k)
-- Dietary preferences (Veg/Non-Veg/Vegan)
-- Meal variety optimization
-- Custom meal planning
-
-### 📈 Plan Page
-- Personalized workout split generation
-- BMI and fitness metrics
-- Weekly workout schedule
-- Calorie and protein recommendations
-
-### 🛒 Shopping
-- Fitness product catalog
-- Category filtering
-- Price sorting
-- Product details and ratings
-
-### 🎥 Video Dashboard
-- Exercise form videos
-- Common mistakes videos
-- Organized by muscle group
-- Adjustable video player
-
-## 📱 Progressive Web App
-
-Runli is optimized as a PWA and can be installed on mobile devices:
-
-### Installation
-
-**Android (Chrome):**
-1. Open the app in Chrome
-2. Tap menu (⋮) → "Add to Home screen"
-3. Confirm installation
-
-**iOS (Safari):**
-1. Open the app in Safari
-2. Tap Share → "Add to Home Screen"
-3. Confirm installation
-
-### PWA Features
-- ✅ Fullscreen app experience
-- ✅ Offline-ready (with service worker)
-- ✅ App icon on home screen
-- ✅ Native app feel
-- ✅ Fast loading
-- ✅ Mobile-optimized layouts
-
-## 🚀 Tech Stack
-
-### Frontend
-- **React** - UI framework
-- **React Router** - Navigation
-- **Lucide React** - Icons
-- **PapaParse** - CSV parsing
-- **React Select** - Enhanced select inputs
-
-### Backend
-- **Node.js** - Runtime
-- **Express** - Web framework
-- **MongoDB** - Database
-- **Mongoose** - ODM
-- **JWT** - Authentication
-- **Google Gemini AI** - AI-powered features
-
-### Build Tools
-- **Vite** - Build tool and dev server
-- **ESLint** - Code linting
-- **PostCSS** - CSS processing
-
-## 🛠️ Installation & Setup
-
-### Prerequisites
-- Node.js (v16 or higher)
-- MongoDB (local or Atlas)
-- npm or yarn
-
-### Clone Repository
-```bash
-git clone https://github.com/yourusername/runli.git
-cd runli
-```
-
-### Install Dependencies
-```bash
-npm install
-```
-
-### Environment Variables
-Create a `.env` file in the root directory:
-```env
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret_key
-GEMINI_API_KEY=your_google_gemini_api_key
-PORT=5001
-```
-
-### Run Development Servers
-
-**Backend:**
-```bash
-npm run server
-```
-
-**Frontend:**
-```bash
-npm run dev
-```
-
-The app will be available at `http://localhost:5173`
-
-### Build for Production
-```bash
-npm run build
-```
-
-## 📁 Project Structure
-
-```
-runli/
-├── public/              # Static assets
-│   ├── manifest.json    # PWA manifest
-│   ├── icon-192.png     # App icon (192x192)
-│   └── icon-512.png     # App icon (512x512)
-├── server/              # Backend code
-│   ├── models/          # MongoDB models
-│   ├── routes/          # API routes
-│   └── server.js        # Express server
-├── src/                 # Frontend code
-│   ├── components/      # React components
-│   ├── context/         # React context
-│   ├── pages/           # Page components
-│   ├── services/        # API services
-│   ├── utils/           # Utility functions
-│   ├── App.jsx          # Main app component
-│   └── main.jsx         # Entry point
-├── .gitignore
-├── package.json
-├── vite.config.js
-└── README.md
-```
-
-## 🎨 Design Features
-
-- **Dark Theme** - Easy on the eyes
-- **Emerald Green Accents** - Modern color scheme
-- **Glassmorphism** - Premium UI effects
-- **Responsive Design** - Works on all devices
-- **Touch-Optimized** - 44px minimum touch targets
-- **Smooth Animations** - Polished user experience
-
-## 📊 Data Persistence
-
-All user data is automatically saved to MongoDB:
-- Daily progress (water, calories, protein, gym)
-- Habit completions and streaks
-- Workout history and exercise logs
-- Diet plans and meal selections
-- User profile and preferences
-
-### Daily Reset
-- Trackers reset automatically at midnight
-- Historical data preserved in database
-- Streaks calculated correctly
-
-## 🔒 Authentication
-
-- JWT-based authentication
-- Secure password hashing
-- Protected API routes
-- User session management
-
-## 🌐 API Endpoints
-
-### Authentication
-- `POST /api/auth/signup` - User registration
-- `POST /api/auth/login` - User login
-
-### User
-- `GET /api/user/profile` - Get user profile
-- `PUT /api/user/profile` - Update user profile
-
-### Progress
-- `GET /api/progress/:date` - Get daily progress
-- `POST /api/progress/:date` - Update daily progress
-- `GET /api/progress/range/:startDate/:endDate` - Get progress range
-
-### Habits
-- `GET /api/habits` - Get all habits
-- `POST /api/habits` - Create habit
-- `PUT /api/habits/:id` - Update habit
-- `DELETE /api/habits/:id` - Delete habit
-- `POST /api/habits/:id/log` - Log habit completion
-
-### Diet
-- `GET /api/diet` - Get diet plans
-- `POST /api/diet` - Create diet plan
-
-### AI
-- `GET /api/ai/insight` - Get daily AI insight
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 👤 Author
-
-**Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-
-## 🙏 Acknowledgments
-
-- Exercise videos from YouTube
-- Icons from Lucide React
-- AI powered by Google Gemini
-- Fonts from Google Fonts
-
-## 📞 Support
-
-For support, email your@email.com or open an issue on GitHub.
+[![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![Python](https://img.shields.io/badge/Python-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![MongoDB](https://img.shields.io/badge/MongoDB-6.0-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
 ---
 
-**Made with ❤️ for fitness enthusiasts**
+## Overview
+
+Runli is a **full-stack fitness lifestyle application** built on the MERN stack with a dedicated Python AI microservice. It goes beyond simple habit logging by combining:
+
+- **Real-time computer vision** — a YOLOv8 pose-detection model counts your reps and scores your form live in the browser
+- **RAG-augmented AI coaching** — a ChromaDB vector store indexes your entire workout and nutrition history so the AI coach can answer questions grounded in *your* data
+- **Adaptive meal planning** — Gemini 2.0 Flash generates personalised diet plans that respect your budget, macros, and Indian food preferences
+- **A Digital Twin engine** — analyses your last 30 days of behaviour to surface patterns about your workout consistency, diet adherence, and recovery cycles
+- **Tiered subscriptions** — Free / Pro / Elite tiers gated through Razorpay recurring billing
+
+**Who it is for:** fitness enthusiasts who want a single intelligent app rather than five disconnected trackers — and developers/recruiters who want to see a production-grade full-stack + AI integration built end-to-end.
+
+---
+
+## Key Features
+
+### 🏋️ Workout & Gym Mode
+
+- **Live pose detection** — YOLOv8-Pose (via OpenCV + Ultralytics in the Python service) analyses webcam frames in real time, counts reps, and computes a form-quality score
+- **Exercise history** — every completed set is persisted to MongoDB and simultaneously ingested into the RAG vector store for future AI recall
+- **Nearby gym finder** — Google Places API locates gyms within 5 km, sorted by distance, with estimated monthly fees
+
+### 🥗 Nutrition & Diet Planning
+
+- **AI-generated meal plans** — Gemini 2.0 Flash produces weekly diet plans tailored to the user's caloric target, macronutrient split, dietary preferences, and budget
+- **Food vision analysis** — upload a photo of your meal; the backend identifies the dish (via Gemini Vision or a curated seed database) and returns calorie/macro breakdowns
+- **Food logging** — daily `FoodLog` entries track cumulative calories, protein, carbs, and fats with a per-day summary view
+
+### 🤖 AI-Powered Features
+
+- **RAG Coach (`/coach`)** — conversational AI coach backed by ChromaDB semantic search over personal history; answers like *"How has my protein been this week?"* are grounded in real data
+- **Digital Twin** — a Gemini analysis of your 30-day activity window that produces structured JSON insights covering workout behaviour, diet adherence, recovery patterns, and motivation cycles
+- **ML Predictions** — an XGBoost model (inside the Python service) predicts fitness outcomes (e.g. likely burnout, habit adherence probability) based on historical feature vectors
+- **Gemini → Groq fallback** — if the primary Gemini API is rate-limited, the service automatically falls back to Groq (Llama 3.1 8B Instant) with zero user-visible impact
+
+### 📊 Progress & Analytics
+
+- **Daily progress dashboard** — logs gym attendance, calories consumed, protein, water, sleep, mood score, and steps
+- **Recharts visualisations** — trend lines, bar charts, and streak visualisations across all tracked metrics
+- **Fitness Score** — a composite daily score computed from multiple wellness dimensions
+- **Admin analytics** — aggregated user-level dashboard for platform-wide insights
+
+### 🧘 Wellness & Habit Tracking
+
+- **Habit system** — full CRUD with daily completion logging, streak tracking, and a visual `HabitLog` collection
+- **BMI calculator** — interactive real-time component with health-range indicators
+- **Wellness page** — holistic overview combining sleep, mood, hydration, and activity data
+
+### 🔐 Authentication & User Profiles
+
+- **Email/password** — bcrypt-hashed passwords, JWT-issued tokens
+- **Google OAuth 2.0** — Passport.js `GoogleStrategy`, session-based flow
+- **User onboarding** — collects fitness goal, target weight, dietary preferences, and budget during first-time setup
+
+### 💳 Subscriptions (Razorpay)
+
+- **Free / Pro (₹99/mo) / Elite (₹199/mo)** tiers
+- Razorpay recurring subscription API with webhook-verified payment events
+- Feature gating via `subscriptionMiddleware` based on the authenticated user's plan tier
+
+### 📱 Progressive Web App (PWA)
+
+- Installable on mobile via `vite-plugin-pwa`
+- Offline capability for key read-only views
+
+---
+
+## Tech Stack
+
+| Category | Technologies |
+|---|---|
+| **Frontend** | React 19, Vite 7, React Router DOM v7, Framer Motion, Recharts, Lucide React, React Select |
+| **Styling** | Tailwind CSS v4, PostCSS |
+| **Backend (Node)** | Express 5, Node.js, Passport.js (Google OAuth 2.0), JWT, bcryptjs, Multer |
+| **AI Service (Python)** | FastAPI, Uvicorn, YOLOv8 (Ultralytics), OpenCV, XGBoost, scikit-learn, sentence-transformers |
+| **LLM / AI** | Google Gemini 2.0 Flash (`@google/generative-ai`), Groq Llama 3.1 8B (fallback) |
+| **Vector Store / RAG** | ChromaDB (persistent cosine-similarity collection), sentence-transformers embeddings |
+| **Database** | MongoDB 6.0 (Mongoose ODM) |
+| **Queue / Cache** | Redis 7 (BullMQ for background jobs, ioredis client) |
+| **Payments** | Razorpay (recurring subscriptions + webhooks) |
+| **External APIs** | Google Places API (nearby gyms), Google Maps, Deepgram (voice), Gemini Vision (food analysis) |
+| **Deployment** | Docker Compose (multi-service), Nginx (reverse proxy), Vercel (frontend static) |
+| **DevOps** | ESLint, Nodemon, PWA (`vite-plugin-pwa`), GitHub Actions |
+
+---
+
+## System Architecture
+
+```mermaid
+flowchart TD
+    User["👤 User (Browser / PWA)"]
+
+    subgraph Frontend["React Frontend (Vite, port 5173 / 80)"]
+        UI["Pages & Components"]
+        CTX["Context API (Auth, Personalization, Toast)"]
+    end
+
+    subgraph Node["Express Backend (port 5001)"]
+        Auth["Auth Routes\n(JWT + Google OAuth)"]
+        API["REST API Routes\n(habits, food, gym, diet,\nRAG, subscriptions, analytics)"]
+        MW["Middleware\n(authenticateToken, subscriptionGate)"]
+        BullMQ["BullMQ Workers\n(background ingestion)"]
+    end
+
+    subgraph Python["Python AI Service (FastAPI, port 8000)"]
+        RAG["RAG Endpoints\n(/rag/ingest, /rag/query)"]
+        YOLO["YOLOv8 Pose Detection\n(/pose/analyze)"]
+        XGB["XGBoost Predictor\n(/predict)"]
+        Voice["Voice Coach\n(WebSocket)"]
+        LLM["LLM Layer\nGemini 2.0 Flash → Groq Fallback"]
+    end
+
+    MongoDB[("MongoDB 6.0\nUsers, Habits, FoodLogs,\nExerciseHistory, DailyProgress,\nFitnessScore, Twin, Subscriptions")]
+    Redis[("Redis 7\nBullMQ queues\nSession cache")]
+    Chroma[("ChromaDB\nUser memory vectors\ncosine similarity")]
+
+    ExternalAPIs["External Services\nGoogle Places · Razorpay\nDeepgram · Gemini Vision"]
+
+    User --> Frontend
+    Frontend --> Node
+    Node --> Auth
+    Node --> API
+    API --> MW
+    MW --> BullMQ
+    API --> Python
+    Python --> RAG
+    Python --> YOLO
+    Python --> XGB
+    Python --> Voice
+    Python --> LLM
+    Node --> MongoDB
+    Node --> Redis
+    Python --> Chroma
+    Node --> ExternalAPIs
+```
+
+---
+
+## Project Structure
+
+```
+runli/
+├── src/                        # React frontend
+│   ├── pages/                  # Route-level pages
+│   │   ├── AICoach.jsx         # RAG-powered chat coach
+│   │   ├── GymMode.jsx         # Live pose detection + workout tracker
+│   │   ├── DietPlan.jsx        # AI meal plan generator
+│   │   ├── HabitTracker.jsx    # Habit CRUD + streak tracking
+│   │   ├── Progress.jsx        # Progress charts & analytics
+│   │   ├── Today.jsx           # Daily dashboard (OS home tab)
+│   │   ├── Wellness.jsx        # Holistic wellness overview
+│   │   ├── Upgrade.jsx         # Subscription tiers (Razorpay)
+│   │   └── BillingDashboard.jsx
+│   ├── components/             # Reusable UI components
+│   ├── context/                # React Context (Auth, Personalization, Toast)
+│   ├── hooks/                  # Custom React hooks
+│   └── services/               # Axios API wrappers
+│
+├── server/                     # Express backend (Node.js)
+│   ├── app.js                  # Express entry point
+│   ├── routes/                 # 17 route modules
+│   │   ├── aiRoutes.js         # AI endpoints (Gemini integration)
+│   │   ├── ragRoutes.js        # RAG memory management
+│   │   ├── gymRoutes.js        # Gym finder + exercise history
+│   │   ├── dietRoutes.js       # Meal plan generation
+│   │   ├── visionRoutes.js     # Food photo analysis (Gemini Vision)
+│   │   ├── subscriptionRoutes.js # Razorpay billing
+│   │   ├── twinRoutes.js       # Digital Twin
+│   │   ├── habitRoutes.js      # Habit tracker CRUD
+│   │   ├── authRoutes.js       # JWT + OAuth
+│   │   └── ...
+│   ├── models/                 # Mongoose schemas
+│   ├── services/               # Business logic (twinService, ragService…)
+│   └── middleware/             # Auth, subscription gating
+│
+├── ai-service/                 # Python FastAPI microservice
+│   ├── main.py                 # FastAPI app
+│   │                           # RAG · YOLOv8 · XGBoost · Voice WebSocket
+│   └── requirements.txt
+│
+├── docker-compose.yml          # 5-service stack (client, server, mongodb, redis, ai-service)
+├── Dockerfile.client           # Nginx-served React build
+├── Dockerfile.server           # Node.js server
+├── nginx.conf                  # Reverse proxy config
+├── vercel.json                 # SPA rewrite rules (frontend-only deploy)
+└── .env.example                # All required environment variables
+```
+
+---
+
+## Local Setup
+
+### Prerequisites
+
+- **Node.js** ≥ 20
+- **Python** ≥ 3.10
+- **Docker & Docker Compose** (recommended — starts all 5 services automatically)
+- **MongoDB** (local or Atlas) and **Redis** (if not using Docker)
+
+### Option A — Docker Compose (recommended)
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Ishaan6286/Runli.git
+cd Runli
+
+# 2. Configure environment
+cp .env.example .env
+# Edit .env and fill in your API keys (see Environment Variables below)
+
+# 3. Start all services
+npm run docker:up
+
+# 4. Open the app
+# Frontend   → http://localhost
+# API        → http://localhost:5001
+# AI service → http://localhost:8000
+```
+
+### Option B — Manual (development)
+
+```bash
+# Terminal 1 — Frontend
+npm install
+npm run dev               # http://localhost:5173
+
+# Terminal 2 — Node backend
+npm run server            # http://localhost:5001
+
+# Terminal 3 — Python AI service
+cd ai-service
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
+---
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and populate the following:
+
+| Variable | Purpose | Required |
+|---|---|---|
+| `GEMINI_API_KEY` | Google Gemini 2.0 Flash (primary LLM) | ✅ |
+| `GROQ_API_KEY` | Groq Llama 3.1 fallback LLM | Recommended |
+| `JWT_SECRET` | JWT signing secret | ✅ |
+| `SESSION_SECRET` | Express session secret | ✅ |
+| `MONGODB_URI` | MongoDB connection string | ✅ |
+| `REDIS_URI` | Redis connection string | ✅ |
+| `AI_SERVICE_URL` | Python FastAPI service URL | ✅ |
+| `GOOGLE_CLIENT_ID` | Google OAuth 2.0 client ID | For OAuth |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth 2.0 client secret | For OAuth |
+| `GOOGLE_CALLBACK_URL` | OAuth redirect URI | For OAuth |
+| `GOOGLE_MAPS_API_KEY` | Google Places API (nearby gyms) | For gym finder |
+| `RAZORPAY_KEY_ID` | Razorpay API key | For billing |
+| `RAZORPAY_KEY_SECRET` | Razorpay API secret | For billing |
+| `RAZORPAY_WEBHOOK_SECRET` | Webhook signature verification | For billing |
+| `VISION_METHOD` | `mock` \| `gemini` \| `clarifai` | Optional (default: `mock`) |
+| `DEEPGRAM_API_KEY` | Deepgram voice transcription | Optional |
+
+> The app degrades gracefully — `VISION_METHOD=mock` uses a curated seed database, the gym finder falls back to mock data without `GOOGLE_MAPS_API_KEY`, and `GROQ_API_KEY` is only needed as an LLM fallback.
+
+---
+
+## API Overview
+
+The Express backend exposes 17 route modules under `/api/`:
+
+| Route | Description |
+|---|---|
+| `/api/auth` | Register, login, Google OAuth, JWT refresh |
+| `/api/user` | Profile management, onboarding |
+| `/api/habits` | Habit CRUD, completion logging, streaks |
+| `/api/food` | Food logging, daily macro summary |
+| `/api/diet` | AI meal plan generation (Gemini) |
+| `/api/vision` | Food photo → nutritional breakdown |
+| `/api/gym` | Nearby gyms, exercise history |
+| `/api/rag` | RAG memory ingest & query (proxied to Python service) |
+| `/api/ai` | General Gemini AI endpoints |
+| `/api/chat` | Conversational AI coach |
+| `/api/twin` | Digital Twin generation & retrieval |
+| `/api/progress` | Daily progress log |
+| `/api/score` | Fitness score computation |
+| `/api/analytics` | User and admin analytics |
+| `/api/prediction` | XGBoost outcome predictions |
+| `/api/subscription` | Razorpay subscription management |
+| `/api/context` | Personalisation context |
+
+---
+
+## Deployment
+
+### Docker (self-hosted / VPS)
+
+```bash
+npm run docker:up      # Build & start all 5 containers
+npm run docker:down    # Stop all containers
+```
+
+The compose stack includes: `client` (Nginx), `server` (Node.js), `mongodb`, `redis`, and `ai-service` (FastAPI). ChromaDB data, MongoDB data, and Redis data are persisted via named Docker volumes.
+
+### Vercel (frontend only)
+
+`vercel.json` is configured with a catch-all SPA rewrite. Deploy the Vite build output and point the backend environment variable at your hosted Express + Python services.
+
+---
+
+## Architecture Decisions
+
+| Decision | Rationale |
+|---|---|
+| **Separate Python AI microservice** | Python's ML ecosystem (YOLOv8, XGBoost, ChromaDB, OpenCV) has no comparable Node.js equivalent; isolating it keeps the Node backend lightweight and independently scalable |
+| **RAG over plain LLM** | Grounding the AI coach in the user's actual ChromaDB-indexed history prevents hallucination and makes coaching responses personalised and verifiable |
+| **Gemini → Groq fallback** | Gemini 2.0 Flash is the primary model for quality; Groq provides a free, fast fallback to prevent service interruption under rate limits |
+| **BullMQ + Redis** | RAG ingestion after each workout/food-log is fire-and-forget; BullMQ ensures it never blocks the user-facing request |
+| **JWT + session dual strategy** | JWTs for stateless API calls; Express sessions for the Google OAuth handshake flow |
+| **Razorpay** | Native INR recurring subscriptions with webhook-verified state transitions; avoids the complexity of Stripe's INR restrictions |
+
+---
+
+## Future Improvements
+
+- **WebSocket live coaching** — real-time voice feedback from the AI coach during workouts (Deepgram transcription infrastructure is already in place)
+- **React Native app** — convert the PWA to a native mobile experience
+- **Advanced ML models** — burnout prediction, personalised progressive overload recommendations
+- **Community features** — leaderboards, social habit accountability, and group challenges
+
+---
+
+## Contributing
+
+Pull requests are welcome. Please open an issue first to discuss what you would like to change.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## License
+
+Distributed under the **ISC License**. See `package.json` for details.
+
+---
+
+<p align="center">Built with ❤️ by <a href="https://github.com/Ishaan6286">Ishaan6286</a></p>
