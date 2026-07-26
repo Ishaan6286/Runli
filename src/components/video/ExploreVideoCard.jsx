@@ -4,8 +4,6 @@ import { PlayCircle, Clock, Dumbbell, Flame } from 'lucide-react';
 export default function ExploreVideoCard({ video, progress, duration, onClick }) {
   if (!video) return null;
 
-  const getThumbnail = (id) => `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
-
   // Calculate progress percentage if we have continue watching data
   const progressPercent = progress && duration ? Math.min((progress / duration) * 100, 100) : 0;
 
@@ -29,7 +27,7 @@ export default function ExploreVideoCard({ video, progress, duration, onClick })
     >
       <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#111' }}>
         <img 
-          src={getThumbnail(video.youtubeId)} 
+          src={video.thumbnail}
           alt={video.title} 
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           loading="lazy"

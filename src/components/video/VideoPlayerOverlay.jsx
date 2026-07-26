@@ -11,6 +11,7 @@ export default function VideoPlayerOverlay({ video, onClose }) {
   const [isFav, setIsFav] = useState(false);
   const [isWL, setIsWL] = useState(false);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const youtubeVideoId = video?.videoId;
 
   useEffect(() => {
     if (!video) return;
@@ -34,14 +35,14 @@ export default function VideoPlayerOverlay({ video, onClose }) {
 
   // Initialize Player
   useEffect(() => {
-    if (!scriptLoaded || !video) return;
+    if (!scriptLoaded || !video || !youtubeVideoId) return;
 
     const startSeconds = getProgressForVideo(video.id) || 0;
 
     playerRef.current = new window.YT.Player('yt-player-container', {
       height: '100%',
       width: '100%',
-      videoId: video.youtubeId,
+      videoId: youtubeVideoId,
       playerVars: {
         autoplay: 1,
         start: Math.floor(startSeconds),
@@ -61,7 +62,7 @@ export default function VideoPlayerOverlay({ video, onClose }) {
         playerRef.current.destroy();
       }
     };
-  }, [scriptLoaded, video]);
+  }, [scriptLoaded, video, youtubeVideoId]);
 
   const saveCurrentProgress = () => {
     if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
@@ -127,7 +128,13 @@ export default function VideoPlayerOverlay({ video, onClose }) {
 
         {/* Video Player Area */}
         <div style={{ width: '100%', aspectRatio: '16/9', background: '#000', flexShrink: 0 }}>
-          <div id="yt-player-container"></div>
+          {youtubeVideoId ? (
+            <div id="yt-player-container"></div>
+          ) : (
+            <div style={{ height: '100%', display: 'grid', placeItems: 'center', padding: '1rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+              This video is unavailable right now.
+            </div>
+          )}
         </div>
 
         {/* Content Area */}

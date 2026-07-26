@@ -168,7 +168,7 @@ export default function ExploreVideos() {
               {searchResults.map(video => (
                 <div key={video.id} onClick={() => handleVideoClick(video)} style={{ cursor: 'pointer' }}>
                   <div style={{ width: '100%', aspectRatio: '16/9', borderRadius: 'var(--r-lg)', overflow: 'hidden', marginBottom: '0.5rem', position: 'relative' }}>
-                    <img src={`https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`} alt={video.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={video.thumbnail} alt={video.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: '0 0 0.25rem 0', lineHeight: 1.3 }}>{video.title}</h3>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{video.duration} • {video.difficulty || video.category}</div>
@@ -188,7 +188,7 @@ export default function ExploreVideos() {
               <div 
                 style={{ 
                   position: 'relative', width: '100%', aspectRatio: '16/9', maxHeight: '500px', 
-                  backgroundImage: `url(https://img.youtube.com/vi/${heroVideo.youtubeId}/maxresdefault.jpg)`,
+                  backgroundImage: `url(${heroVideo.thumbnail})`,
                   backgroundSize: 'cover', backgroundPosition: 'center',
                   marginBottom: '2rem',
                   display: 'flex', alignItems: 'flex-end',
