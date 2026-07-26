@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Disallow API and backend endpoints
+Disallow: /api/
+
+# Disallow Admin routes
+Disallow: /admin/
+
+# Disallow Authentication & Onboarding pages
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /userinfo
+Disallow: /auth/
+
+# Sitemap directive
+Sitemap: https://runli.vercel.app/sitemap.xml
