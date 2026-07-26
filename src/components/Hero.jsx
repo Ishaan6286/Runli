@@ -1,7 +1,7 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Dumbbell, Salad, Brain, Zap } from 'lucide-react';
+import { ArrowRight, Dumbbell, Salad, Brain, Zap, TrendingUp, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo.png';
 
@@ -30,32 +30,46 @@ const staggerItem = {
 };
 
 const FEATURES = [
-  { icon: Brain,    label: 'AI Coach',      desc: 'Plans built around your body' },
-  { icon: Dumbbell, label: 'Smart Training', desc: 'Adaptive workout sessions' },
-  { icon: Salad,    label: 'Nutrition OS',  desc: 'Macro tracking that thinks' },
-  { icon: Zap,      label: 'Daily Streaks', desc: 'XP, badges, and habit rings' },
+  { icon: Brain,      label: 'AI Coach',          desc: '24/7 personalized fitness intelligence built around your body' },
+  { icon: Dumbbell,   label: 'Workout Planning',  desc: 'Adaptive training splits, exercise tracking & pose detection' },
+  { icon: Salad,      label: 'Nutrition Tracking',desc: 'Smart macro logging, meal plans & food vision analysis' },
+  { icon: TrendingUp, label: 'Progress Analytics',desc: 'Fitness score trends, body metrics & AI health insights' },
+  { icon: Zap,        label: 'Habit Streaks',     desc: 'Consistency rings, daily XP rewards & achievement badges' },
+  { icon: ShieldCheck,label: 'Data Privacy',      desc: 'Encrypted health data & private personalization engine' },
 ];
 
 const Hero = () => {
-  const { user } = useAuth();
+  const { user, token, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect authenticated users directly to /today (dashboard)
+  useEffect(() => {
+    if (!loading && (user || token)) {
+      navigate('/today', { replace: true });
+    }
+  }, [user, token, loading, navigate]);
 
   return (
     <motion.div
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
       style={{
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 'clamp(2rem, 6vw, 4rem) clamp(1.25rem, 5vw, 3rem)',
+        padding: 'clamp(2.5rem, 6vw, 5rem) clamp(1.25rem, 5vw, 3rem)',
         position: 'relative',
         color: 'var(--text-primary)',
       }}
     >
-      {/* Content */}
+      {/* Content Container */}
       <div
         style={{
-          maxWidth: '760px',
+          maxWidth: '840px',
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
@@ -71,7 +85,7 @@ const Hero = () => {
         >
           <img
             src={logo}
-            alt="Runli"
+            alt="Runli Logo"
             style={{
               width: 'clamp(180px, 50vw, 260px)',
               height: 'auto',
@@ -82,10 +96,10 @@ const Hero = () => {
 
         {/* Eyebrow chip */}
         <motion.div variants={staggerItem} initial="initial" animate="animate">
-          <span className="chip chip-primary">✦ AI Fitness Operating System</span>
+          <span className="chip chip-primary">✦ Next-Gen AI Fitness Operating System</span>
         </motion.div>
 
-        {/* Headline */}
+        {/* Main Headline */}
         <motion.h1
           variants={staggerItem}
           initial="initial"
@@ -112,7 +126,7 @@ const Hero = () => {
           </span>
         </motion.h1>
 
-        {/* Sub */}
+        {/* Subtitle */}
         <motion.p
           variants={staggerItem}
           initial="initial"
@@ -121,50 +135,50 @@ const Hero = () => {
             fontSize: 'clamp(1rem, 2.5vw, 1.125rem)',
             color: 'var(--text-secondary)',
             lineHeight: 1.65,
-            maxWidth: '560px',
+            maxWidth: '620px',
             margin: 0,
           }}
         >
-          One intelligent layer that learns your body, plans your nutrition, tracks your habits, and coaches your workouts — so every decision is backed by data.
+          Runli is an intelligent fitness companion that learns your unique biology, optimizes your nutrition, tracks habit streaks, and coaches your workout sessions in real time.
         </motion.p>
 
-        {/* CTAs */}
+        {/* Call to Action Buttons */}
         <motion.div
           variants={staggerItem}
           initial="initial"
           animate="animate"
-          style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}
+          style={{ display: 'flex', gap: '0.875rem', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}
         >
           <Link
-            to={user ? '/userinfo' : '/login'}
+            to="/login"
             className="btn btn-primary"
-            style={{ fontSize: '0.9375rem', padding: '0.875rem 1.75rem', borderRadius: 'var(--r-xl)' }}
+            style={{ fontSize: '0.9375rem', padding: '0.875rem 1.875rem', borderRadius: 'var(--r-xl)', textDecoration: 'none' }}
           >
-            Get your free AI fitness plan
+            Get Started
             <ArrowRight size={18} />
           </Link>
-          {user && (
-            <Link
-              to="/dashboard"
-              className="btn btn-secondary"
-              style={{ fontSize: '0.9375rem', padding: '0.8125rem 1.5rem', borderRadius: 'var(--r-xl)' }}
-            >
-              Go to Dashboard
-            </Link>
-          )}
+
+          <Link
+            to="/login"
+            className="btn btn-secondary"
+            style={{ fontSize: '0.9375rem', padding: '0.8125rem 1.75rem', borderRadius: 'var(--r-xl)', textDecoration: 'none' }}
+          >
+            Sign In
+          </Link>
         </motion.div>
 
-        {/* Feature grid */}
+        {/* Feature Highlights Grid */}
         <motion.div
           variants={staggerContainer}
           initial="initial"
           animate="animate"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '0.75rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '0.875rem',
             width: '100%',
-            maxWidth: '600px',
+            maxWidth: '780px',
+            marginTop: '1rem',
           }}
         >
           {FEATURES.map(({ icon: Icon, label, desc }) => (
@@ -176,14 +190,15 @@ const Hero = () => {
                 display: 'flex',
                 alignItems: 'flex-start',
                 gap: '0.75rem',
-                padding: '1rem 1.25rem',
+                padding: '1.125rem 1.25rem',
                 textAlign: 'left',
                 cursor: 'default',
               }}
             >
               <span
                 style={{
-                  width: 36, height: 36,
+                  width: 38,
+                  height: 38,
                   borderRadius: 'var(--r-lg)',
                   background: 'var(--primary-dim)',
                   display: 'grid',
@@ -191,13 +206,13 @@ const Hero = () => {
                   flexShrink: 0,
                 }}
               >
-                <Icon size={18} color="var(--primary-500)" />
+                <Icon size={20} color="var(--primary-500)" />
               </span>
               <div>
-                <div style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.15rem' }}>
+                <div style={{ fontWeight: 650, fontSize: '0.9375rem', marginBottom: '0.2rem' }}>
                   {label}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                <div style={{ fontSize: '0.78125rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                   {desc}
                 </div>
               </div>
@@ -205,14 +220,14 @@ const Hero = () => {
           ))}
         </motion.div>
 
-        {/* Social proof */}
+        {/* Social Proof */}
         <motion.p
           variants={staggerItem}
           initial="initial"
           animate="animate"
-          style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}
+          style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0.5rem 0 0' }}
         >
-          Free to start · No credit card required
+          Free to start · Instant setup · Built for performance
         </motion.p>
       </div>
     </motion.div>

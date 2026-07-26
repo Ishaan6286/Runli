@@ -1,8 +1,9 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import AppBackground from "./components/layout/AppBackground";
 import BottomNav from "./components/layout/BottomNav";
+import { useAuth } from "./context/AuthContext";
 
 // ── New OS tab pages ──────────────────────────────────
 import Today    from "./pages/Today";
@@ -23,7 +24,7 @@ import ForgotPassword from "./components/ForgotPassword";
 import UserInfo       from "./components/UserInfo";
 import AuthCallback   from "./pages/AuthCallback";
 
-// ── Legacy pages (still reachable via old URLs) ───────
+// ── Legacy pages ───────
 import Dashboard     from "./pages/Dashboard";
 import DietPlan      from "./pages/DietPlan";
 import GymMode       from "./pages/GymMode";
@@ -42,42 +43,52 @@ import { ToastProvider } from "./context/ToastContext";
 import { PersonalizationProvider } from "./context/PersonalizationContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
+// Route guard requiring authentication
+const ProtectedRoute = ({ children }) => {
+  const { user, token, loading } = useAuth();
+  if (loading) return null;
+  if (!user && !token) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
 const AnimatedRoutes = () => {
   const location = useLocation();
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        {/* Landing + auth */}
+        {/* Public Marketing Landing & Auth routes */}
         <Route path="/"                element={<Hero />} />
         <Route path="/login"           element={<Login />} />
         <Route path="/signup"          element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/userinfo"        element={<UserInfo />} />
         <Route path="/auth/callback"   element={<AuthCallback />} />
         <Route path="/bmi"             element={<BmiCalculator />} />
 
-        {/* ── Primary OS routes ── */}
-        <Route path="/today"    element={<Today />} />
-        <Route path="/progress" element={<Progress />} />
-        <Route path="/plan"     element={<Plan />} />
-        <Route path="/gym"      element={<Gym />} />
-        <Route path="/profile"  element={<Profile />} />
-        <Route path="/wellness" element={<Wellness />} />
-        <Route path="/coach"    element={<AICoach />} />
+        {/* ── Primary Protected OS routes ── */}
+        <Route path="/today"    element={<ProtectedRoute><Today /></ProtectedRoute>} />
+        <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
+        <Route path="/plan"     element={<ProtectedRoute><Plan /></ProtectedRoute>} />
+        <Route path="/gym"      element={<ProtectedRoute><Gym /></ProtectedRoute>} />
+        <Route path="/profile"  element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/wellness" element={<ProtectedRoute><Wellness /></ProtectedRoute>} />
+        <Route path="/coach"    element={<ProtectedRoute><AICoach /></ProtectedRoute>} />
+        <Route path="/userinfo" element={<ProtectedRoute><UserInfo /></ProtectedRoute>} />
 
-        {/* ── Legacy redirects ── */}
-        <Route path="/dashboard"  element={<Today />} />
-        <Route path="/diet-plan"  element={<DietPlan />} />
-        <Route path="/gym-mode"   element={<GymMode />} />
-        <Route path="/habits"     element={<HabitTracker />} />
-        <Route path="/videos"     element={<VideoDashboard />} />
-        <Route path="/me"         element={<Profile />} />
-        <Route path="/eat"        element={<Eat />} />
-        <Route path="/train"      element={<GymMode />} />
-        <Route path="/analytics"        element={<Analytics />} />
-        <Route path="/admin/analytics"  element={<AdminAnalytics />} />
-        <Route path="/upgrade"          element={<Upgrade />} />
-        <Route path="/billing"           element={<BillingDashboard />} />
+        {/* ── Protected Secondary & Legacy routes ── */}
+        <Route path="/dashboard"        element={<ProtectedRoute><Today /></ProtectedRoute>} />
+        <Route path="/diet-plan"        element={<ProtectedRoute><DietPlan /></ProtectedRoute>} />
+        <Route path="/gym-mode"         element={<ProtectedRoute><GymMode /></ProtectedRoute>} />
+        <Route path="/habits"           element={<ProtectedRoute><HabitTracker /></ProtectedRoute>} />
+        <Route path="/videos"           element={<ProtectedRoute><VideoDashboard /></ProtectedRoute>} />
+        <Route path="/me"               element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/eat"              element={<ProtectedRoute><Eat /></ProtectedRoute>} />
+        <Route path="/train"            element={<ProtectedRoute><GymMode /></ProtectedRoute>} />
+        <Route path="/analytics"        element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+        <Route path="/admin/analytics"  element={<ProtectedRoute><AdminAnalytics /></ProtectedRoute>} />
+        <Route path="/upgrade"          element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
+        <Route path="/billing"          element={<ProtectedRoute><BillingDashboard /></ProtectedRoute>} />
       </Routes>
     </AnimatePresence>
   );
@@ -87,14 +98,14 @@ function App() {
   return (
     <ToastProvider>
       <PersonalizationProvider>
-          <Router>
-            <AppBackground />
-            <ErrorBoundary>
-              <AnimatedRoutes />
-            </ErrorBoundary>
-            <BottomNav />
-            <ProUpgradeModal />
-          </Router>
+        <Router>
+          <AppBackground />
+          <ErrorBoundary>
+            <AnimatedRoutes />
+          </ErrorBoundary>
+          <BottomNav />
+          <ProUpgradeModal />
+        </Router>
       </PersonalizationProvider>
     </ToastProvider>
   );
