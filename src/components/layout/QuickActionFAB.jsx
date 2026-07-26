@@ -69,7 +69,7 @@ export default function QuickActionFAB() {
                 }}
               >
                 <div style={{ width: 28, height: 28, borderRadius: '50%', background: `${action.color}20`, display: 'grid', placeItems: 'center' }}>
-                  <action.icon size={14} color={action.color} />
+                  {React.createElement(action.icon, { size: 14, color: action.color })}
                 </div>
                 {action.label}
               </motion.button>

@@ -88,7 +88,7 @@ function EditTargetsModal({ currentTargets, profile, onSave, onReset, onClose })
         initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         onClick={e => e.stopPropagation()}
-        style={{ background: "var(--bg-card)", borderRadius: "var(--r-xl)", padding: "1.75rem 1.5rem", width: "90%", maxWidth: 420, boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}
+        style={{ background: "var(--bg-card)", padding: "2.5rem 2rem", width: "100%", height: "100%", maxWidth: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
           <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700 }}>Edit Daily Targets</h2>
