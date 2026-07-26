@@ -54,6 +54,7 @@ export default defineConfig({
         ]
       },
       workbox: {
+        navigateFallbackDenylist: [/^\/robots\.txt$/, /^\/sitemap\.xml$/, /^\/google.*\.html$/],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MiB — covers the current bundle
         runtimeCaching: [

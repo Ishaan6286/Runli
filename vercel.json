@@ -1,8 +1,45 @@
 {
-    "rewrites": [
+  "rewrites": [
+    {
+      "source": "/((?!api/|robots\\.txt|sitemap\\.xml|google[a-zA-Z0-9]+\\.html|.*\\.[a-zA-Z0-9]+$).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/robots.txt",
+      "headers": [
         {
-            "source": "/(.*)",
-            "destination": "/index.html"
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate"
         }
-    ]
+      ]
+    },
+    {
+      "source": "/sitemap.xml",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/xml; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/google6aa2542ff12fd36b.html",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/html; charset=utf-8"
+        }
+      ]
+    }
+  ]
 }
