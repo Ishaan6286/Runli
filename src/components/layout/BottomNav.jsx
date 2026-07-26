@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, TrendingUp, ClipboardList, Dumbbell, UserCircle2, Salad } from 'lucide-react';
+import { Home, TrendingUp, ClipboardList, Dumbbell, UserCircle2, Salad, Moon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { spring } from '../../utils/motion.js';
 import QuickActionFAB from './QuickActionFAB';
@@ -17,7 +17,7 @@ const HIDDEN_ON = [
 const NAV_ITEMS = [
   { to: '/today',    label: 'Today',    Icon: Home },
   { to: '/progress', label: 'Progress', Icon: TrendingUp },
-  { to: '/plan',     label: 'Plan',     Icon: ClipboardList },
+  { to: '/wellness', label: 'Sleep',    Icon: Moon },
   { to: '/gym',      label: 'Gym',      Icon: Dumbbell },
   { to: '/profile',  label: 'Profile',  Icon: UserCircle2 },
 ];

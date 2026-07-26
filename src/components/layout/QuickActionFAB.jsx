@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Salad, Dumbbell, Moon, Scale, X, TrendingUp, Tv2 } from 'lucide-react';
+import { Plus, Salad, Dumbbell, Moon, Scale, X, TrendingUp, Tv2, ClipboardList } from 'lucide-react';
 
 export default function QuickActionFAB() {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,11 +10,9 @@ export default function QuickActionFAB() {
   const toggle = () => setIsOpen(!isOpen);
 
   const actions = [
-    { id: 'meal', icon: Salad, label: 'Log Meal', color: 'var(--amber-500)', path: '/eat' },
-    { id: 'workout', icon: Dumbbell, label: 'Workout', color: 'var(--primary-500)', path: '/gym' },
-    { id: 'sleep', icon: Moon, label: 'Sleep', color: 'var(--blue-500)', path: '/wellness' },
+    { id: 'plan', icon: ClipboardList, label: 'Plan', color: 'var(--amber-500)', path: '/plan' },
     { id: 'weight', icon: Scale, label: 'Weight', color: 'var(--purple-500)', path: '/progress' },
-    { id: 'habits', icon: TrendingUp, label: 'Habits', color: 'var(--purple-500)', path: '/habits' },
+    { id: 'habits', icon: TrendingUp, label: 'Habits', color: 'var(--blue-500)', path: '/habits' },
     { id: 'videos', icon: Tv2, label: 'Explore Videos', color: 'var(--danger-500)', path: '/explore' },
   ];
 
