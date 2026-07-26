@@ -385,39 +385,74 @@ export default function MePage() {
             <Award size={18} color="var(--amber-500)" />
             Achievements ({earnedAchievements.length})
           </h2>
-          {earnedAchievements.length === 0 ? (
+          {Object.keys(achievementDefs).length === 0 ? (
             <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
               Complete workouts, log your meals, and use AI features to start unlocking achievements!
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
-              {earnedAchievements.map((earnedObj) => {
-                const def = achievementDefs[earnedObj.achievementId];
-                if (!def) return null;
+              {Object.values(achievementDefs).map((def) => {
+                // Find progress record
+                const record = earnedAchievements.find(a => a.achievementId === def.id);
+                const isUnlocked = record?.unlocked;
+                const progress = record?.progress || 0;
+                const target = def.target;
+                
                 const Icon = getAchievementIcon(def.category, def.id);
-                const color = getAchievementColor(def.category);
+                const baseColor = getAchievementColor(def.category);
+                
+                // If unlocked, use full color. If locked, use grayscale.
+                const color = isUnlocked ? baseColor : 'var(--text-muted)';
+                const bgColor = isUnlocked ? `${baseColor}15` : 'var(--bg-raised)';
+                const borderColor = isUnlocked ? `${baseColor}33` : 'var(--border-subtle)';
+                const iconBgColor = isUnlocked ? `${baseColor}22` : 'var(--bg-base)';
+                const opacity = isUnlocked ? 1 : 0.6;
+                const progressPct = Math.min((progress / target) * 100, 100);
+
                 return (
-                  <div key={def.id} onClick={() => setSelectedAchievement(def)} style={{
+                  <div key={def.id} onClick={() => setSelectedAchievement({ ...def, record })} style={{
                     padding: '0.875rem', borderRadius: 'var(--r-lg)',
-                    background: `${color}11`,
-                    border: `1px solid ${color}33`,
-                    opacity: 1,
+                    background: bgColor,
+                    border: `1px solid ${borderColor}`,
+                    opacity,
                     display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '0.5rem',
                     transition: 'all 200ms',
                     cursor: 'pointer'
                   }}>
                     <span style={{
                       width: 42, height: 42, borderRadius: 'var(--r-md)',
-                      background: `${color}22`,
+                      background: iconBgColor,
                       display: 'grid', placeItems: 'center',
+                      position: 'relative'
                     }}>
                       <Icon size={20} color={color} />
                     </span>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.8125rem', marginBottom: '0.2rem' }}>{def.title}</div>
-                      <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{def.desc}</div>
+                    <div style={{ width: '100%' }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.8125rem', marginBottom: '0.2rem', color: isUnlocked ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                        {def.title}
+                      </div>
+                      <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: '0.5rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {def.desc}
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      {!isUnlocked && target > 1 && (
+                        <div style={{ width: '100%' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>
+                            <span>Progress</span>
+                            <span>{progress} / {target}</span>
+                          </div>
+                          <div className="progress-track" style={{ height: 4, background: 'var(--bg-base)' }}>
+                            <div className="progress-fill" style={{ width: `${progressPct}%`, background: 'var(--text-muted)' }} />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <span className="chip chip-primary" style={{ background: color, color: '#fff', border: 'none' }}>+{def.xp} XP</span>
+                    {isUnlocked && (
+                      <span className="chip chip-primary" style={{ background: color, color: '#fff', border: 'none', marginTop: 'auto' }}>
+                        +{def.xp} XP
+                      </span>
+                    )}
                   </div>
                 );
               })}

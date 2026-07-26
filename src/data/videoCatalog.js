@@ -2,42 +2,89 @@ import { workoutVideos } from './workoutVideos';
 import { recipeVideos } from './recipeVideos';
 import { fitnessVideos } from './fitnessVideos';
 
+// Combine all catalogs
 export const videoCatalog = [
   ...workoutVideos.map(v => ({ ...v, type: 'workout' })),
   ...recipeVideos.map(v => ({ ...v, type: 'recipe' })),
   ...fitnessVideos.map(v => ({ ...v, type: 'fitness' }))
 ];
 
-export const getAllVideos = () => videoCatalog;
+// Helper to find a video by ID
+export function getVideoById(id) {
+  return videoCatalog.find(v => v.id === id);
+}
 
-export const getVideoById = (id) => videoCatalog.find(v => v.id === id);
-
-export const getVideosByCategory = (category) => 
-  videoCatalog.filter(v => v.category.toLowerCase() === category.toLowerCase());
-
-export const getVideosByType = (type) => 
-  videoCatalog.filter(v => v.type === type);
-
-export const searchVideos = (query) => {
-  if (!query) return [];
-  const lowerQuery = query.toLowerCase();
-  
-  return videoCatalog.filter(v => {
-    return v.title.toLowerCase().includes(lowerQuery) ||
-           v.category.toLowerCase().includes(lowerQuery) ||
-           (v.muscleGroup && v.muscleGroup.toLowerCase().includes(lowerQuery)) ||
-           (v.tags && v.tags.some(tag => tag.toLowerCase().includes(lowerQuery)));
-  });
-};
-
-export const getVideoByExerciseName = (exerciseName) => {
+// Helper to find a video by exercise name
+export function getVideoByExerciseName(exerciseName) {
   if (!exerciseName) return null;
-  const lowerName = exerciseName.toLowerCase();
+  const name = exerciseName.toLowerCase();
+  return videoCatalog.find(v => v.exercises && v.exercises.some(ex => ex.toLowerCase() === name || name.includes(ex.toLowerCase())));
+}
+
+// Netflix-style row helpers
+export function getTrending() {
+  // Mock trending: just grab a mix of popular categories
+  return videoCatalog
+    .filter(v => ['chest', 'legs', 'science', 'dinner'].includes(v.category))
+    .slice(0, 10);
+}
+
+export function getNewReleases() {
+  return videoCatalog.filter(v => v.isNew);
+}
+
+export function getBeginnerVideos() {
+  return videoCatalog.filter(v => v.difficulty === 'Beginner').slice(0, 15);
+}
+
+export function getAdvancedVideos() {
+  return videoCatalog.filter(v => v.difficulty === 'Advanced' || v.difficulty === 'Intermediate').slice(0, 15);
+}
+
+export function getVideosByCategory(category) {
+  return videoCatalog.filter(v => v.category === category);
+}
+
+export function getVideosByType(type) {
+  return videoCatalog.filter(v => v.type === type);
+}
+
+export function getVideosByMuscle(muscle) {
+  return videoCatalog.filter(v => v.muscleGroup && v.muscleGroup.toLowerCase().includes(muscle.toLowerCase()));
+}
+
+// ── Search & Filter ────────────────────────────────────────────────────────
+export function searchVideos(query, filters = {}) {
+  let results = [...videoCatalog];
+
+  // Apply search text
+  if (query) {
+    const q = query.toLowerCase();
+    results = results.filter(v => 
+      v.title.toLowerCase().includes(q) ||
+      (v.muscleGroup && v.muscleGroup.toLowerCase().includes(q)) ||
+      (v.category && v.category.toLowerCase().includes(q)) ||
+      (v.tags && v.tags.some(tag => tag.toLowerCase().includes(q))) ||
+      (v.exercises && v.exercises.some(ex => ex.toLowerCase().includes(q)))
+    );
+  }
+
+  // Apply filters
+  if (filters.difficulty && filters.difficulty.length > 0) {
+    results = results.filter(v => filters.difficulty.includes(v.difficulty));
+  }
   
-  // Direct match in tags or title
-  return videoCatalog.find(v => 
-    v.type === 'workout' && 
-    (v.title.toLowerCase().includes(lowerName) || 
-    (v.tags && v.tags.some(tag => tag.toLowerCase() === lowerName)))
-  );
-};
+  if (filters.type && filters.type.length > 0) {
+    results = results.filter(v => filters.type.includes(v.type));
+  }
+
+  if (filters.equipment && filters.equipment.length > 0) {
+    results = results.filter(v => {
+      if (!v.equipment) return false;
+      const eq = v.equipment.toLowerCase();
+      return filters.equipment.some(f => eq.includes(f.toLowerCase()));
+    });
+  }
+
+  return results;
+}

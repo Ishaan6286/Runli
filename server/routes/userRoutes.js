@@ -46,13 +46,24 @@ router.get("/profile", authMiddleware, async (req, res) => {
     }
 });
 
+// GET /api/user/achievements - Get all achievements (including locked with progress)
+router.get("/achievements", authMiddleware, async (req, res) => {
+    try {
+        const achievements = await Achievement.find({ userId: req.userId });
+        res.json({ achievements, definitions: ACHIEVEMENTS_DEF });
+    } catch (err) {
+        res.status(500).json({ message: "Server error fetching achievements" });
+    }
+});
+
 // PUT /api/user/profile - Update user profile
 router.put("/profile", authMiddleware, async (req, res) => {
     try {
         const {
             name, height, weight, age, gender, activityLevel, goal, dietPreference,
             targetWeight, experience, stressLevel, sleepHours, mealFrequency,
-            months, injuries, allergies, physiqueImage, bodyFatEstimate, workoutEnvironment, workoutPlan
+            months, injuries, allergies, physiqueImage, bodyFatEstimate, workoutEnvironment, workoutPlan,
+            calorieGoal, proteinGoal, waterGoal
         } = req.body;
 
         // ─── Deterministic validation (API-level bypass prevention) ───────────
@@ -117,6 +128,11 @@ router.put("/profile", authMiddleware, async (req, res) => {
         if (bodyFatEstimate !== undefined) updateFields.bodyFatEstimate = val(bodyFatEstimate);
         if (workoutEnvironment !== undefined) updateFields.workoutEnvironment = val(workoutEnvironment);
         if (workoutPlan !== undefined)    updateFields.workoutPlan = workoutPlan;
+        
+        // Custom targets
+        if (calorieGoal !== undefined) updateFields.calorieGoal = calorieGoal;
+        if (proteinGoal !== undefined) updateFields.proteinGoal = proteinGoal;
+        if (waterGoal !== undefined) updateFields.waterGoal = waterGoal;
 
         const user = await User.findByIdAndUpdate(
             req.userId,

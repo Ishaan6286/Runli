@@ -81,33 +81,48 @@ export default function BillingDashboard() {
   const PlanIcon = meta.icon;
 
   const handleCancel = async () => {
-    if (!cancelConfirm) {
-      setCancelConfirm(true);
-      return;
-    }
-    setCancelling(true);
-    setCancelError('');
+    if (!cancelConfirm) { setCancelConfirm(true); return; }
+    setCancelling(true); setCancelError('');
     try {
       await cancelSubscription();
       await reloadPlan();
-      setCancelSuccess(true);
-      setCancelConfirm(false);
+      setCancelSuccess(true); setCancelConfirm(false);
     } catch (err) {
       console.error(err);
       setCancelError('Failed to cancel. Please try again or contact support.');
-    } finally {
-      setCancelling(false);
-    }
+    } finally { setCancelling(false); }
   };
 
   const renewalDate = expiresAt
     ? new Date(expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
     : null;
 
-  if (loading) return (
+  // Safety timeout — never show spinner indefinitely
+  const [timedOut, setTimedOut] = useState(false);
+  useEffect(() => {
+    if (!loading) { setTimedOut(false); return; }
+    const t = setTimeout(() => setTimedOut(true), 6000);
+    return () => clearTimeout(t);
+  }, [loading]);
+
+  if (loading && !timedOut) return (
     <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', color: 'var(--text-muted)' }}>
       <Loader size={18} className="spin" />
       Loading billing…
+    </div>
+  );
+
+  if (timedOut) return (
+    <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', padding: '2rem', textAlign: 'center' }}>
+      <AlertTriangle size={40} color="var(--amber-500)" />
+      <h2 style={{ margin: 0, fontWeight: 700 }}>Couldn't load billing info</h2>
+      <p style={{ color: 'var(--text-secondary)', maxWidth: 320 }}>This usually means you're not logged in or the server is unreachable. Sign in and try again.</p>
+      <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <button onClick={() => { setTimedOut(false); reloadPlan(); }} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <RefreshCw size={15} /> Retry
+        </button>
+        <button onClick={() => navigate('/upgrade')} className="btn btn-primary">View Plans</button>
+      </div>
     </div>
   );
 

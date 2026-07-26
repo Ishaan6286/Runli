@@ -1,84 +1,115 @@
-const HISTORY_KEY = 'runli_video_history';
-const FAVORITES_KEY = 'runli_video_favorites';
-const WATCH_LATER_KEY = 'runli_video_watch_later';
+/**
+ * videoHistory.js
+ * LocalStorage wrapper for video progress tracking
+ */
 
-// HISTORY
+const HISTORY_KEY = 'runli_video_history';
+
 export const getWatchHistory = () => {
   try {
-    const data = localStorage.getItem(HISTORY_KEY);
-    return data ? JSON.parse(data) : {};
-  } catch {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
     return {};
   }
 };
 
+/**
+ * Update history with current progress
+ */
 export const saveWatchProgress = (videoId, progressSeconds, totalDurationSeconds) => {
   if (!videoId) return;
   try {
     const history = getWatchHistory();
+    const isCompleted = progressSeconds > 0 && totalDurationSeconds > 0 && (progressSeconds / totalDurationSeconds) >= 0.9;
+    
     history[videoId] = {
       progress: progressSeconds,
       duration: totalDurationSeconds,
-      lastWatched: Date.now()
+      lastWatched: Date.now(),
+      isCompleted
     };
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    
+    // Prune if > 100 items (keep latest 100)
+    const keys = Object.keys(history);
+    if (keys.length > 100) {
+      const sortedKeys = keys.sort((a, b) => history[b].lastWatched - history[a].lastWatched);
+      const pruned = {};
+      sortedKeys.slice(0, 100).forEach(k => pruned[k] = history[k]);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(pruned));
+    } else {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    }
   } catch (e) {
     console.error("Failed to save watch progress", e);
   }
 };
 
-export const getProgressForVideo = (videoId) => {
+/**
+ * Remove a specific video from history
+ */
+export const clearVideoFromHistory = (videoId) => {
   const history = getWatchHistory();
-  return history[videoId]?.progress || 0;
+  delete history[videoId];
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+};
+
+/**
+ * Clear all video history
+ */
+export const clearAllHistory = () => {
+  localStorage.removeItem(HISTORY_KEY);
+};
+
+export const getProgressForVideo = (videoId) => {
+  return getWatchHistory()[videoId] || null;
+};
+
+/**
+ * Get all history sorted by recent
+ */
+export const getRecentlyWatched = () => {
+  const history = getWatchHistory();
+  return Object.entries(history)
+    .sort((a, b) => b[1].lastWatched - a[1].lastWatched)
+    .map(([id, data]) => ({ id, ...data }));
 };
 
 export const getContinueWatching = () => {
   const history = getWatchHistory();
   return Object.entries(history)
-    // Filter out videos that are less than 10 seconds in, or finished (e.g. within 10s of the end)
-    .filter(([_, data]) => data.progress > 10 && data.progress < (data.duration - 10))
+    // Filter out videos that are less than 10 seconds in, or finished
+    .filter(([_, data]) => data.progress > 10 && !data.isCompleted)
     .sort((a, b) => b[1].lastWatched - a[1].lastWatched)
     .map(([id, data]) => ({ id, ...data }));
 };
 
-// FAVORITES
-export const getFavorites = () => {
-  try {
-    const data = localStorage.getItem(FAVORITES_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
+// ── Favorites & Watch Later ──────────────────────────────────────────
+
+const FAV_KEY = 'runli_video_favorites';
+const WL_KEY = 'runli_video_watch_later';
+
+const getList = (key) => {
+  try { return JSON.parse(localStorage.getItem(key) || '[]'); } 
+  catch { return []; }
 };
 
 export const toggleFavorite = (videoId) => {
-  const favs = getFavorites();
-  const newFavs = favs.includes(videoId) 
-    ? favs.filter(id => id !== videoId)
-    : [...favs, videoId];
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(newFavs));
-  return newFavs.includes(videoId);
+  let list = getList(FAV_KEY);
+  if (list.includes(videoId)) list = list.filter(id => id !== videoId);
+  else list.push(videoId);
+  localStorage.setItem(FAV_KEY, JSON.stringify(list));
+  return list.includes(videoId);
 };
 
-export const isFavorite = (videoId) => getFavorites().includes(videoId);
-
-// WATCH LATER
-export const getWatchLater = () => {
-  try {
-    const data = localStorage.getItem(WATCH_LATER_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
-};
+export const isFavorite = (videoId) => getList(FAV_KEY).includes(videoId);
 
 export const toggleWatchLater = (videoId) => {
-  const wl = getWatchLater();
-  const newWl = wl.includes(videoId) 
-    ? wl.filter(id => id !== videoId)
-    : [...wl, videoId];
-  localStorage.setItem(WATCH_LATER_KEY, JSON.stringify(newWl));
-  return newWl.includes(videoId);
+  let list = getList(WL_KEY);
+  if (list.includes(videoId)) list = list.filter(id => id !== videoId);
+  else list.push(videoId);
+  localStorage.setItem(WL_KEY, JSON.stringify(list));
+  return list.includes(videoId);
 };
 
-export const isWatchLater = (videoId) => getWatchLater().includes(videoId);
+export const isWatchLater = (videoId) => getList(WL_KEY).includes(videoId);

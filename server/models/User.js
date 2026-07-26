@@ -62,6 +62,9 @@ const userSchema = new mongoose.Schema(
       enum: ['Gym', 'Home', 'Outdoors', null], 
       default: null 
     },
+    calorieGoal: { type: Number, default: null },
+    proteinGoal: { type: Number, default: null },
+    waterGoal: { type: Number, default: null },
     workoutPlan: {
       type: mongoose.Schema.Types.Mixed,
       default: null
