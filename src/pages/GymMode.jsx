@@ -14,7 +14,6 @@ import { LockBadge } from '../components/ProGate.jsx';
 import { usePersonalization } from '../context/PersonalizationContext';
 import { getVideoByExerciseName } from '../data/videoCatalog';
 import VideoPlayerOverlay from '../components/video/VideoPlayerOverlay';
-import { exerciseVideos } from '../data/exerciseVideosMap';
 
 // Workout Split Data (Synced exactly with Today.jsx)
 const SPLITS = [
@@ -43,40 +42,7 @@ function getSplitByFrequency(freq = 4) {
     return split;
 }
 
-// YouTube video IDs from Video Dashboard - Comprehensive Exercise Library
 
-
-// Video Key Mapping - Intelligently matches exercise names to video keys
-const getVideoKeyForExercise = (exerciseName) => {
-    if (!exerciseName) return null;
-
-    const name = exerciseName.trim();
-
-    // Direct match (case-insensitive)
-    const directMatch = Object.keys(exerciseVideos).find(
-        key => key.toLowerCase() === name.toLowerCase()
-    );
-    if (directMatch) return directMatch;
-
-    // Fuzzy matching - find best match based on keywords
-    const nameLower = name.toLowerCase();
-
-    // Try to find a video key that contains most of the exercise name keywords
-    const bestMatch = Object.keys(exerciseVideos).find(key => {
-        const keyLower = key.toLowerCase();
-        // Check if the exercise name is contained in the key or vice versa
-        if (keyLower.includes(nameLower) || nameLower.includes(keyLower)) {
-            return true;
-        }
-        // Check for partial matches with main keywords
-        const nameWords = nameLower.split(/\s+/).filter(w => w.length > 3);
-        const keyWords = keyLower.split(/\s+/).filter(w => w.length > 3);
-        const matchCount = nameWords.filter(nw => keyWords.some(kw => kw.includes(nw) || nw.includes(kw))).length;
-        return matchCount >= Math.min(nameWords.length, 2); // At least 2 keywords match
-    });
-
-    return bestMatch || null;
-};
 
 // Audio Context for Beeps
 const playBeep = (freq = 440, duration = 0.1, type = 'sine') => {
@@ -111,7 +77,6 @@ export default function GymMode() {
     const [isResting, setIsResting] = useState(false);
 
     // Video State
-    const [currentVideo, setCurrentVideo] = useState(null);
     const [exploreVideo, setExploreVideo] = useState(null);
 
     // Daily Quote
@@ -195,7 +160,7 @@ export default function GymMode() {
                             sets: parseInt(sets),
                             reps: repsMax ? parseInt(repsMax) : parseInt(repsMin),
                             completed: false,
-                            videoKey: getVideoKeyForExercise(name.trim()),
+                            hasVideo: !!getVideoByExerciseName(adjustedName),
                             type: "strength"
                         });
                     } else {
@@ -457,18 +422,9 @@ export default function GymMode() {
 
     const playVideo = (e, workout) => {
         e.stopPropagation();
-        
         const exploreMatch = getVideoByExerciseName(workout.name);
         if (exploreMatch) {
             setExploreVideo(exploreMatch);
-            return;
-        }
-
-        if (workout.videoKey && exerciseVideos[workout.videoKey]) {
-            setCurrentVideo({
-                title: workout.name,
-                url: `https://www.youtube.com/embed/${exerciseVideos[workout.videoKey]}`
-            });
         }
     };
 
@@ -812,7 +768,7 @@ export default function GymMode() {
                                                         <ScanLine size={14} /> Analyze
                                                     </button>
                                                 )}
-                                                {workout.videoKey && (
+                                                {workout.hasVideo && (
                                                     <button className="btn-icon" onClick={(e) => playVideo(e, workout)} style={{ width: 36, height: 36, color: 'var(--primary-500)' }} title="Watch Form Video">
                                                         <PlayCircle size={22} />
                                                     </button>
