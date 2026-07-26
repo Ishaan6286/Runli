@@ -38,6 +38,16 @@ function EditTargetsModal({ currentTargets, profile, onSave, onReset, onClose })
   const handleSave = async () => {
     setSaving(true);
     const newTargets = saveCustomTargets({ calories: Number(cal), protein: Number(prot), water: parseFloat(water) });
+    
+    // Update local profile so other pages immediately see the new targets
+    try {
+      const profile = JSON.parse(localStorage.getItem("runliUserInfo") || "{}");
+      profile.calorieGoal = newTargets.calories;
+      profile.proteinGoal = newTargets.protein;
+      profile.waterGoal = newTargets.water;
+      localStorage.setItem("runliUserInfo", JSON.stringify(profile));
+    } catch {}
+
     // Persist to backend so notifications / other pages can use it
     try {
       await updateProfile({ calorieGoal: newTargets.calories, proteinGoal: newTargets.protein, waterGoal: newTargets.water });
@@ -71,14 +81,14 @@ function EditTargetsModal({ currentTargets, profile, onSave, onReset, onClose })
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}
       onClick={onClose}
     >
       <motion.div
-        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         onClick={e => e.stopPropagation()}
-        style={{ background: "var(--bg-card)", borderRadius: "var(--r-xl) var(--r-xl) 0 0", padding: "1.75rem 1.5rem calc(1.75rem + env(safe-area-inset-bottom, 0px))", width: "100%", maxWidth: 520, boxShadow: "0 -8px 40px rgba(0,0,0,0.4)" }}
+        style={{ background: "var(--bg-card)", borderRadius: "var(--r-xl)", padding: "1.75rem 1.5rem", width: "90%", maxWidth: 420, boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
           <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700 }}>Edit Daily Targets</h2>

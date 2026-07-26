@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Salad, Dumbbell, Moon, Scale, X, TrendingUp, Tv2, ClipboardList } from 'lucide-react';
+import { Plus, Salad, Dumbbell, Moon, Scale, X, TrendingUp, PlayCircle, ClipboardList } from 'lucide-react';
 
 export default function QuickActionFAB() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,7 +13,7 @@ export default function QuickActionFAB() {
     { id: 'plan', icon: ClipboardList, label: 'Plan', color: 'var(--amber-500)', path: '/plan' },
     { id: 'weight', icon: Scale, label: 'Weight', color: 'var(--purple-500)', path: '/progress' },
     { id: 'habits', icon: TrendingUp, label: 'Habits', color: 'var(--blue-500)', path: '/habits' },
-    { id: 'videos', icon: Tv2, label: 'Explore Videos', color: 'var(--danger-500)', path: '/explore' },
+    { id: 'videos', icon: PlayCircle, label: 'Explore Videos', color: 'var(--danger-500)', path: '/explore' },
   ];
 
   const handleAction = (path) => {

@@ -12,6 +12,7 @@ import { getRecommendations } from '../utils/recommendationEngine';
 import { useAuth } from '../context/AuthContext';
 import { usePersonalization } from '../context/PersonalizationContext';
 import { getDietPlan, updateProgress } from '../services/api';
+import { getTargets } from '../utils/nutritionTargets';
 import { getHabits, getTodayStatus, logHabit } from '../services/habitApi';
 import { useFitnessScore } from '../hooks/useFitnessScore';
 import FitnessScoreCard from '../components/dashboard/FitnessScoreCard';
@@ -56,6 +57,10 @@ function getTodaysWorkout(userInfo) {
   const freq = Number(userInfo?.frequency) || 4;
   const day = new Date().getDay();
   const idx = day === 0 ? 6 : day - 1;
+  
+  if (userInfo?.workoutPlan && userInfo.workoutPlan.length > 0) {
+      return userInfo.workoutPlan[idx % userInfo.workoutPlan.length];
+  }
   return SPLITS[idx % Math.max(freq, 1)];
 }
 
@@ -225,12 +230,14 @@ const WorkoutCard = ({ workout, navigate }) => (
         </button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem' }}>
-        {workout.exercises.map((ex, i) => (
+        {workout.exercises && workout.exercises.length > 0 ? workout.exercises.map((ex, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--primary-500)', flexShrink: 0, opacity: 0.7 }} />
-            {ex}
+            {typeof ex === 'string' ? ex : `${ex.name} ${ex.sets}×${ex.reps}`}
           </div>
-        ))}
+        )) : (
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Rest Day. No exercises.</div>
+        )}
       </div>
     </div>
   </div>
@@ -652,7 +659,8 @@ export default function Today() {
       focus: adjustWorkout(baseWorkout.focus, 'strength')
   };
   const { title, subtitle } = getGreetingState();
-  const waterGoal = userInfo.weight ? Math.round(userInfo.weight * 35) : 3000;
+  const targets   = getTargets(userInfo);
+  const waterGoal = targets.water ? Math.round(targets.water * 1000) : 3000;
   const aiTips    = getAISuggestions(wellness, userInfo, todayHabitStatus);
   const name      = user?.displayName || userInfo?.name || '';
   const habitsDoneCount = todayHabitStatus?.summary?.completed || 0;

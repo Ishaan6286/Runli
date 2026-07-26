@@ -108,6 +108,7 @@ export default function MePage() {
   const [newWeight, setNewWeight] = useState('');
   const [cluster, setCluster] = useState(null);
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [isAchievementsExpanded, setIsAchievementsExpanded] = useState(false);
   const { isPro, isElite, plan, triggerUpgrade } = usePlan();
 
   useEffect(() => {
@@ -391,7 +392,7 @@ export default function MePage() {
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
-              {Object.values(achievementDefs).map((def) => {
+              {(isAchievementsExpanded ? Object.values(achievementDefs) : Object.values(achievementDefs).slice(0, 4)).map((def) => {
                 // Find progress record
                 const record = earnedAchievements.find(a => a.achievementId === def.id);
                 const isUnlocked = record?.unlocked;
@@ -457,6 +458,23 @@ export default function MePage() {
                 );
               })}
             </div>
+          )}
+          {Object.keys(achievementDefs).length > 4 && (
+            <button
+              onClick={() => setIsAchievementsExpanded(!isAchievementsExpanded)}
+              style={{
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '0.3rem',
+                fontSize: '0.8125rem', color: 'var(--primary-500)', fontWeight: 600,
+                padding: '0.5rem 0 0 0', marginTop: '1rem', width: '100%', justifyContent: 'center'
+              }}
+            >
+              {isAchievementsExpanded ? (
+                <><ChevronUp size={16} /> Show Less</>
+              ) : (
+                <><ChevronDown size={16} /> Show All Achievements ({Object.keys(achievementDefs).length})</>
+              )}
+            </button>
           )}
         </motion.div>
 

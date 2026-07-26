@@ -42,6 +42,7 @@ import WorkoutScheduleSettings from "./pages/WorkoutScheduleSettings";
 import ExploreVideos from "./pages/ExploreVideos";
 import { ProUpgradeModal } from "./components/ProGate.jsx";
 import AchievementToast from "./components/AchievementToast";
+import BillingDashboard from "./pages/BillingDashboard";
 
 import BmiCalculator from "./components/BmiCalculator";
 import { ToastProvider } from "./context/ToastContext";
@@ -98,6 +99,7 @@ const AnimatedRoutes = () => {
         <Route path="/settings/notifications" element={<ProtectedRoute><NotificationSettings /></ProtectedRoute>} />
         <Route path="/settings/schedule"      element={<ProtectedRoute><WorkoutScheduleSettings /></ProtectedRoute>} />
         <Route path="/notifications"    element={<ProtectedRoute><NotificationCenter /></ProtectedRoute>} />
+        <Route path="/billing"          element={<ProtectedRoute><BillingDashboard /></ProtectedRoute>} />
       </Routes>
     </AnimatePresence>
   );

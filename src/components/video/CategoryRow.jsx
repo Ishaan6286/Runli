@@ -7,8 +7,6 @@ export default function CategoryRow({ title, videos, onVideoClick, onSeeAll }) {
   const [showLeft, setShowLeft] = useState(false);
   const [showRight, setShowRight] = useState(true);
 
-  if (!videos || videos.length === 0) return null;
-
   const handleScroll = () => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
@@ -22,6 +20,8 @@ export default function CategoryRow({ title, videos, onVideoClick, onSeeAll }) {
     window.addEventListener('resize', handleScroll);
     return () => window.removeEventListener('resize', handleScroll);
   }, [videos]);
+
+  if (!videos || videos.length === 0) return null;
 
   const scroll = (direction) => {
     if (scrollRef.current) {
