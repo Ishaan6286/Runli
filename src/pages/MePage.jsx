@@ -4,7 +4,7 @@ import {
   UserCircle2, Scale, TrendingUp, Award, ShoppingBag,
   Settings, LogOut, ChevronRight, Star, Zap, Target,
   Dumbbell, Flame, Activity, Calculator, ChevronDown, ChevronUp,
-  CreditCard, Crown,
+  CreditCard, Crown, Bell, Calendar, X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -51,15 +51,30 @@ function xpLevel(xp) {
   return { lvl, pct: Math.min(((xp - currXP) / (nextXP - currXP)) * 100, 100), nextXP };
 }
 
-/* ── Achievement definitions ── */
-const ACHIEVEMENTS = [
-  { id: 'first_workout', icon: Dumbbell, label: 'First Workout',  desc: 'Complete your first session',   color: 'var(--primary-500)' },
-  { id: 'streak_7',      icon: Flame,    label: '7-Day Streak',   desc: 'Workout 7 days in a row',        color: 'var(--amber-500)' },
-  { id: 'protein_goal',  icon: Target,   label: 'Protein King',   desc: 'Hit protein goal 5 times',       color: 'var(--purple-500)' },
-  { id: 'steps_10k',     icon: Activity, label: '10K Steps',      desc: 'Walk 10,000 steps in a day',     color: 'var(--blue-500)' },
-  { id: 'meal_log_7',    icon: Star,     label: 'Meal Planner',   desc: 'Log meals for 7 days',           color: 'var(--amber-400)' },
-  { id: 'wellness_70',   icon: Zap,      label: 'Wellness Pro',   desc: 'Score 70+ for 3 days in a row',  color: 'var(--primary-400)' },
-];
+/* ── Achievement definitions (Fallback/Icon Mapping) ── */
+const getAchievementIcon = (category, id) => {
+  if (category === 'Workouts') return Dumbbell;
+  if (category === 'Workout Streak') return Flame;
+  if (category === 'Nutrition') return Target;
+  if (category === 'Hydration') return Activity;
+  if (category === 'Cardio') return Target;
+  if (category === 'Habits') return Star;
+  if (category === 'Consistency') return Award;
+  if (category === 'AI Usage') return Zap;
+  return Award;
+};
+
+const getAchievementColor = (category) => {
+  if (category === 'Workouts') return 'var(--primary-500)';
+  if (category === 'Workout Streak') return 'var(--amber-500)';
+  if (category === 'Nutrition') return 'var(--purple-500)';
+  if (category === 'Hydration') return 'var(--blue-500)';
+  if (category === 'Cardio') return 'var(--blue-400)';
+  if (category === 'Habits') return 'var(--amber-400)';
+  if (category === 'Consistency') return 'var(--primary-400)';
+  if (category === 'AI Usage') return 'var(--purple-400)';
+  return 'var(--primary-500)';
+};
 
 /* ── Nav link row ── */
 const NavRow = ({ icon: Icon, label, sub, onClick, accent = 'var(--text-secondary)' }) => (
@@ -88,6 +103,8 @@ export default function MePage() {
   const [info, setInfo] = useState({});
   const [xp, setXp] = useState(0);
   const [earnedAchievements, setEarned] = useState([]);
+  const [achievementDefs, setAchievementDefs] = useState({});
+  const [selectedAchievement, setSelectedAchievement] = useState(null);
   const [newWeight, setNewWeight] = useState('');
   const [cluster, setCluster] = useState(null);
   const [showBreakdown, setShowBreakdown] = useState(false);
@@ -104,25 +121,18 @@ export default function MePage() {
           const fresh = { ...stored, ...res.user };
           setInfo(fresh);
           localStorage.setItem('runliUserInfo', JSON.stringify(fresh));
+          if (res.user.xp !== undefined) setXp(res.user.xp);
+        }
+        if (res.achievements) {
+          setEarned(res.achievements);
+        }
+        if (res.definitions) {
+          setAchievementDefs(res.definitions);
         }
       } catch (e) { console.error('Error syncing profile', e); }
     };
     loadProfile();
 
-    // Derive XP from activity data
-    try {
-      const progress = JSON.parse(localStorage.getItem('runliProgress')) || {};
-      const days = Object.keys(progress).length;
-      const gymDays = Object.values(progress).filter(p => p.wentToGym).length;
-      setXp(days * 40 + gymDays * 80);
-    } catch {}
-    // Check earned achievements
-    const earned = [];
-    try {
-      const history = JSON.parse(localStorage.getItem('gymModeHistory')) || {};
-      if (Object.keys(history).length > 0) earned.push('first_workout');
-    } catch {}
-    setEarned(earned);
     // Assign fitness archetype cluster
     try { setCluster(getUserCluster()); } catch {}
   }, []);
@@ -373,44 +383,54 @@ export default function MePage() {
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15 } }} className="card">
           <h2 style={{ fontSize: '1.0625rem', fontWeight: 600, margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Award size={18} color="var(--amber-500)" />
-            Achievements
+            Achievements ({earnedAchievements.length})
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
-            {ACHIEVEMENTS.map(({ id, icon: Icon, label, desc, color }) => {
-              const earned = earnedAchievements.includes(id);
-              return (
-                <div key={id} style={{
-                  padding: '0.875rem', borderRadius: 'var(--r-lg)',
-                  background: earned ? `${color}11` : 'var(--bg-raised)',
-                  border: `1px solid ${earned ? `${color}33` : 'var(--border-subtle)'}`,
-                  opacity: earned ? 1 : 0.5,
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '0.5rem',
-                  transition: 'all 200ms',
-                }}>
-                  <span style={{
-                    width: 42, height: 42, borderRadius: 'var(--r-md)',
-                    background: earned ? `${color}22` : 'rgba(255,255,255,0.04)',
-                    display: 'grid', placeItems: 'center',
+          {earnedAchievements.length === 0 ? (
+            <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+              Complete workouts, log your meals, and use AI features to start unlocking achievements!
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
+              {earnedAchievements.map((earnedObj) => {
+                const def = achievementDefs[earnedObj.achievementId];
+                if (!def) return null;
+                const Icon = getAchievementIcon(def.category, def.id);
+                const color = getAchievementColor(def.category);
+                return (
+                  <div key={def.id} onClick={() => setSelectedAchievement(def)} style={{
+                    padding: '0.875rem', borderRadius: 'var(--r-lg)',
+                    background: `${color}11`,
+                    border: `1px solid ${color}33`,
+                    opacity: 1,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '0.5rem',
+                    transition: 'all 200ms',
+                    cursor: 'pointer'
                   }}>
-                    <Icon size={20} color={earned ? color : 'var(--text-muted)'} />
-                  </span>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.8125rem', marginBottom: '0.2rem' }}>{label}</div>
-                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{desc}</div>
+                    <span style={{
+                      width: 42, height: 42, borderRadius: 'var(--r-md)',
+                      background: `${color}22`,
+                      display: 'grid', placeItems: 'center',
+                    }}>
+                      <Icon size={20} color={color} />
+                    </span>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.8125rem', marginBottom: '0.2rem' }}>{def.title}</div>
+                      <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{def.desc}</div>
+                    </div>
+                    <span className="chip chip-primary" style={{ background: color, color: '#fff', border: 'none' }}>+{def.xp} XP</span>
                   </div>
-                  {earned && <span className="chip chip-primary">Earned</span>}
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </motion.div>
 
         {/* ── Links ── */}
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.2 } }} className="card">
           <h2 style={{ fontSize: '1.0625rem', fontWeight: 600, margin: '0 0 0.5rem' }}>More</h2>
           <NavRow icon={Calculator}  label="BMI Calculator"  sub="Check your body mass index" onClick={() => navigate('/bmi')}         accent="var(--blue-500)" />
-          <NavRow icon={ShoppingBag} label="AI Marketplace"   sub="Curated supplements & gear"  onClick={() => navigate('/shopping')}    accent="var(--amber-500)" />
-          <NavRow icon={TrendingUp}  label="Habit Tracker"   sub="Build lasting habits"       onClick={() => navigate('/habits')}      accent="var(--purple-500)" />
+          <NavRow icon={Calendar}    label="Workout Schedule" sub="Set your routine and reminders" onClick={() => navigate('/settings/schedule')} accent="var(--amber-500)" />
+          <NavRow icon={Bell}        label="Notifications"   sub="Manage your preferences"    onClick={() => navigate('/settings/notifications')} accent="var(--purple-500)" />
           <NavRow icon={CreditCard}  label="Billing & Usage" sub="Manage your plan and limits" onClick={() => navigate('/billing')}    accent="#10b981" />
           <NavRow icon={Settings}    label="Edit Profile"    sub="Update your info & goals"   onClick={() => navigate('/userinfo')}    accent="var(--text-secondary)" />
           <div style={{ height: '0.5rem' }} />
@@ -430,6 +450,60 @@ export default function MePage() {
         </motion.div>
 
       </div>
+
+      {/* Achievement Modal Overlay */}
+      <AnimatePresence>
+        {selectedAchievement && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedAchievement(null)}
+            style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0,0,0,0.6)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '1rem', backdropFilter: 'blur(4px)'
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: 'var(--bg-card)', padding: '2rem', borderRadius: 'var(--r-xl)',
+                width: '100%', maxWidth: 400, position: 'relative', textAlign: 'center',
+                border: `1px solid ${getAchievementColor(selectedAchievement.category)}44`
+              }}
+            >
+              <button onClick={() => setSelectedAchievement(null)} className="btn-icon" style={{ position: 'absolute', top: 12, right: 12 }}>
+                <X size={20} />
+              </button>
+              
+              <div style={{
+                width: 80, height: 80, borderRadius: '50%', margin: '0 auto 1.5rem',
+                background: `${getAchievementColor(selectedAchievement.category)}22`,
+                display: 'grid', placeItems: 'center'
+              }}>
+                {React.createElement(getAchievementIcon(selectedAchievement.category, selectedAchievement.id), {
+                  size: 40, color: getAchievementColor(selectedAchievement.category)
+                })}
+              </div>
+              
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.5rem' }}>{selectedAchievement.title}</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', margin: '0 0 1.5rem', lineHeight: 1.5 }}>
+                {selectedAchievement.desc}
+              </p>
+              
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-raised)', padding: '0.5rem 1rem', borderRadius: 99 }}>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Reward:</span>
+                <span style={{ fontWeight: 700, color: getAchievementColor(selectedAchievement.category) }}>+{selectedAchievement.xp} XP</span>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </motion.div>
   );
 }

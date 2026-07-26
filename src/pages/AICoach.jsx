@@ -4,6 +4,7 @@ import { sendCoachMessage } from '../services/api';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Zap, Trash2, WifiOff, X, ChevronLeft } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 // ── Typing indicator dots ───────────────────────────────────────────────────
 const TypingDots = () => (
@@ -20,8 +21,18 @@ const TypingDots = () => (
 );
 
 // ── Single message bubble ───────────────────────────────────────────────────
-const MessageBubble = ({ msg }) => {
+const MessageBubble = ({ msg, onSearchVideo }) => {
   const isUser = msg.type === 'user';
+  
+  // Parse [SEARCH_VIDEO: query]
+  let displayHtml = msg.text;
+  let videoQuery = null;
+  const match = displayHtml.match(/\[SEARCH_VIDEO:\s*(.+?)\]/);
+  if (match) {
+    videoQuery = match[1];
+    displayHtml = displayHtml.replace(match[0], '');
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12, scale: 0.97 }}
@@ -52,8 +63,18 @@ const MessageBubble = ({ msg }) => {
             ? '0 4px 20px rgba(16,185,129,0.25)'
             : '0 2px 8px rgba(0,0,0,0.3)',
         }}
+        className="markdown-body"
       >
-        {msg.text}
+        <ReactMarkdown>{displayHtml}</ReactMarkdown>
+        {videoQuery && (
+          <button 
+            onClick={() => onSearchVideo(videoQuery)}
+            className="btn btn-primary" 
+            style={{ marginTop: '0.75rem', fontSize: '0.8125rem', padding: '0.5rem 1rem', width: '100%', background: 'var(--bg-card)', color: 'var(--primary-500)', border: '1px solid var(--primary-500)' }}
+          >
+            🎥 Search Videos for "{videoQuery}"
+          </button>
+        )}
       </div>
       {msg.type === 'model' && msg.rag_enabled && (
         <div style={{
@@ -190,10 +211,13 @@ const AICoach = () => {
         fontFamily: "'Plus Jakarta Sans', Inter, sans-serif",
         // leave room for the global BottomNav (~64px) + safe area
         paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+        alignItems: 'center', // Center layout on desktop
       }}>
 
         {/* ── Header ──────────────────────────────────────────────── */}
         <div style={{
+          width: '100%',
+          maxWidth: '800px',
           position: 'sticky',
           top: 0,
           zIndex: 30,
@@ -275,6 +299,8 @@ const AICoach = () => {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               style={{
+                width: '100%',
+                maxWidth: '800px',
                 background: 'rgba(245,158,11,0.1)',
                 borderBottom: '1px solid rgba(245,158,11,0.2)',
                 color: '#f59e0b',
@@ -300,6 +326,8 @@ const AICoach = () => {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               style={{
+                width: '100%',
+                maxWidth: '800px',
                 background: 'rgba(239,68,68,0.1)',
                 borderBottom: '1px solid rgba(239,68,68,0.2)',
                 color: '#f87171',
@@ -326,6 +354,8 @@ const AICoach = () => {
         {/* ── Messages area ───────────────────────────────────────── */}
         <div style={{
           flex: 1,
+          width: '100%',
+          maxWidth: '800px',
           overflowY: 'auto',
           padding: '1.25rem 1rem',
           display: 'flex',
@@ -389,6 +419,8 @@ const AICoach = () => {
 
         {/* ── Input area ──────────────────────────────────────────── */}
         <div style={{
+          width: '100%',
+          maxWidth: '800px',
           padding: '0.75rem 1rem',
           background: 'rgba(0,0,0,0.9)',
           backdropFilter: 'blur(20px)',

@@ -2,6 +2,8 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import Achievement from "../models/Achievement.js";
+import { ACHIEVEMENTS_DEF } from "../services/achievementEngine.js";
 
 const router = express.Router();
 
@@ -31,7 +33,13 @@ router.get("/profile", authMiddleware, async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        res.json({ user });
+        const achievements = await Achievement.find({ userId: req.userId });
+
+        res.json({ 
+            user, 
+            achievements, 
+            definitions: ACHIEVEMENTS_DEF 
+        });
     } catch (err) {
         console.error("Get profile error:", err.message);
         res.status(500).json({ message: "Server error" });
@@ -44,7 +52,7 @@ router.put("/profile", authMiddleware, async (req, res) => {
         const {
             name, height, weight, age, gender, activityLevel, goal, dietPreference,
             targetWeight, experience, stressLevel, sleepHours, mealFrequency,
-            months, injuries, allergies, physiqueImage, bodyFatEstimate, workoutEnvironment
+            months, injuries, allergies, physiqueImage, bodyFatEstimate, workoutEnvironment, workoutPlan
         } = req.body;
 
         // ─── Deterministic validation (API-level bypass prevention) ───────────
@@ -108,6 +116,7 @@ router.put("/profile", authMiddleware, async (req, res) => {
         if (physiqueImage !== undefined)  updateFields.physiqueImage = physiqueImage;
         if (bodyFatEstimate !== undefined) updateFields.bodyFatEstimate = val(bodyFatEstimate);
         if (workoutEnvironment !== undefined) updateFields.workoutEnvironment = val(workoutEnvironment);
+        if (workoutPlan !== undefined)    updateFields.workoutPlan = workoutPlan;
 
         const user = await User.findByIdAndUpdate(
             req.userId,

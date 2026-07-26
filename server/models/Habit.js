@@ -14,7 +14,6 @@ const habitSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['water', 'sleep', 'steps', 'meditation', 'stretching', 'supplements', 'custom'],
         default: 'custom'
     },
     icon: {

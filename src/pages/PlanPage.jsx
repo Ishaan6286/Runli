@@ -178,7 +178,11 @@ export default function Plan() {
   const bmr      = calcBMR(weight, height, age, gender);
   const calories = caloriesTarget(bmr, freq, targetPhysique);
   const water    = waterTarget(weight);
-  const split    = getSplitByFrequency(freq);
+  
+  // Use saved workout plan or fall back to generated split
+  const split    = user.workoutPlan && user.workoutPlan.length > 0 
+                    ? user.workoutPlan 
+                    : getSplitByFrequency(freq);
 
   let mainGoal = "-";
   if (targetWeight && targetDuration) {
@@ -255,8 +259,17 @@ export default function Plan() {
 
           {/* Workout Split */}
           <div className="card" style={{ marginBottom: "0.5rem" }}>
-            <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              Weekly Workout Split <span role="img" aria-label="workout">🏋️‍♂️</span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "1rem" }}>
+              <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                Weekly Workout Split <span role="img" aria-label="workout">🏋️‍♂️</span>
+              </div>
+              <button 
+                onClick={() => navigate('/workout-editor')}
+                className="btn btn-secondary"
+                style={{ padding: "0.5rem 1rem", fontSize: "0.9rem" }}
+              >
+                Edit Plan
+              </button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1rem" }}>
               {split.map((d, idx) => (
@@ -268,9 +281,15 @@ export default function Plan() {
                 }}>
                   <div style={{ color: "var(--primary-400)", fontWeight: 700, fontSize: "1.0625rem", marginBottom: "0.5rem" }}>
                     {d.day} <span style={{ color: "var(--text-primary)" }}>{d.focus}</span>
+                    {d.isRestDay && <span style={{ marginLeft: "0.5rem" }}>🏖️</span>}
                   </div>
                   <ul style={{ marginLeft: "1.25rem", listStyleType: "disc", color: "var(--text-secondary)", lineHeight: "1.6" }}>
-                    {d.exercises.map((ex, i) => <li key={i}>{ex}</li>)}
+                    {d.exercises.length > 0 
+                      ? d.exercises.map((ex, i) => (
+                          <li key={i}>{typeof ex === 'string' ? ex : `${ex.name} ${ex.sets}×${ex.reps}`}</li>
+                        ))
+                      : <li>Rest Day</li>
+                    }
                   </ul>
                 </div>
               ))}

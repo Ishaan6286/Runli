@@ -968,9 +968,6 @@ export default function Progress() {
           </motion.div>
         )}
 
-        {/* ── Form Mastery ── */}
-        <FormMasteryPanel />
-
       </div>
     </motion.div>
   );

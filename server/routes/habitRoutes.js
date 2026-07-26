@@ -2,6 +2,7 @@ import express from 'express';
 import Habit from '../models/Habit.js';
 import HabitLog from '../models/HabitLog.js';
 import auth from '../middleware/authMiddleware.js';
+import { processEvent } from '../services/achievementEngine.js';
 
 const router = express.Router();
 
@@ -355,10 +356,27 @@ router.post('/:id/log', auth, async (req, res) => {
 
         const streaks = calculateStreak(logs);
 
+        // --- ACHIEVEMENT ENGINE ---
+        const unlocked = [];
+        try {
+            if (completed) {
+                // Check if all active habits are completed for today
+                const activeHabits = await Habit.find({ userId: req.user.id, isActive: true });
+                const todayLogs = await HabitLog.find({ userId: req.user.id, date: logDate, completed: true });
+                if (activeHabits.length > 0 && activeHabits.length === todayLogs.length) {
+                    const h = await processEvent(req.user.id, 'HABITS_ALL');
+                    unlocked.push(...h);
+                }
+            }
+        } catch (e) {
+            console.error("Achievement Engine Error:", e);
+        }
+
         res.json({
             success: true,
             log,
-            streak: streaks
+            streak: streaks,
+            unlockedAchievements: unlocked
         });
     } catch (error) {
         console.error('Error logging habit:', error);

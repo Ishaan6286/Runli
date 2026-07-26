@@ -1,6 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL || "/api";
+import { achievementEvents } from '../components/AchievementToast';
 
-const getAuthHeaders = () => {
+export const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
   return {
     "Content-Type": "application/json",
@@ -21,6 +22,11 @@ const handleResponse = async (response) => {
   if (!response.ok) {
     throw new Error(data.message || "Request failed");
   }
+  
+  if (data.unlockedAchievements && data.unlockedAchievements.length > 0) {
+    achievementEvents.emit(data.unlockedAchievements);
+  }
+
   return data;
 };
 
@@ -476,7 +482,6 @@ export const swapAIDietMeal = async (data) => {
 };
 
 // --- AI COACH RAG ENGINE ---
-
 export const sendCoachMessage = async (message, history = []) => {
     // Check if device is completely offline before trying
     if (!navigator.onLine) {
@@ -484,10 +489,21 @@ export const sendCoachMessage = async (message, history = []) => {
     }
     
     try {
+        const userInfo = JSON.parse(localStorage.getItem('runliUserInfo')) || {};
+        const gymHistory = JSON.parse(localStorage.getItem('gymModeHistory')) || {};
+        
         const response = await fetch(`${API_URL}/ai/chat`, {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: JSON.stringify({ message, history })
+            body: JSON.stringify({ 
+                message, 
+                history,
+                userData: {
+                    profile: userInfo,
+                    workoutPlan: userInfo.workoutPlan || [],
+                    gymHistory: gymHistory
+                }
+            })
         });
         
         return await handleResponse(response);
@@ -498,4 +514,51 @@ export const sendCoachMessage = async (message, history = []) => {
         }
         throw error;
     }
+};
+
+// -------------------------------------------------------------
+// Notifications API
+// -------------------------------------------------------------
+
+export const getNotificationSettings = async () => {
+    const response = await fetch(`${API_URL}/notifications/settings`, { headers: getAuthHeaders() });
+    return handleResponse(response);
+};
+
+export const updateNotificationSettings = async (settings) => {
+    const response = await fetch(`${API_URL}/notifications/settings`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ settings })
+    });
+    return handleResponse(response);
+};
+
+export const getNotificationHistory = async () => {
+    const response = await fetch(`${API_URL}/notifications/history`, { headers: getAuthHeaders() });
+    return handleResponse(response);
+};
+
+export const markNotificationRead = async (id) => {
+    const response = await fetch(`${API_URL}/notifications/history/${id}/read`, {
+        method: 'PUT',
+        headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+};
+
+export const markAllNotificationsRead = async () => {
+    const response = await fetch(`${API_URL}/notifications/history/read-all`, {
+        method: 'PUT',
+        headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+};
+
+export const deleteNotification = async (id) => {
+    const response = await fetch(`${API_URL}/notifications/history/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+    });
+    return handleResponse(response);
 };

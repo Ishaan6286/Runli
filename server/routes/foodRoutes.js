@@ -3,6 +3,7 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import FoodLog from "../models/FoodLog.js";
 import DailyProgress from "../models/DailyProgress.js";
+import { processEvent } from '../services/achievementEngine.js';
 
 const router = express.Router();
 
@@ -76,9 +77,19 @@ router.post("/", authMiddleware, async (req, res) => {
             ingestNutrition(req.userId, dateStr, foodLog._id, foodLog.totalCalories, foodLog.totalProtein, foodLog.foods);
         }).catch(err => console.error("Failed to load ragService:", err));
 
+        // --- ACHIEVEMENT ENGINE ---
+        const unlocked = [];
+        try {
+            const m = await processEvent(req.userId, 'MEAL_LOGGED');
+            unlocked.push(...m);
+        } catch (e) {
+            console.error("Achievement Engine Error:", e);
+        }
+
         res.status(201).json({
             message: "Food logged successfully",
-            foodLog
+            foodLog,
+            unlockedAchievements: unlocked
         });
     } catch (err) {
         console.error("Log food error:", err.message);

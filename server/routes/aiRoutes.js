@@ -6,6 +6,7 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import AnalyticsEvent from '../models/AnalyticsEvent.js';
 import { enqueueAiJob, aiQueue, aiQueueEvents } from '../services/queueService.js';
+import { processEvent } from '../services/achievementEngine.js';
 
 dotenv.config();
 
@@ -190,7 +191,7 @@ router.post('/chat', authMiddleware, async (req, res) => {
             emotionalHint = '\n[USER EMOTIONAL STATE: Positive and energized. Match their energy! Celebrate and channel it forward.]';
         }
 
-        const finalSystemPrompt = (systemPrompt || `You are Runli Coach — a personal AI fitness coach. You are concise, warm, science-backed, and deeply personal. Never be generic. Replies must be SHORT (2-4 sentences max) unless the user explicitly asks for a full plan. Never mention OpenAI, ChatGPT, or Gemini.`) + emotionalHint;
+        const finalSystemPrompt = (systemPrompt || `You are Runli Coach — a personal AI fitness coach. You are concise, warm, science-backed, and deeply personal. Never be generic. Replies must be SHORT (2-4 sentences max) unless the user explicitly asks for a full plan. Never mention OpenAI, ChatGPT, or Gemini. If a user asks about form, injuries, mobility, or recipes, tell them to check the Explore Videos tab, and output exactly [SEARCH_VIDEO: your search query] in your response so the app can link them directly.`) + emotionalHint;
 
         let text = '';
 
@@ -455,7 +456,16 @@ Do not include any markdown formatting like \`\`\`json. Return only raw JSON.`;
         }
         // ─────────────────────────────────────────────────────────────────────
 
-        res.json(plan);
+        // --- ACHIEVEMENT ENGINE ---
+        const unlocked = [];
+        try {
+            const m = await processEvent(req.userId, 'AI_DIET');
+            unlocked.push(...m);
+        } catch (e) {
+            console.error("Achievement Engine Error:", e);
+        }
+
+        res.json({ ...plan, unlockedAchievements: unlocked });
 
     } catch (error) {
         console.error("AI Diet Generation Error:", error);

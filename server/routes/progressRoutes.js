@@ -2,6 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import DailyProgress from '../models/DailyProgress.js';
 import dotenv from 'dotenv';
+import { processEvent } from '../services/achievementEngine.js';
 
 dotenv.config();
 const router = express.Router();
@@ -92,7 +93,44 @@ router.post('/:date', authMiddleware, async (req, res) => {
         }).catch(err => console.error("Failed to load ragService:", err));
 
 
-        res.json({ progress });
+        // --- ACHIEVEMENT ENGINE ---
+        const unlocked = [];
+        try {
+            if (wentToGym === true) {
+                const w = await processEvent(req.userId, 'WORKOUT_COMPLETED');
+                unlocked.push(...w);
+                
+                // Determine streak 
+                // Since this might be complex to calculate precisely on the fly, 
+                // a robust way is counting consecutive wentToGym==true looking backwards.
+                let streak = 0;
+                let checkDate = new Date(date);
+                while(true) {
+                    const p = await DailyProgress.findOne({ userId: req.userId, date: checkDate });
+                    if (p && p.wentToGym) streak++;
+                    else break;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                }
+                const s = await processEvent(req.userId, 'STREAK_INCREASED', { streak });
+                unlocked.push(...s);
+            }
+            if (proteinIntake && proteinIntake >= 100) { // simple assumption for now, ideally check goal
+                const p = await processEvent(req.userId, 'PROTEIN_HIT');
+                unlocked.push(...p);
+            }
+            if (waterIntake && waterIntake >= 2500) {
+                const w = await processEvent(req.userId, 'WATER_COMPLETED');
+                unlocked.push(...w);
+            }
+            if (req.body.steps && req.body.steps >= 10000) {
+                const s = await processEvent(req.userId, 'STEPS_10K');
+                unlocked.push(...s);
+            }
+        } catch (e) {
+            console.error("Achievement Engine Error:", e);
+        }
+
+        res.json({ progress, unlockedAchievements: unlocked });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Server Error" });

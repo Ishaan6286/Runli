@@ -22,6 +22,7 @@ import analyticsRoutes from "./routes/analyticsRoutes.js";
 import twinRoutes from "./routes/twinRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import ragRoutes from "./routes/ragRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 import session from 'express-session';
 import passport from './config/passport.js';
 
@@ -35,6 +36,8 @@ connectDB();
 // import { setupCronJobs } from './services/queueService.js';
 // startAiWorker();
 // setupCronJobs();
+import { startNotificationEngine } from './services/notificationEngine.js';
+startNotificationEngine();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -91,6 +94,7 @@ app.use("/api/context", contextRoutes);
 app.use("/api/twin", twinRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 app.use("/api/rag", ragRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);

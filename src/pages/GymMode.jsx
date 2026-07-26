@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
     Play, Pause, RotateCcw, CheckCircle, Circle,
     Volume2, VolumeX, X, Clock, Dumbbell, Video, PlayCircle,
-    TrendingUp, AlertCircle, Calendar, Calculator, Disc, ScanLine
+    TrendingUp, AlertCircle, Calendar, Calculator, Disc, ScanLine, MessageSquare, ChevronDown
 } from 'lucide-react';
+import { KeepAwake } from '@capacitor-community/keep-awake';
 import PoseCamera from '../components/PoseCamera.jsx';
 import { motivationalQuotes } from '../data/quotes';
 import usePlan from '../hooks/usePlan.js';
 import { LockBadge } from '../components/ProGate.jsx';
 import { usePersonalization } from '../context/PersonalizationContext';
-
+import { getVideoByExerciseName } from '../data/videoCatalog';
+import VideoPlayerOverlay from '../components/video/VideoPlayerOverlay';
 
 // Workout Split Data (Synced exactly with Today.jsx)
 const SPLITS = [
@@ -211,10 +213,8 @@ export default function GymMode() {
     const [isResting, setIsResting] = useState(false);
 
     // Video State
-    const [currentVideo, setCurrentVideo] = useState({
-        title: "Bench Press Form",
-        url: "https://www.youtube.com/embed/SCVCLChPQFY"
-    });
+    const [currentVideo, setCurrentVideo] = useState(null);
+    const [exploreVideo, setExploreVideo] = useState(null);
 
     // Daily Quote
     const [quote, setQuote] = useState("");
@@ -262,11 +262,21 @@ export default function GymMode() {
             // Convert to Monday = 0, Tuesday = 1, etc.
             const dayIndex = today === 0 ? 6 : today - 1;
 
-            // Generate workout split based on frequency
-            const workoutSplit = getSplitByFrequency(frequency);
+            // Get today's workout
+            let todaysWorkout = null;
+            if (userInfo.workoutPlan && userInfo.workoutPlan.length > 0) {
+                todaysWorkout = userInfo.workoutPlan[dayIndex % userInfo.workoutPlan.length];
+            } else {
+                const workoutSplit = getSplitByFrequency(frequency);
+                todaysWorkout = workoutSplit[dayIndex % workoutSplit.length];
+            }
 
-            // Get today's workout (cycle through the split)
-            const todaysWorkout = workoutSplit[dayIndex % workoutSplit.length];
+            setTodaysFocus(adjustWorkout(todaysWorkout.focus, 'strength'));
+            
+            if (todaysWorkout.isRestDay || !todaysWorkout.exercises || todaysWorkout.exercises.length === 0) {
+                setWorkouts([]); // empty array triggers Rest Day UI
+                return;
+            }
             setTodaysFocus(adjustWorkout(todaysWorkout.focus, 'strength'));
 
             // Convert exercises to workout format
@@ -275,28 +285,42 @@ export default function GymMode() {
             ];
 
             todaysWorkout.exercises.forEach((exercise, index) => {
-                // Parse exercise string like "Barbell Bench Press 4x8-12" or "Bench Press 4×8-12"
-                const match = exercise.match(/^(.+?)\s+(\d+)[x×](\d+)(?:-(\d+))?/);
-                if (match) {
-                    const [, name, sets, repsMin, repsMax] = match;
-                    const adjustedName = adjustWorkout(name.trim(), 'strength');
-                    generatedWorkouts.push({
-                        id: index + 2,
-                        name: adjustedName,
-                        sets: parseInt(sets),
-                        reps: repsMax ? parseInt(repsMax) : parseInt(repsMin),
-                        completed: false,
-                        videoKey: getVideoKeyForExercise(name.trim()),
-                        type: "strength"
-                    });
+                if (typeof exercise === 'string') {
+                    // Parse legacy string format
+                    const match = exercise.match(/^(.+?)\s+(\d+)[x×](\d+)(?:-(\d+))?/);
+                    if (match) {
+                        const [, name, sets, repsMin, repsMax] = match;
+                        const adjustedName = adjustWorkout(name.trim(), 'strength');
+                        generatedWorkouts.push({
+                            id: index + 2,
+                            name: adjustedName,
+                            sets: parseInt(sets),
+                            reps: repsMax ? parseInt(repsMax) : parseInt(repsMin),
+                            completed: false,
+                            videoKey: getVideoKeyForExercise(name.trim()),
+                            type: "strength"
+                        });
+                    } else {
+                        generatedWorkouts.push({
+                            id: index + 2,
+                            name: exercise,
+                            completed: false,
+                            videoKey: getVideoKeyForExercise(exercise),
+                            type: "cardio"
+                        });
+                    }
                 } else {
-                    // For exercises without set/rep format (like "Plank 90s ×3")
+                    // New Custom Object Format
+                    const adjustedName = adjustWorkout(exercise.name.trim(), 'strength');
                     generatedWorkouts.push({
-                        id: index + 2,
-                        name: exercise,
+                        id: exercise.id || (index + 2),
+                        name: adjustedName,
+                        sets: exercise.sets,
+                        reps: exercise.reps,
+                        notes: exercise.notes,
                         completed: false,
-                        videoKey: getVideoKeyForExercise(exercise),
-                        type: "cardio"
+                        videoKey: exercise.videoKey || getVideoKeyForExercise(exercise.name.trim()),
+                        type: "strength"
                     });
                 }
             });
@@ -344,9 +368,21 @@ export default function GymMode() {
                     const todayDate = new Date().getDay();
                     const dayIndex = todayDate === 0 ? 6 : todayDate - 1;
 
-                    const workoutSplit = getSplitByFrequency(frequency);
-                    const todaysWorkout = workoutSplit[dayIndex % workoutSplit.length];
+                    let todaysWorkout = null;
+                    if (userInfo.workoutPlan && userInfo.workoutPlan.length > 0) {
+                        todaysWorkout = userInfo.workoutPlan[dayIndex % userInfo.workoutPlan.length];
+                    } else {
+                        const workoutSplit = getSplitByFrequency(frequency);
+                        todaysWorkout = workoutSplit[dayIndex % workoutSplit.length];
+                    }
+                    
                     setTodaysFocus(adjustWorkout(todaysWorkout.focus, 'strength'));
+
+                    if (todaysWorkout.isRestDay || !todaysWorkout.exercises || todaysWorkout.exercises.length === 0) {
+                        setWorkouts([]);
+                        localStorage.setItem('lastWorkoutDate', today);
+                        return;
+                    }
 
                     // Regenerate workouts
                     const generatedWorkouts = [
@@ -354,26 +390,40 @@ export default function GymMode() {
                     ];
 
                     todaysWorkout.exercises.forEach((exercise, index) => {
-                        const match = exercise.match(/^(.+?)\s+(\d+)[x×](\d+)(?:-(\d+))?/);
-                        if (match) {
-                            const [, name, sets, repsMin, repsMax] = match;
-                            const adjustedName = adjustWorkout(name.trim(), 'strength');
-                            generatedWorkouts.push({
-                                id: index + 2,
-                                name: adjustedName,
-                                sets: parseInt(sets),
-                                reps: repsMax ? parseInt(repsMax) : parseInt(repsMin),
-                                completed: false,
-                                videoKey: getVideoKeyForExercise(name.trim()),
-                                type: "strength"
-                            });
+                        if (typeof exercise === 'string') {
+                            const match = exercise.match(/^(.+?)\s+(\d+)[x×](\d+)(?:-(\d+))?/);
+                            if (match) {
+                                const [, name, sets, repsMin, repsMax] = match;
+                                const adjustedName = adjustWorkout(name.trim(), 'strength');
+                                generatedWorkouts.push({
+                                    id: index + 2,
+                                    name: adjustedName,
+                                    sets: parseInt(sets),
+                                    reps: repsMax ? parseInt(repsMax) : parseInt(repsMin),
+                                    completed: false,
+                                    videoKey: getVideoKeyForExercise(name.trim()),
+                                    type: "strength"
+                                });
+                            } else {
+                                generatedWorkouts.push({
+                                    id: index + 2,
+                                    name: exercise,
+                                    completed: false,
+                                    videoKey: getVideoKeyForExercise(exercise),
+                                    type: "cardio"
+                                });
+                            }
                         } else {
+                            const adjustedName = adjustWorkout(exercise.name.trim(), 'strength');
                             generatedWorkouts.push({
-                                id: index + 2,
-                                name: exercise,
+                                id: exercise.id || (index + 2),
+                                name: adjustedName,
+                                sets: exercise.sets,
+                                reps: exercise.reps,
+                                notes: exercise.notes,
                                 completed: false,
-                                videoKey: getVideoKeyForExercise(exercise),
-                                type: "cardio"
+                                videoKey: exercise.videoKey || getVideoKeyForExercise(exercise.name.trim()),
+                                type: "strength"
                             });
                         }
                     });
@@ -411,7 +461,7 @@ export default function GymMode() {
             if (isRunning && window.Capacitor && window.Capacitor.isNativePlatform()) {
                 await KeepAwake.keepAwake();
 
-                listenerPromise = CapApp.addListener('appStateChange', ({ isActive }) => {
+                listenerPromise = window.Capacitor.Plugins.App.addListener('appStateChange', ({ isActive }) => {
                     if (!isActive) {
                         bgTime = Date.now();
                     } else if (bgTime > 0) {
@@ -508,7 +558,14 @@ export default function GymMode() {
     };
 
     const playVideo = (e, workout) => {
-        e.stopPropagation(); // Prevent toggling completion
+        e.stopPropagation();
+        
+        const exploreMatch = getVideoByExerciseName(workout.name);
+        if (exploreMatch) {
+            setExploreVideo(exploreMatch);
+            return;
+        }
+
         if (workout.videoKey && exerciseVideos[workout.videoKey]) {
             setCurrentVideo({
                 title: workout.name,
@@ -794,7 +851,13 @@ export default function GymMode() {
                             TODAY'S WORKOUT
                         </h2>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {workouts.map(workout => {
+                            {workouts.length === 0 ? (
+                                <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                    <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>🏖️</span>
+                                    <h3 style={{ fontSize: '1.25rem', color: 'white', marginBottom: '0.5rem' }}>Rest Day</h3>
+                                    <p>Take time to recover, stretch, and stay hydrated.</p>
+                                </div>
+                            ) : workouts.map(workout => {
                                 const recommendation = getRecommendation(workout.name);
                                 const currentData = trackerData[workout.id] || {};
 
@@ -828,9 +891,14 @@ export default function GymMode() {
                                                         {workout.name}
                                                     </span>
                                                     {workout.type === 'strength' && (
-                                                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                                                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', display: 'block' }}>
                                                             {workout.sets} sets x {workout.reps} reps
                                                         </span>
+                                                    )}
+                                                    {workout.notes && (
+                                                        <div style={{ marginTop: '0.25rem', fontSize: '0.85rem', color: 'var(--amber-400)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                            <MessageSquare size={12} /> {workout.notes}
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
@@ -847,19 +915,12 @@ export default function GymMode() {
                                                     </button>
                                                 )}
                                                 {workout.videoKey && (
-                                                    <button className="btn-icon" onClick={(e) => playVideo(e, workout)} style={{ width: 36, height: 36, color: 'var(--primary-500)', background: currentVideo.title === workout.name ? 'var(--primary-dim)' : 'transparent' }} title="Watch Form Video">
+                                                    <button className="btn-icon" onClick={(e) => playVideo(e, workout)} style={{ width: 36, height: 36, color: 'var(--primary-500)' }} title="Watch Form Video">
                                                         <PlayCircle size={22} />
                                                     </button>
                                                 )}
                                             </div>
                                         </div>
-
-                                        {/* Inline Video Player matching currentVideo on mobile */}
-                                        {currentVideo.title === workout.name && window.innerWidth < 768 && (
-                                            <div style={{ marginTop: '0.5rem', background: '#000', borderRadius: 'var(--r-lg)', overflow: 'hidden', minHeight: '220px', position: 'relative' }}>
-                                                <iframe width="100%" height="100%" src={currentVideo.url} title={currentVideo.title} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ position: 'absolute', top: 0, left: 0 }} />
-                                            </div>
-                                        )}
 
                                         {/* Smart Tracker Inputs (Only for Strength) */}
                                         {workout.type === 'strength' && !workout.completed && (
@@ -912,10 +973,10 @@ export default function GymMode() {
                     <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <Video size={22} color="var(--primary-400)" />
-                            FORM GUIDE: <span style={{ color: 'var(--primary-400)', fontWeight: 400 }}>{currentVideo.title}</span>
+                            FORM GUIDE
                         </h2>
                         <div style={{ flex: 1, background: '#000', borderRadius: 'var(--r-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', minHeight: '300px' }}>
-                            <iframe width="100%" height="100%" src={currentVideo.url} title={currentVideo.title} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ position: 'absolute', top: 0, left: 0 }} />
+                            <p style={{ color: 'var(--text-muted)' }}>Select an exercise to view form guide.</p>
                         </div>
                     </div>
                 </div>
@@ -972,6 +1033,11 @@ export default function GymMode() {
                     />
                 )}
             </AnimatePresence>
+            
+            {/* New Explore Video Overlay */}
+            {exploreVideo && (
+                <VideoPlayerOverlay video={exploreVideo} onClose={() => setExploreVideo(null)} />
+            )}
         </div>
     );
 }

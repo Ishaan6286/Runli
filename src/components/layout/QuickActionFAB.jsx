@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Salad, Dumbbell, Moon, Scale, X } from 'lucide-react';
+import { Plus, Salad, Dumbbell, Moon, Scale, X, TrendingUp, PlaySquare } from 'lucide-react';
 
 export default function QuickActionFAB() {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,6 +14,8 @@ export default function QuickActionFAB() {
     { id: 'workout', icon: Dumbbell, label: 'Workout', color: 'var(--primary-500)', path: '/gym' },
     { id: 'sleep', icon: Moon, label: 'Sleep', color: 'var(--blue-500)', path: '/wellness' },
     { id: 'weight', icon: Scale, label: 'Weight', color: 'var(--purple-500)', path: '/progress' },
+    { id: 'habits', icon: TrendingUp, label: 'Habits', color: 'var(--purple-500)', path: '/habits' },
+    { id: 'videos', icon: PlaySquare, label: 'Explore Videos', color: 'var(--danger-500)', path: '/explore' },
   ];
 
   const handleAction = (path) => {
@@ -22,7 +24,7 @@ export default function QuickActionFAB() {
   };
 
   return (
-    <div style={{ position: 'fixed', bottom: 84, left: '50%', transform: 'translateX(-50%)', zIndex: 100 }}>
+    <div style={{ position: 'fixed', bottom: 'calc(74px + env(safe-area-inset-bottom, 0px))', left: '50%', transform: 'translateX(-50%)', zIndex: 100 }}>
       {/* Overlay */}
       <AnimatePresence>
         {isOpen && (

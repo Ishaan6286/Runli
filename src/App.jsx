@@ -35,8 +35,13 @@ import Eat           from "./pages/Eat";
 import Analytics     from "./pages/Analytics";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import Upgrade       from "./pages/Upgrade";
-import BillingDashboard from "./pages/BillingDashboard";
+import WorkoutEditor    from "./pages/WorkoutEditor";
+import NotificationSettings from "./pages/NotificationSettings";
+import NotificationCenter from "./pages/NotificationCenter";
+import WorkoutScheduleSettings from "./pages/WorkoutScheduleSettings";
+import ExploreVideos from "./pages/ExploreVideos";
 import { ProUpgradeModal } from "./components/ProGate.jsx";
+import AchievementToast from "./components/AchievementToast";
 
 import BmiCalculator from "./components/BmiCalculator";
 import { ToastProvider } from "./context/ToastContext";
@@ -88,7 +93,11 @@ const AnimatedRoutes = () => {
         <Route path="/analytics"        element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
         <Route path="/admin/analytics"  element={<ProtectedRoute><AdminAnalytics /></ProtectedRoute>} />
         <Route path="/upgrade"          element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
-        <Route path="/billing"          element={<ProtectedRoute><BillingDashboard /></ProtectedRoute>} />
+        <Route path="/workout-editor"   element={<ProtectedRoute><WorkoutEditor /></ProtectedRoute>} />
+        <Route path="/explore"          element={<ProtectedRoute><ExploreVideos /></ProtectedRoute>} />
+        <Route path="/settings/notifications" element={<ProtectedRoute><NotificationSettings /></ProtectedRoute>} />
+        <Route path="/settings/schedule"      element={<ProtectedRoute><WorkoutScheduleSettings /></ProtectedRoute>} />
+        <Route path="/notifications"    element={<ProtectedRoute><NotificationCenter /></ProtectedRoute>} />
       </Routes>
     </AnimatePresence>
   );
@@ -105,6 +114,7 @@ function App() {
           </ErrorBoundary>
           <BottomNav />
           <ProUpgradeModal />
+          <AchievementToast />
         </Router>
       </PersonalizationProvider>
     </ToastProvider>

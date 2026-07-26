@@ -62,6 +62,10 @@ const userSchema = new mongoose.Schema(
       enum: ['Gym', 'Home', 'Outdoors', null], 
       default: null 
     },
+    workoutPlan: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null
+    },
     experience: {
       type: String,
       enum: ['Beginner', 'Intermediate', 'Advanced', 'Athlete', null],
@@ -105,6 +109,39 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['user', 'admin'],
       default: 'user',
+    },
+    xp: {
+      type: Number,
+      default: 0
+    },
+    level: {
+      type: Number,
+      default: 1
+    },
+    workoutSchedule: {
+      preferredTime: { type: String, default: null }, // e.g., 'Morning', 'Evening', or '18:30'
+      days: { type: [String], default: [] }, // e.g. ['Monday', 'Wednesday', 'Friday']
+      reminderLeadTime: { type: Number, default: 30 }, // in minutes
+      enabled: { type: Boolean, default: true }
+    },
+    pushSubscription: {
+      type: Object, // Stores endpoint, keys (p256dh, auth)
+      default: null
+    },
+    notificationSettings: {
+      workout: { type: Boolean, default: true },
+      diet: { type: Boolean, default: true },
+      water: { type: Boolean, default: true },
+      meals: { type: Boolean, default: true },
+      protein: { type: Boolean, default: true },
+      sleep: { type: Boolean, default: true },
+      habits: { type: Boolean, default: true },
+      progress: { type: Boolean, default: true },
+      weeklyReport: { type: Boolean, default: true },
+      aiMotivation: { type: Boolean, default: true },
+      restDay: { type: Boolean, default: true },
+      quietHoursStart: { type: String, default: "22:00" }, // 10 PM
+      quietHoursEnd: { type: String, default: "07:00" }    // 7 AM
     }
   },
   { timestamps: true }

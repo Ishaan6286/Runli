@@ -6,7 +6,7 @@ import {
   Zap, Dumbbell, Salad, Droplets, CheckCircle2, Circle,
   Moon, Footprints, SmilePlus, ChevronRight, Plus, Minus,
   Flame, Activity, Lightbulb, Sparkles, TrendingUp, ArrowRight,
-  Wind, Sun, Sunset, Stars, Mic
+  Wind, Sun, Sunset, Stars, Mic, Bell
 } from 'lucide-react';
 import { getRecommendations } from '../utils/recommendationEngine';
 import { useAuth } from '../context/AuthContext';
@@ -164,6 +164,9 @@ const StickyHeader = ({ name, streak, xp, title, subtitle }) => {
           <span className="chip" style={{ fontSize: '0.6875rem', background: 'var(--bg-raised)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}>
             <Zap size={10} color="var(--purple-500)" /> {xp} XP
           </span>
+          <button onClick={() => window.location.href = '/notifications'} style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-subtle)', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)', marginLeft: '0.25rem' }}>
+            <Bell size={16} />
+          </button>
         </div>
       </div>
     </div>

@@ -28,11 +28,16 @@ Guidelines:
 - Be conversational and supportive, especially for emotional queries.
 `;
 
-const generateGroqChat = async (message, history = []) => {
+const generateGroqChat = async (message, history = [], userData = null) => {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) throw new Error('GROQ_API_KEY not configured');
 
-    const messages = [{ role: 'system', content: SYSTEM_INSTRUCTION }];
+    let dynamicInstruction = SYSTEM_INSTRUCTION;
+    if (userData) {
+        dynamicInstruction += `\n\nUser Context Data:\n- Profile: ${JSON.stringify(userData.profile, null, 2)}\n- Workout Plan: ${JSON.stringify(userData.workoutPlan, null, 2)}\n- Gym History: ${JSON.stringify(userData.gymHistory, null, 2)}\nUse this data to give personalized, specific advice instead of generic responses.`;
+    }
+
+    const messages = [{ role: 'system', content: dynamicInstruction }];
     (history || []).slice(-10).forEach(m => {
         if (m.text?.trim()) {
             messages.push({
@@ -67,26 +72,32 @@ const generateGroqChat = async (message, history = []) => {
 };
 
 // Gemini Fallback
-const getGeminiModel = () => {
+const getGeminiModel = (userData = null) => {
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'PLACEHOLDER_KEY') {
         return null;
     }
+    
+    let dynamicInstruction = SYSTEM_INSTRUCTION;
+    if (userData) {
+        dynamicInstruction += `\n\nUser Context Data:\n- Profile: ${JSON.stringify(userData.profile)}\n- Workout Plan: ${JSON.stringify(userData.workoutPlan)}\n- Gym History: ${JSON.stringify(userData.gymHistory)}\nUse this data to give personalized, specific advice instead of generic responses.`;
+    }
+
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     return genAI.getGenerativeModel({
         model: "gemini-1.5-flash",
-        systemInstruction: SYSTEM_INSTRUCTION
+        systemInstruction: dynamicInstruction
     });
 };
 
 router.post('/', async (req, res) => {
     try {
-        const { message, history = [] } = req.body;
+        const { message, history = [], userData = null } = req.body;
         let text = '';
 
         // 1. Try Groq Primary
         if (process.env.GROQ_API_KEY) {
             try {
-                text = await generateGroqChat(message, history);
+                text = await generateGroqChat(message, history, userData);
             } catch (groqErr) {
                 console.warn('Groq chat endpoint error, trying Gemini fallback:', groqErr.message);
             }
@@ -94,7 +105,7 @@ router.post('/', async (req, res) => {
 
         // 2. Fallback to Gemini
         if (!text) {
-            const model = getGeminiModel();
+            const model = getGeminiModel(userData);
             if (!model) {
                 return res.json({
                     text: "I'm currently in offline mode. Please configure my API key in the server settings to unlock my full AI potential!",
