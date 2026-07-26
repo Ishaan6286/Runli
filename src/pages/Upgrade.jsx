@@ -252,7 +252,7 @@ export default function Upgrade() {
             Level Up Your Fitness
           </h1>
           <p style={{ margin: 0, fontSize: '1rem', color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: 480, marginInline: 'auto' }}>
-            From free tracking to a full AI-powered fitness OS — pick the plan that matches your ambition.
+            From free tracking to a full AI-powered fitness companion — pick the plan that matches your ambition.
           </p>
         </motion.div>
 

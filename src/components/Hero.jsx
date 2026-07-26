@@ -96,7 +96,7 @@ const Hero = () => {
 
         {/* Eyebrow chip */}
         <motion.div variants={staggerItem} initial="initial" animate="animate">
-          <span className="chip chip-primary">✦ Next-Gen AI Fitness Operating System</span>
+          <span className="chip chip-primary">✦ Your AI Workout & Nutrition Coach</span>
         </motion.div>
 
         {/* Main Headline */}
