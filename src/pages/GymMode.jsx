@@ -15,6 +15,8 @@ import { usePersonalization } from '../context/PersonalizationContext';
 import { getVideoByExerciseName } from '../data/videoCatalog';
 import VideoPlayerOverlay from '../components/video/VideoPlayerOverlay';
 
+const getVideoKeyForExercise = (exerciseName) => getVideoByExerciseName(exerciseName)?.title || null;
+
 // Workout Split Data (Synced exactly with Today.jsx)
 const SPLITS = [
     { focus: 'Chest + Triceps', emoji: '💪', exercises: ['Bench Press 4×8-12', 'Incline DB Press 4×10', 'Cable Flyes 3×15', 'Tricep Pushdowns 3×12'] },
@@ -160,7 +162,7 @@ export default function GymMode() {
                             sets: parseInt(sets),
                             reps: repsMax ? parseInt(repsMax) : parseInt(repsMin),
                             completed: false,
-                            hasVideo: !!getVideoByExerciseName(adjustedName),
+                            videoKey: getVideoKeyForExercise(adjustedName),
                             type: "strength"
                         });
                     } else {
@@ -420,12 +422,9 @@ export default function GymMode() {
         setPlankTimeLeft(plankDuration);
     };
 
-    const playVideo = (e, workout) => {
+    const playVideo = (e, video) => {
         e.stopPropagation();
-        const exploreMatch = getVideoByExerciseName(workout.name);
-        if (exploreMatch) {
-            setExploreVideo(exploreMatch);
-        }
+        setExploreVideo(video);
     };
 
     const handleTrackerChange = (id, field, value) => {
@@ -712,6 +711,7 @@ export default function GymMode() {
                                     <p>Take time to recover, stretch, and stay hydrated.</p>
                                 </div>
                             ) : workouts.map(workout => {
+                                const formVideo = getVideoByExerciseName(workout.videoKey || workout.name);
                                 const recommendation = getRecommendation(workout.name);
                                 const currentData = trackerData[workout.id] || {};
 
@@ -768,8 +768,8 @@ export default function GymMode() {
                                                         <ScanLine size={14} /> Analyze
                                                     </button>
                                                 )}
-                                                {workout.hasVideo && (
-                                                    <button className="btn-icon" onClick={(e) => playVideo(e, workout)} style={{ width: 36, height: 36, color: 'var(--primary-500)' }} title="Watch Form Video">
+                                                {formVideo && (
+                                                    <button className="btn-icon" onClick={(e) => playVideo(e, formVideo)} style={{ width: 36, height: 36, color: 'var(--primary-500)' }} title="Watch Form Video">
                                                         <PlayCircle size={22} />
                                                     </button>
                                                 )}
