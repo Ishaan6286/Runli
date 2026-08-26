@@ -79,16 +79,14 @@ export const ingestNutrition = async (userId, dateStr, foodLogId, totalCalories,
     }
 };
 
-export const ingestWorkout = async (userId, dateStr, exerciseId, exerciseName, reps, formScore) => {
+export const ingestWorkout = async (userId, dateStr, exerciseId, exerciseName, reps) => {
     try {
         const sourceId = exerciseId || `${exerciseName}_${dateStr}`;
         let memoryText = `On ${dateStr}, performed ${exerciseName}: ${reps} reps.`;
-        if (formScore != null) memoryText += ` Form score: ${formScore}/100.`;
 
         await ragIngest(userId, 'exercise', sourceId, memoryText, {
             date: dateStr,
-            exercise: exerciseName,
-            form_score: formScore || 0
+            exercise: exerciseName
         });
     } catch (e) {
         console.warn('[RAG] ingestWorkout error:', e.message);

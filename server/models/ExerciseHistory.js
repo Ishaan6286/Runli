@@ -15,10 +15,7 @@ const exerciseHistorySchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  formScore: {
-    type: Number,
-    required: true,
-  },
+
   date: {
     type: Date,
     default: Date.now,

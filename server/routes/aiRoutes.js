@@ -309,22 +309,20 @@ router.post('/digest', authMiddleware, async (req, res) => {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-        const [progress, poseEvents] = await Promise.all([
-            DailyProgress.find({ userId: req.userId, date: { $gte: sevenDaysAgo } }).sort({ date: 1 }).lean(),
-            AnalyticsEvent.find({ userId: req.userId, event: 'pose_analyzed', timestamp: { $gte: sevenDaysAgo } }).lean(),
+        const [progress] = await Promise.all([
+            DailyProgress.find({ userId: req.userId, date: { $gte: sevenDaysAgo } }).sort({ date: 1 }).lean()
         ]);
 
         const gymDays     = progress.filter(p => p.wentToGym).length;
         const avgCalories = progress.length ? Math.round(progress.reduce((s, p) => s + (p.caloriesConsumed || 0), 0) / progress.length) : 0;
         const avgProtein  = progress.length ? Math.round(progress.reduce((s, p) => s + (p.proteinIntake  || 0), 0) / progress.length) : 0;
-        const avgFormScore = poseEvents.length ? Math.round(poseEvents.reduce((s, e) => s + (e.properties?.formScore || 0), 0) / poseEvents.length) : null;
         const weights = progress.filter(p => p.weight > 0).map(p => p.weight);
         const weightChange = weights.length >= 2 ? (weights[weights.length - 1] - weights[0]).toFixed(1) : null;
 
         // Add job to the queue instead of waiting for Gemini
         const job = await enqueueAiJob('generate-digest', {
             userId: req.userId,
-            meta: { gymDays, avgCalories, avgProtein, avgFormScore, weightChange }
+            meta: { gymDays, avgCalories, avgProtein, weightChange }
         });
 
         res.status(202).json({ 

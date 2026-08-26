@@ -103,14 +103,12 @@ router.get('/personal', authMiddleware, async (req, res) => {
       workoutFrequency,
       macros,
       topExercises,
-      formScores,
       featureUsage,
       streak,
     ] = await Promise.all([
       svc.getWorkoutFrequency(userId, days),
       svc.getMacroAverages(userId, days),
       svc.getTopExercises(userId, days),
-      svc.getFormScoreHistory(userId, days),
       svc.getUserFeatureUsage(userId, days),
       svc.getCurrentStreak(userId),
     ]);
@@ -125,7 +123,7 @@ router.get('/personal', authMiddleware, async (req, res) => {
         avgWater:    Math.round(macros.avgWater     || 0),
       },
       topExercises,
-      formScores,
+
       featureUsage,
       streak,
     });

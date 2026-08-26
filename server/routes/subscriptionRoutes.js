@@ -119,7 +119,7 @@ router.get('/status', authenticateToken, async (req, res) => {
     
     // Check if limits need reset
     if (!user.usageResetDate || new Date() > user.usageResetDate) {
-      user.usage = { voiceMinutes: 0, aiRequests: 0, poseAnalyses: 0, nutritionScans: 0 };
+      user.usage = { voiceMinutes: 0, aiRequests: 0, nutritionScans: 0 };
       const nextMonth = new Date();
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       user.usageResetDate = nextMonth;
@@ -249,7 +249,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
         user.planExpiresAt = new Date(sub.current_end * 1000);
         
         // Reset usage
-        user.usage = { voiceMinutes: 0, aiRequests: 0, poseAnalyses: 0, nutritionScans: 0 };
+        user.usage = { voiceMinutes: 0, aiRequests: 0, nutritionScans: 0 };
         const nextMonth = new Date();
         nextMonth.setMonth(nextMonth.getMonth() + 1);
         user.usageResetDate = nextMonth;
@@ -334,7 +334,7 @@ router.post('/verify', authenticateToken, async (req, res) => {
     }
     
     // Reset usage
-    user.usage = { voiceMinutes: 0, aiRequests: 0, poseAnalyses: 0, nutritionScans: 0 };
+    user.usage = { voiceMinutes: 0, aiRequests: 0, nutritionScans: 0 };
     const nextMonth = new Date();
     nextMonth.setMonth(nextMonth.getMonth() + 1);
     user.usageResetDate = nextMonth;
@@ -386,7 +386,7 @@ router.post('/trial', authenticateToken, async (req, res) => {
     user.planExpiresAt = expires;
     
     // Reset usage
-    user.usage = { voiceMinutes: 0, aiRequests: 0, poseAnalyses: 0, nutritionScans: 0 };
+    user.usage = { voiceMinutes: 0, aiRequests: 0, nutritionScans: 0 };
     const nextMonth = new Date();
     nextMonth.setMonth(nextMonth.getMonth() + 1);
     user.usageResetDate = nextMonth;

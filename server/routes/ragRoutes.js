@@ -111,19 +111,17 @@ router.post('/ingest-nutrition', authMiddleware, async (req, res) => {
 // Called after exercise history saved
 // ─────────────────────────────────────────────
 router.post('/ingest-workout', authMiddleware, async (req, res) => {
-    const { exerciseId, exerciseName, reps, formScore, date } = req.body;
+    const { exerciseId, exerciseName, reps, date } = req.body;
     const userId = req.userId;
 
     const dateStr = date ? String(date).slice(0, 10) : new Date().toISOString().slice(0, 10);
     const sourceId = exerciseId || `${exerciseName}_${dateStr}`;
 
     let memoryText = `On ${dateStr}, performed ${exerciseName}: ${reps} reps.`;
-    if (formScore != null) memoryText += ` Form score: ${formScore}/100.`;
 
     await ragIngest(userId, 'exercise', sourceId, memoryText, {
         date: dateStr,
-        exercise: exerciseName,
-        form_score: formScore || 0
+        exercise: exerciseName
     });
 
     res.json({ status: 'queued' });

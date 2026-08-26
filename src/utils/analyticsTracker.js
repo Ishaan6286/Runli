@@ -97,7 +97,7 @@ const EVENT_CATEGORIES = {
   set_logged:               'workout',
   meal_logged:              'diet',
   food_scanned:             'feature',
-  pose_analyzed:            'feature',
+
   habit_checked:            'habit',
   ai_insight_viewed:        'feature',
   cluster_assigned:         'system',

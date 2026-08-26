@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, Zap, Crown, Star, BarChart2, Mic, Brain, Camera,
+  ArrowLeft, Zap, Crown, Star, BarChart2, Mic, Brain,
   Salad, Calendar, AlertTriangle, CheckCircle, Loader, CreditCard, RefreshCw,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -253,12 +253,7 @@ export default function BillingDashboard() {
                 limit={limits?.aiRequests || 0}
                 color="var(--purple-500)"
               />
-              <UsageBar
-                icon={Camera} label="Pose Analyses"
-                used={usage?.poseAnalyses || 0}
-                limit={limits?.poseAnalyses || 0}
-                color="var(--blue-500)"
-              />
+
               <UsageBar
                 icon={Salad} label="Nutrition Scans"
                 used={usage?.nutritionScans || 0}
