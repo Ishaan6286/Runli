@@ -24,7 +24,7 @@ export const GATES = {
 
   // ELITE Features
   food_scanner:         { name: 'Food Scanner',         desc: 'Scan food photos to detect calories', tier: 'elite' },
-  pose_detection:       { name: 'Pose Detection',       desc: 'Analyze your exercise form in real-time', tier: 'elite' },
+
   fitness_twin:         { name: 'AI Fitness Twin',      desc: 'Predictive analytics and personal twin', tier: 'elite' },
   premium_voice:        { name: 'Premium Voice',        desc: 'Advanced voice coach features', tier: 'elite' }
 };

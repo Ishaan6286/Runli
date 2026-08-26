@@ -7,7 +7,6 @@ import {
     TrendingUp, AlertCircle, Calendar, Calculator, Disc, ScanLine, MessageSquare, ChevronDown
 } from 'lucide-react';
 import { KeepAwake } from '@capacitor-community/keep-awake';
-import PoseCamera from '../components/PoseCamera.jsx';
 import { motivationalQuotes } from '../data/quotes';
 import usePlan from '../hooks/usePlan.js';
 import { LockBadge } from '../components/ProGate.jsx';
@@ -96,9 +95,6 @@ export default function GymMode() {
     // Tracker State
     const [trackerData, setTrackerData] = useState({}); // { exerciseId: { weight: 0, rpe: 0, notes: '' } }
     const [history, setHistory] = useState({}); // Loaded from localStorage
-
-    // Pose Camera State
-    const [activePose, setActivePose] = useState(null); // { workoutId, exerciseName }
 
     // Plank Timer State
     const [showPlankTimer, setShowPlankTimer] = useState(false);
@@ -549,13 +545,6 @@ export default function GymMode() {
                     </button>
                     <button
                         className="btn btn-primary"
-                        onClick={() => { if (!isElite) { triggerUpgrade('pose_detection'); return; } setActivePose({ workoutId: 'auto', exerciseName: 'Auto-Detect' }); }}
-                        style={{ padding: '0 1.25rem', fontSize: '0.9375rem', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: isElite ? 1 : 0.6 }}
-                    >
-                        <ScanLine size={16} /> Auto-Detect
-                    </button>
-                    <button
-                        className="btn btn-primary"
                         onClick={() => setShowPlankTimer(true)}
                         style={{ padding: '0 1.25rem', fontSize: '0.9375rem' }}
                     >
@@ -758,16 +747,6 @@ export default function GymMode() {
                                             </div>
 
                                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                                {workout.type === 'strength' && (
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); if (!isElite) { triggerUpgrade('pose_detection'); return; } setActivePose({ workoutId: workout.id, exerciseName: workout.name }); }}
-                                                        className="btn btn-secondary"
-                                                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', gap: '0.35rem', color: isElite ? 'var(--primary-400)' : 'var(--text-muted)', borderColor: isElite ? 'rgba(16,185,129,0.3)' : 'var(--border-subtle)' }}
-                                                        title={isElite ? 'Analyze Form (AI)' : 'Elite feature'}
-                                                    >
-                                                        <ScanLine size={14} /> Analyze
-                                                    </button>
-                                                )}
                                                 {formVideo && (
                                                     <button className="btn-icon" onClick={(e) => playVideo(e, formVideo)} style={{ width: 36, height: 36, color: 'var(--primary-500)' }} title="Watch Form Video">
                                                         <PlayCircle size={22} />
@@ -872,21 +851,6 @@ export default function GymMode() {
                     )}
                 </div>
             )}
-
-            <AnimatePresence>
-                {activePose && isElite && (
-                    <PoseCamera
-                        key={activePose.workoutId}
-                        exerciseName={activePose.exerciseName}
-                        onClose={({ reps, overallScore }) => {
-                            if (reps > 0 || overallScore > 0) {
-                                setTrackerData(prev => ({ ...prev, [activePose.workoutId]: { ...prev[activePose.workoutId], reps, formScore: overallScore } }));
-                            }
-                            setActivePose(null);
-                        }}
-                    />
-                )}
-            </AnimatePresence>
             
             {/* New Explore Video Overlay */}
             {exploreVideo && (

@@ -165,19 +165,18 @@ function getMockGyms(lat, lng) {
 // POST /api/gym/history
 router.post('/history', authenticateToken, async (req, res) => {
     try {
-        const { exerciseName, reps, formScore } = req.body;
+        const { exerciseName, reps } = req.body;
         const newEntry = new ExerciseHistory({
             userId: req.user.userId,
             exerciseName,
-            reps,
-            formScore
+            reps
         });
         await newEntry.save();
 
         // --- RAG INGESTION (Fire and forget) ---
         import('../services/ragService.js').then(({ ingestWorkout }) => {
             const dateStr = new Date().toISOString().slice(0, 10);
-            ingestWorkout(req.user.userId, dateStr, newEntry._id, exerciseName, reps, formScore);
+            ingestWorkout(req.user.userId, dateStr, newEntry._id, exerciseName, reps, null);
         }).catch(err => console.error("Failed to load ragService:", err));
 
         res.status(201).json({ message: 'History saved successfully', entry: newEntry });

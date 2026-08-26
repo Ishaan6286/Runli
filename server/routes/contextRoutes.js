@@ -69,7 +69,7 @@ router.get('/:userId', async (req, res) => {
         mood: p.moodScore,
       })),
       // Future integrations:
-      poseAnalysis: "No recent pose issues.",
+
       fitnessTwin: fitnessTwinStr
     };
 

@@ -104,7 +104,6 @@ const userSchema = new mongoose.Schema(
     usage: {
       voiceMinutes: { type: Number, default: 0 },
       aiRequests: { type: Number, default: 0 },
-      poseAnalyses: { type: Number, default: 0 },
       nutritionScans: { type: Number, default: 0 }
     },
     usageResetDate: { type: Date, default: null },

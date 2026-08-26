@@ -31,7 +31,7 @@ const staggerItem = {
 
 const FEATURES = [
   { icon: Brain,      label: 'AI Coach',          desc: '24/7 personalized fitness intelligence built around your body' },
-  { icon: Dumbbell,   label: 'Workout Planning',  desc: 'Adaptive training splits, exercise tracking & pose detection' },
+  { icon: Dumbbell,   label: 'Workout Planning',  desc: 'Adaptive training splits & exercise tracking' },
   { icon: Salad,      label: 'Nutrition Tracking',desc: 'Smart macro logging, meal plans & food vision analysis' },
   { icon: TrendingUp, label: 'Progress Analytics',desc: 'Fitness score trends, body metrics & AI health insights' },
   { icon: Zap,        label: 'Habit Streaks',     desc: 'Consistency rings, daily XP rewards & achievement badges' },

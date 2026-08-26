@@ -89,31 +89,7 @@ export async function getTopExercises(userId, days = 30) {
   ]);
 }
 
-/**
- * Form score history (pose detection sessions)
- */
-export async function getFormScoreHistory(userId, days = 30) {
-  const since = daysAgo(days);
-  return AnalyticsEvent.aggregate([
-    {
-      $match: {
-        userId,
-        event: 'pose_analyzed',
-        timestamp: { $gte: since },
-      },
-    },
-    {
-      $group: {
-        _id: '$properties.exercise',
-        avgScore: { $avg: '$properties.formScore' },
-        sessions: { $sum: 1 },
-        totalReps: { $sum: '$properties.reps' },
-      },
-    },
-    { $project: { exercise: '$_id', avgScore: 1, sessions: 1, totalReps: 1, _id: 0 } },
-    { $sort: { sessions: -1 } },
-  ]);
-}
+
 
 /**
  * Feature usage for personal summary (what the user actually uses)

@@ -36,7 +36,6 @@ export const startAiWorker = () => {
                         gymDays: meta.gymDays || 0,
                         avgCalories: meta.avgCalories || 0,
                         avgProtein: meta.avgProtein || 0,
-                        avgFormScore: meta.avgFormScore || null,
                         weightChange: meta.weightChange || null
                     })
                 });

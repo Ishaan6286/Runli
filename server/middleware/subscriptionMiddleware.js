@@ -12,19 +12,16 @@ export const PLAN_LIMITS = {
   free: {
     voiceMinutes: 0,
     aiRequests: 10,
-    poseAnalyses: 0,
     nutritionScans: 0
   },
   pro: {
     voiceMinutes: 30,
     aiRequests: 50,
-    poseAnalyses: 10,
     nutritionScans: 15
   },
   elite: {
     voiceMinutes: 120,
     aiRequests: 500,
-    poseAnalyses: 100,
     nutritionScans: 100
   }
 };
@@ -58,7 +55,7 @@ export const trackUsage = (featureName, cost = 1) => {
 
       // Initialize usage tracking if it doesn't exist
       if (!user.usageResetDate || new Date() > user.usageResetDate) {
-        user.usage = { voiceMinutes: 0, aiRequests: 0, poseAnalyses: 0, nutritionScans: 0 };
+        user.usage = { voiceMinutes: 0, aiRequests: 0, nutritionScans: 0 };
         const nextMonth = new Date();
         nextMonth.setMonth(nextMonth.getMonth() + 1);
         user.usageResetDate = nextMonth;

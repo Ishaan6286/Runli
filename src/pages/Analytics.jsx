@@ -265,25 +265,6 @@ export default function Analytics() {
               <BarList items={data?.topExercises} />
             </motion.div>
 
-            {/* ── Form Scores ── */}
-            {data?.formScores?.length > 0 && (
-              <motion.div variants={fadeUp} className="card">
-                <h2 style={{ margin: '0 0 0.875rem', fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                  <TrendingUp size={15} color="#f59e0b" /> Form Scores
-                </h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.625rem' }}>
-                  {data.formScores.map(fs => (
-                    <div key={fs.exercise} style={{ background: 'var(--bg-raised)', borderRadius: 'var(--r-md)', padding: '0.75rem', border: '1px solid var(--border-subtle)' }}>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', textTransform: 'capitalize' }}>{fs.exercise}</div>
-                      <div style={{ fontSize: '1.4rem', fontWeight: 800, color: fs.avgScore >= 80 ? '#10b981' : fs.avgScore >= 60 ? '#f59e0b' : '#ef4444' }}>
-                        {Math.round(fs.avgScore)}<span style={{ fontSize: '0.75rem', fontWeight: 500 }}>/100</span>
-                      </div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{fs.sessions} session{fs.sessions > 1 ? 's' : ''} · {fs.totalReps} reps</div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
 
             {/* ── AI Digest ── */}
             <DigestCard />
