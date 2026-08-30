@@ -172,7 +172,7 @@ def get_period_dates(period_label: str) -> tuple:
 # ── Intent Classification ──────────────────────────────────────────────────────
 def classify_intent(query: str, history: list) -> str:
     """
-    Classify into: PERSONAL | GENERIC | HYBRID | APP_COMMAND | OUT_OF_DOMAIN.
+    Classify into: PERSONAL | GENERIC | HYBRID | OUT_OF_DOMAIN.
     Uses deterministic patterns first, LLM fallback for ambiguous.
     """
     q = query.lower().strip()
@@ -187,14 +187,6 @@ def classify_intent(query: str, history: list) -> str:
     ]
     if any(re.search(k, q, re.IGNORECASE) for k in ood):
         return "OUT_OF_DOMAIN"
-
-    # APP_COMMAND (navigation / safe UI actions)
-    nav_patterns = [
-        r"(open|take me to|go to|show me|navigate to|switch to|open up)",
-        r"\b(gym page|diet page|progress page|wellness page|profile page|coach page|today page|dashboard)\b",
-    ]
-    if any(re.search(k, q, re.IGNORECASE) for k in nav_patterns):
-        return "APP_COMMAND"
 
     # PERSONAL (asking about their own data)
     personal = [
@@ -234,8 +226,7 @@ def classify_intent(query: str, history: list) -> str:
             "PERSONAL (about the user's own data/logs), "
             "GENERIC (general fitness/nutrition knowledge), "
             "HYBRID (needs both personal data AND fitness knowledge), "
-            "APP_COMMAND (wants to navigate to a page or do a UI action), "
-            "OUT_OF_DOMAIN (unrelated to fitness, health, nutrition, or the app). "
+            "OUT_OF_DOMAIN (unrelated to fitness, health, nutrition, or wellness). "
             "Reply with ONLY the category word."
         )
         msgs = [{"role": "system", "content": system}]
@@ -247,7 +238,7 @@ def classify_intent(query: str, history: list) -> str:
                 model=GROQ_MODEL, messages=msgs, max_tokens=10, temperature=0.0
             )
             cat = resp.choices[0].message.content.strip().upper()
-            if cat in ("PERSONAL", "GENERIC", "HYBRID", "APP_COMMAND", "OUT_OF_DOMAIN"):
+            if cat in ("PERSONAL", "GENERIC", "HYBRID", "OUT_OF_DOMAIN"):
                 return cat
         except Exception:
             pass
@@ -821,8 +812,7 @@ def rag_coach_chat(req: CoachChatRequest):
     Flow:
       1. Intent Classification (deterministic + LLM fallback)
       2. OUT_OF_DOMAIN → immediate refusal
-      3. APP_COMMAND → navigate_to action returned to frontend
-      4. PERSONAL/HYBRID/GENERIC → Groq tool-calling loop (max 3 iterations)
+      3. PERSONAL/HYBRID/GENERIC → Groq tool-calling loop (max 3 iterations)
          - Groq selects tools, Python executes via Node /api/ai/tools
          - Results fed back into context for final answer
     Security: userId is ALWAYS from req.user_id (set by Node from JWT), never from LLM.
@@ -843,43 +833,6 @@ def rag_coach_chat(req: CoachChatRequest):
             "latency_ms": int((time.time() - start_time) * 1000)
         }
 
-    # ── 3. APP_COMMAND (navigation — handled in frontend) ─────────────────────
-    if intent == "APP_COMMAND":
-        nav_map = {
-            r"today|dashboard|home": "/today",
-            r"progress": "/progress",
-            r"diet|food|nutrition|eat|meal": "/diet-plan",
-            r"gym|train|workout|exercise": "/gym-mode",
-            r"wellness|sleep|recover|mood": "/wellness",
-            r"profile|me\b|account": "/me",
-            r"coach|ai|chat": "/coach",
-            r"habit": "/habits",
-            r"video|explore": "/videos",
-            r"analytic": "/analytics",
-            r"plan\b": "/plan",
-            r"billing|subscription|upgrade": "/billing",
-        }
-        ALLOWLIST = {"/today", "/progress", "/diet-plan", "/gym-mode", "/wellness",
-                     "/me", "/coach", "/habits", "/videos", "/analytics", "/plan",
-                     "/billing", "/workout-editor"}
-        q_lower = req.message.lower()
-        route = "/today"
-        for pattern, r in nav_map.items():
-            if re.search(pattern, q_lower, re.IGNORECASE):
-                route = r
-                break
-        if route not in ALLOWLIST:
-            route = "/today"
-        nav_text = f"Sure! Taking you there now. 🚀"
-        
-        print(f"[RAG] APP_COMMAND detected. Navigating to: {route}")
-        
-        return {
-            "text": nav_text,
-            "action": {"type": "navigate", "route": route},
-            "rag_sources": [], "memories_used": 0, "rag_enabled": False, "fallback_used": False,
-            "latency_ms": int((time.time() - start_time) * 1000)
-        }
 
     # ── 4. Build system prompt ────────────────────────────────────────────────
     profile = req.user_profile or {}

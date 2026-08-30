@@ -206,7 +206,7 @@ const WelcomeState = memo(({ onPrompt }) => (
       letterSpacing: '-0.02em',
       color: 'var(--text-primary)',
     }}>
-      AI Coach
+      Runli Coach
     </h2>
     <p style={{
       margin: 0,
@@ -361,22 +361,6 @@ const AICoach = () => {
 
       const response = await sendCoachMessage(text, historyForApi, pendingAction);
 
-      // Handle navigation action
-      if (response?.action?.type === 'navigate' && response.action.route) {
-        setMessages(prev => [...prev, {
-          id: `${Date.now()}-model`,
-          type: 'model',
-          text: response.text || 'Taking you there now... 🚀',
-          timestamp: Date.now(),
-          rag_enabled: response.rag_enabled,
-          rag_sources: response.rag_sources,
-        }]);
-        setTimeout(() => {
-          navigate(response.action.route);
-        }, 800);
-        return;
-      }
-
       // Update pending action state
       setPendingAction(response?.pending_action ?? null);
 
@@ -394,7 +378,7 @@ const AICoach = () => {
       setIsLoading(false);
       inputRef.current?.focus();
     }
-  }, [input, isLoading, isOffline, messages, pendingAction, navigate]);
+  }, [input, isLoading, isOffline, messages, pendingAction]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -495,7 +479,7 @@ const AICoach = () => {
                 lineHeight: 1.2,
                 letterSpacing: '-0.01em',
               }}>
-                AI Coach
+                Runli Coach
               </div>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 4,

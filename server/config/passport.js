@@ -16,18 +16,31 @@ passport.use(new GoogleStrategy({
 },
     async (accessToken, refreshToken, profile, done) => {
         try {
-            // Check if user exists
-            let user = await User.findOne({ email: profile.emails[0].value });
+            const email = profile.emails[0].value;
+
+            // Check if user already exists — if so, ensure onboarding is marked complete
+            // so existing users are never sent back to the onboarding wizard.
+            let user = await User.findOne({ email });
 
             if (user) {
+                // If this is an existing user who somehow doesn't have onboardingCompleted
+                // set (e.g. legacy account), fix it silently so the frontend routes to /today.
+                if (!user.onboardingCompleted) {
+                    user = await User.findByIdAndUpdate(
+                        user._id,
+                        { $set: { onboardingCompleted: true } },
+                        { new: true }
+                    );
+                }
                 return done(null, user);
             }
 
-            // Create new user
+            // New user — create account. onboardingCompleted defaults to false,
+            // so the frontend will correctly route them to /userinfo.
             user = await User.create({
                 name: profile.displayName,
-                email: profile.emails[0].value,
-                password: Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8), // Random dummy password
+                email,
+                password: Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8),
             });
 
             return done(null, user);

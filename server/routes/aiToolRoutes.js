@@ -29,13 +29,46 @@ const aiServiceAuth = (req, res, next) => {
     next();
 };
 
-// ── Date helpers ──────────────────────────────────────────────────────────────
-const startOfDay = (d) => { const x = new Date(d); x.setUTCHours(0,0,0,0); return x; };
-const endOfDay   = (d) => { const x = new Date(d); x.setUTCHours(23,59,59,999); return x; };
+// ── Date helpers (Asia/Kolkata = UTC+5:30) ────────────────────────────────────
+// We MUST use IST offsets because foodRoutes.js and progressRoutes.js store dates
+// using local server setHours(0,0,0,0). Using UTC boundaries would shift the window
+// and miss all records logged between midnight IST and 05:30 UTC.
+
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000; // UTC+5:30 in milliseconds
+
+/**
+ * Given a YYYY-MM-DD string, return a Date representing midnight IST (00:00:00 IST).
+ * Equivalent to: Date = YYYY-MM-DD 00:00:00 IST = YYYY-MM-(DD-1) 18:30:00 UTC
+ */
+const startOfDayIST = (dateStr) => {
+    // Parse date parts to avoid JS timezone ambiguity
+    const [y, m, d] = dateStr.split('-').map(Number);
+    // Midnight IST in UTC: subtract IST offset
+    return new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0) - IST_OFFSET_MS);
+};
+
+/**
+ * Given a YYYY-MM-DD string, return a Date representing 23:59:59.999 IST.
+ */
+const endOfDayIST = (dateStr) => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d, 23, 59, 59, 999) - IST_OFFSET_MS);
+};
+
+// Keep backward-compat aliases used inside dispatch
+const startOfDay = (d) => startOfDayIST(typeof d === 'string' ? d : d.toISOString().slice(0, 10));
+const endOfDay   = (d) => endOfDayIST(typeof d === 'string' ? d : d.toISOString().slice(0, 10));
+
 const dateRange  = (start, end) => ({
-    $gte: startOfDay(new Date(start)),
-    $lte: endOfDay(new Date(end)),
+    $gte: startOfDayIST(start),
+    $lte: endOfDayIST(end),
 });
+
+// Returns today's date string in YYYY-MM-DD format, using IST (Asia/Kolkata)
+const todayIST = () => {
+    const now = new Date(Date.now() + IST_OFFSET_MS);
+    return now.toISOString().slice(0, 10);
+};
 
 // ── Validation helpers ────────────────────────────────────────────────────────
 const validateNumber = (val, min, max, name) => {
@@ -49,8 +82,9 @@ const validateDate = (str) => {
     if (!str || !/^\d{4}-\d{2}-\d{2}$/.test(str)) throw new Error('date must be YYYY-MM-DD');
     const d = new Date(str);
     if (isNaN(d.getTime())) throw new Error('Invalid date');
-    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-    if (d > tomorrow) throw new Error('Cannot log dates in the future');
+    // Compare against IST tomorrow to prevent logging truly future dates
+    const tomorrowIST = new Date(Date.now() + IST_OFFSET_MS + 86400000).toISOString().slice(0, 10);
+    if (str >= tomorrowIST) throw new Error('Cannot log dates in the future');
     return str;
 };
 
@@ -79,10 +113,10 @@ async function dispatch(userId, tool, args, confirmed) {
 
         // ── READ: Daily Progress ────────────────────────────────────────────
         case 'get_daily_progress': {
-            const date = args.date || new Date().toISOString().slice(0, 10);
+            const date = args.date || todayIST();
             const doc = await DailyProgress.findOne({
                 userId,
-                date: { $gte: startOfDay(new Date(date)), $lte: endOfDay(new Date(date)) }
+                date: { $gte: startOfDay(date), $lte: endOfDay(date) }
             }).lean();
             if (!doc) return { found: false, date };
             return {
@@ -299,11 +333,11 @@ async function dispatch(userId, tool, args, confirmed) {
 
         // ── MUTATION: Log Water ─────────────────────────────────────────────
         case 'log_water': {
-            const date = validateDate(args.date || new Date().toISOString().slice(0,10));
+            const date = validateDate(args.date || todayIST());
             const amount = validateNumber(args.amount_ml, 1, 10000, 'amount_ml');
             await DailyProgress.findOneAndUpdate(
-                { userId, date: { $gte: startOfDay(new Date(date)), $lte: endOfDay(new Date(date)) } },
-                { $set: { userId, date: new Date(date) }, $inc: { waterIntake: amount } },
+                { userId, date: { $gte: startOfDay(date), $lte: endOfDay(date) } },
+                { $set: { userId, date: startOfDay(date) }, $inc: { waterIntake: amount } },
                 { upsert: true, new: true }
             );
             return { logged: true, amount_ml: amount, date };
@@ -311,10 +345,10 @@ async function dispatch(userId, tool, args, confirmed) {
 
         // ── MUTATION: Mark Gym Attendance ───────────────────────────────────
         case 'mark_gym_attendance': {
-            const date = validateDate(args.date || new Date().toISOString().slice(0,10));
+            const date = validateDate(args.date || todayIST());
             await DailyProgress.findOneAndUpdate(
-                { userId, date: { $gte: startOfDay(new Date(date)), $lte: endOfDay(new Date(date)) } },
-                { $set: { userId, date: new Date(date), wentToGym: true } },
+                { userId, date: { $gte: startOfDay(date), $lte: endOfDay(date) } },
+                { $set: { userId, date: startOfDay(date), wentToGym: true } },
                 { upsert: true, new: true }
             );
             return { logged: true, wentToGym: true, date };
@@ -322,11 +356,11 @@ async function dispatch(userId, tool, args, confirmed) {
 
         // ── MUTATION: Log Weight ────────────────────────────────────────────
         case 'log_weight': {
-            const date = validateDate(args.date || new Date().toISOString().slice(0,10));
+            const date = validateDate(args.date || todayIST());
             const weight = validateNumber(args.weight_kg, 20, 500, 'weight_kg');
             await DailyProgress.findOneAndUpdate(
-                { userId, date: { $gte: startOfDay(new Date(date)), $lte: endOfDay(new Date(date)) } },
-                { $set: { userId, date: new Date(date), weight } },
+                { userId, date: { $gte: startOfDay(date), $lte: endOfDay(date) } },
+                { $set: { userId, date: startOfDay(date), weight } },
                 { upsert: true, new: true }
             );
             return { logged: true, weight_kg: weight, date };
@@ -334,11 +368,11 @@ async function dispatch(userId, tool, args, confirmed) {
 
         // ── MUTATION: Log Sleep ─────────────────────────────────────────────
         case 'log_sleep': {
-            const date = validateDate(args.date || new Date().toISOString().slice(0,10));
+            const date = validateDate(args.date || todayIST());
             const hours = validateNumber(args.hours, 0, 24, 'hours');
             await DailyProgress.findOneAndUpdate(
-                { userId, date: { $gte: startOfDay(new Date(date)), $lte: endOfDay(new Date(date)) } },
-                { $set: { userId, date: new Date(date), sleepHours: hours } },
+                { userId, date: { $gte: startOfDay(date), $lte: endOfDay(date) } },
+                { $set: { userId, date: startOfDay(date), sleepHours: hours } },
                 { upsert: true, new: true }
             );
             return { logged: true, sleep_hours: hours, date };
@@ -346,11 +380,11 @@ async function dispatch(userId, tool, args, confirmed) {
 
         // ── MUTATION: Log Mood ──────────────────────────────────────────────
         case 'log_mood': {
-            const date = validateDate(args.date || new Date().toISOString().slice(0,10));
+            const date = validateDate(args.date || todayIST());
             const score = validateNumber(args.score, 1, 5, 'score');
             await DailyProgress.findOneAndUpdate(
-                { userId, date: { $gte: startOfDay(new Date(date)), $lte: endOfDay(new Date(date)) } },
-                { $set: { userId, date: new Date(date), moodScore: Math.round(score) } },
+                { userId, date: { $gte: startOfDay(date), $lte: endOfDay(date) } },
+                { $set: { userId, date: startOfDay(date), moodScore: Math.round(score) } },
                 { upsert: true, new: true }
             );
             return { logged: true, mood_score: Math.round(score), date };
@@ -359,27 +393,27 @@ async function dispatch(userId, tool, args, confirmed) {
         // ── DESTRUCTIVE: Delete Daily Progress ─────────────────────────────
         case 'delete_daily_progress': {
             if (!confirmed) return { requires_confirmation: true, message: `I can delete your daily progress record for ${args.date || 'today'}. Please confirm.` };
-            const date = validateDate(args.date || new Date().toISOString().slice(0,10));
-            const r = await DailyProgress.deleteOne({ userId, date: { $gte: startOfDay(new Date(date)), $lte: endOfDay(new Date(date)) } });
+            const date = validateDate(args.date || todayIST());
+            const r = await DailyProgress.deleteOne({ userId, date: { $gte: startOfDay(date), $lte: endOfDay(date) } });
             return { deleted: r.deletedCount > 0, date };
         }
 
         // ── DESTRUCTIVE: Delete Food Log ────────────────────────────────────
         case 'delete_food_log': {
             if (!confirmed) return { requires_confirmation: true, message: `I can delete your food log for ${args.date || 'today'}. Please confirm.` };
-            const date = validateDate(args.date || new Date().toISOString().slice(0,10));
-            const r = await FoodLog.deleteOne({ userId, date: { $gte: startOfDay(new Date(date)), $lte: endOfDay(new Date(date)) } });
+            const date = validateDate(args.date || todayIST());
+            const r = await FoodLog.deleteOne({ userId, date: { $gte: startOfDay(date), $lte: endOfDay(date) } });
             return { deleted: r.deletedCount > 0, date };
         }
 
         // ── DESTRUCTIVE: Delete Exercise Entry ──────────────────────────────
         case 'delete_exercise_entry': {
             if (!confirmed) return { requires_confirmation: true, message: `I can delete your ${args.exercise_name || 'exercise'} entry from ${args.date || 'today'}. Please confirm.` };
-            const date = validateDate(args.date || new Date().toISOString().slice(0,10));
+            const date = validateDate(args.date || todayIST());
             if (!args.exercise_name) throw new Error('exercise_name is required');
             const r = await ExerciseHistory.deleteOne({
                 userId,
-                date: { $gte: startOfDay(new Date(date)), $lte: endOfDay(new Date(date)) },
+                date: { $gte: startOfDay(date), $lte: endOfDay(date) },
                 exerciseName: new RegExp(args.exercise_name, 'i'),
             });
             return { deleted: r.deletedCount > 0, date, exercise: args.exercise_name };

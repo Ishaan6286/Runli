@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Plus, Salad, Dumbbell, Moon, Scale, X, TrendingUp, PlayCircle, ClipboardList } from 'lucide-react';
 
 export default function QuickActionFAB() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Hide the FAB entirely on the /coach page — the Coach has its own layout
+  if (location.pathname === '/coach') return null;
 
   const toggle = () => setIsOpen(!isOpen);
 
