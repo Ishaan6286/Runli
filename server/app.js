@@ -23,6 +23,7 @@ import twinRoutes from "./routes/twinRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import ragRoutes from "./routes/ragRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import mongoQueryRoutes from "./routes/mongoQueryRoutes.js";
 import session from 'express-session';
 import passport from './config/passport.js';
 
@@ -85,6 +86,7 @@ app.use("/api/progress", progressRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/gyms", gymRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/ai", mongoQueryRoutes);
 app.use("/api/habits", habitRoutes);
 app.use("/api/prediction", predictionRoutes);
 app.use("/api/vision", visionRoutes);

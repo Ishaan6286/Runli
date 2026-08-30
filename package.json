@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test:e2e": "node scripts/e2e-test.js",
     "docker:up": "docker-compose up -d --build",
-    "docker:down": "docker-compose down"
+    "docker:down": "docker-compose down",
+    "ingest-pdfs": "cd ai-service && python ingest_pdfs.py"
   },
   "dependencies": {
     "@capacitor-community/keep-awake": "^8.0.1",

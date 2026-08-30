@@ -1,5 +1,4 @@
 import express from 'express';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -71,24 +70,6 @@ const generateGroqChat = async (message, history = [], userData = null) => {
     return data.choices?.[0]?.message?.content?.trim() || '';
 };
 
-// Gemini Fallback
-const getGeminiModel = (userData = null) => {
-    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'PLACEHOLDER_KEY') {
-        return null;
-    }
-    
-    let dynamicInstruction = SYSTEM_INSTRUCTION;
-    if (userData) {
-        dynamicInstruction += `\n\nUser Context Data:\n- Profile: ${JSON.stringify(userData.profile)}\n- Workout Plan: ${JSON.stringify(userData.workoutPlan)}\n- Gym History: ${JSON.stringify(userData.gymHistory)}\nUse this data to give personalized, specific advice instead of generic responses.`;
-    }
-
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    return genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-        systemInstruction: dynamicInstruction
-    });
-};
-
 router.post('/', async (req, res) => {
     try {
         const { message, history = [], userData = null } = req.body;
@@ -99,45 +80,23 @@ router.post('/', async (req, res) => {
             try {
                 text = await generateGroqChat(message, history, userData);
             } catch (groqErr) {
-                console.warn('Groq chat endpoint error, trying Gemini fallback:', groqErr.message);
+                console.warn('Groq chat endpoint error:', groqErr.message);
             }
         }
 
-        // 2. Fallback to Gemini
+        // 2. Fallback if Groq fails
         if (!text) {
-            const model = getGeminiModel(userData);
-            if (!model) {
-                return res.json({
-                    text: "I'm currently in offline mode. Please configure my API key in the server settings to unlock my full AI potential!",
-                    isOffline: true
-                });
-            }
-
-            let chatHistory = history.map(msg => ({
-                role: msg.type === 'user' ? 'user' : 'model',
-                parts: [{ text: msg.text }]
-            }));
-
-            const firstUserIdx = chatHistory.findIndex(m => m.role === 'user');
-            if (firstUserIdx !== -1) {
-                chatHistory = chatHistory.slice(firstUserIdx);
-            } else {
-                chatHistory = [];
-            }
-
-            const chat = model.startChat({
-                history: chatHistory,
-                generationConfig: { maxOutputTokens: 300 },
+            return res.json({
+                text: "I'm currently in offline mode. Please configure my API key in the server settings to unlock my full AI potential!",
+                isOffline: true
             });
-
-            const result = await chat.sendMessage(message);
-            text = result.response.text();
         }
 
-        res.json({ text });
+        return res.json({ text, isOffline: false });
+
     } catch (error) {
-        console.error('Chat API Error:', error);
-        res.status(500).json({ text: "I'm having trouble connecting to my brain right now. Please try again later." });
+        console.error('Chat error:', error);
+        res.status(500).json({ message: 'Error processing your message' });
     }
 });
 
