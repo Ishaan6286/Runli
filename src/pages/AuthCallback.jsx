@@ -17,7 +17,11 @@ export default function AuthCallback() {
             getProfile().then(res => {
                 // res.user contains the profile data
                 login(res.user, token);
-                navigate('/userinfo');
+                if (res.user.onboardingCompleted) {
+                    navigate('/today');
+                } else {
+                    navigate('/userinfo');
+                }
             }).catch(err => {
                 console.error("Failed to fetch profile", err);
                 localStorage.removeItem('token'); // Cleanup

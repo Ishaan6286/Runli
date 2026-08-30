@@ -427,6 +427,7 @@ export default function UserInfo() {
         bodyFatEstimate: data.bodyFatEstimate ? parseFloat(data.bodyFatEstimate) : null,
         workoutEnvironment: data.workoutEnvironment,
         physiqueImage: data.physiqueImage,
+        onboardingCompleted: true,
       };
       // Save locally first so if token is expired, they don't lose data on refresh
       localStorage.setItem("runliUserInfo_draft", JSON.stringify(data));

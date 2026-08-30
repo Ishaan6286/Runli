@@ -49,7 +49,11 @@ export default function SignUp() {
     try {
       const data = await signupUser({ name, email, password });
       login(data.user, data.token);
-      navigate("/userinfo");
+      if (data.user.onboardingCompleted) {
+        navigate("/today");
+      } else {
+        navigate("/userinfo");
+      }
     } catch (err) {
       setError(err.message || "Signup failed. Please try again.");
     } finally {

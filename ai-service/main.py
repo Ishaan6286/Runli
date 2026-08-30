@@ -871,6 +871,9 @@ def rag_coach_chat(req: CoachChatRequest):
         if route not in ALLOWLIST:
             route = "/today"
         nav_text = f"Sure! Taking you there now. 🚀"
+        
+        print(f"[RAG] APP_COMMAND detected. Navigating to: {route}")
+        
         return {
             "text": nav_text,
             "action": {"type": "navigate", "route": route},

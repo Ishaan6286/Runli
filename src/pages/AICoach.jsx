@@ -2,14 +2,11 @@
  * AICoach.jsx — Runli AI Coach
  *
  * Layout contract:
- *   #root / body → no overflow, no page-level scroll
- *   .coach-shell → position:fixed, 0 0 0 0, flex-column
+ *   .coach-shell → position:fixed, sits above the BottomNav
  *   .coach-header → flex-shrink:0, sticky
  *   .coach-messages → flex:1, overflow-y:auto  ← ONLY this scrolls
  *   .coach-composer → flex-shrink:0, sticky
  *   BottomNav → position:fixed (from BottomNav.jsx)
- *
- * The bottom padding of .coach-messages accounts for the BottomNav height.
  */
 
 import React, {
@@ -366,7 +363,17 @@ const AICoach = () => {
 
       // Handle navigation action
       if (response?.action?.type === 'navigate' && response.action.route) {
-        navigate(response.action.route);
+        setMessages(prev => [...prev, {
+          id: `${Date.now()}-model`,
+          type: 'model',
+          text: response.text || 'Taking you there now... 🚀',
+          timestamp: Date.now(),
+          rag_enabled: response.rag_enabled,
+          rag_sources: response.rag_sources,
+        }]);
+        setTimeout(() => {
+          navigate(response.action.route);
+        }, 800);
         return;
       }
 
@@ -423,14 +430,11 @@ const AICoach = () => {
           top: 0,
           left: 0,
           right: 0,
-          // The bottom edge is just above the BottomNav (fixed at bottom:0)
-          bottom: 0,
+          bottom: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px))`,
           display: 'flex',
           flexDirection: 'column',
           background: 'var(--bg-base)',
-          // Ensure we're above AppBackground but below BottomNav's z-index
           zIndex: 10,
-          // Safe area top (for notched phones)
           paddingTop: 'env(safe-area-inset-top, 0px)',
         }}
       >
@@ -624,8 +628,6 @@ const AICoach = () => {
               display: 'flex',
               flexDirection: 'column',
               gap: '0.75rem',
-              // Bottom padding accounts for BottomNav so last message isn't hidden
-              paddingBottom: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px) + 0.5rem)`,
               flexGrow: 1,
             }}
           >
@@ -662,8 +664,7 @@ const AICoach = () => {
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             borderTop: '1px solid var(--border-subtle)',
-            // Bottom padding accounts for BottomNav + safe area
-            paddingBottom: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px) + 0.125rem)`,
+            paddingBottom: '0.875rem',
             zIndex: 2,
           }}
         >

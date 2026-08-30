@@ -97,6 +97,7 @@ async function dispatch(userId, tool, args, confirmed) {
                 moodScore: doc.moodScore,
                 steps: doc.steps,
                 recoveryScore: doc.recoveryScore,
+                dietPlanCompleted: doc.dietPlanCompleted || [],
             };
         }
 
@@ -116,6 +117,7 @@ async function dispatch(userId, tool, args, confirmed) {
                 sleepHours: d.sleepHours,
                 moodScore: d.moodScore,
                 steps: d.steps,
+                dietPlanCompleted: d.dietPlanCompleted || [],
             }));
         }
 

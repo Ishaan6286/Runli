@@ -36,7 +36,11 @@ export default function Login() {
     try {
       const data = await loginUser(email, password);
       login(data.user, data.token);
-      navigate("/userinfo");
+      if (data.user.onboardingCompleted) {
+        navigate("/today");
+      } else {
+        navigate("/userinfo");
+      }
     } catch (err) {
       setError(err.message || "Login failed. Please try again.");
     } finally {

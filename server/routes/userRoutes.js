@@ -63,7 +63,7 @@ router.put("/profile", authMiddleware, async (req, res) => {
             name, height, weight, age, gender, activityLevel, goal, dietPreference,
             targetWeight, experience, stressLevel, sleepHours, mealFrequency,
             months, injuries, allergies, physiqueImage, bodyFatEstimate, workoutEnvironment, workoutPlan,
-            calorieGoal, proteinGoal, waterGoal
+            calorieGoal, proteinGoal, waterGoal, onboardingCompleted
         } = req.body;
 
         // ─── Deterministic validation (API-level bypass prevention) ───────────
@@ -133,6 +133,7 @@ router.put("/profile", authMiddleware, async (req, res) => {
         if (calorieGoal !== undefined) updateFields.calorieGoal = calorieGoal;
         if (proteinGoal !== undefined) updateFields.proteinGoal = proteinGoal;
         if (waterGoal !== undefined) updateFields.waterGoal = waterGoal;
+        if (onboardingCompleted !== undefined) updateFields.onboardingCompleted = onboardingCompleted;
 
         const user = await User.findByIdAndUpdate(
             req.userId,

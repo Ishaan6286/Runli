@@ -84,6 +84,7 @@ const userSchema = new mongoose.Schema(
     months: { type: String, default: null },
     injuries: { type: [String], default: [] },
     allergies: { type: [String], default: [] },
+    onboardingCompleted: { type: Boolean, default: false },
     // Monetisation
     plan: {
       type: String,

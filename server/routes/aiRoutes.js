@@ -159,6 +159,53 @@ router.post('/chat', authMiddleware, async (req, res) => {
             console.warn(`[RAG] Python service error: ${e.message} — falling back to Node direct LLM`);
         }
 
+        // 1.5. Direct Navigation Fallback (if Python service failed)
+        // If the user's message is clearly a navigation command, bypass LLM entirely
+        const navMap = {
+            'today': '/today', 'dashboard': '/today', 'home': '/today',
+            'progress': '/progress',
+            'diet': '/diet-plan', 'food': '/diet-plan', 'nutrition': '/diet-plan', 'eat': '/diet-plan', 'meal': '/diet-plan',
+            'gym': '/gym-mode', 'train': '/gym-mode', 'workout': '/gym-mode', 'exercise': '/gym-mode',
+            'wellness': '/wellness', 'sleep': '/wellness', 'recover': '/wellness', 'mood': '/wellness',
+            'profile': '/me', 'me': '/me', 'account': '/me',
+            'coach': '/coach', 'ai': '/coach', 'chat': '/coach',
+            'habit': '/habits',
+            'video': '/videos', 'explore': '/videos',
+            'analytic': '/analytics',
+            'plan': '/plan',
+            'billing': '/billing', 'subscription': '/billing', 'upgrade': '/billing'
+        };
+        const ALLOWLIST = new Set([
+            "/today", "/progress", "/diet-plan", "/gym-mode", "/wellness",
+            "/me", "/coach", "/habits", "/videos", "/analytics", "/plan",
+            "/billing", "/workout-editor"
+        ]);
+        
+        const msgLower = message.toLowerCase();
+        const navPatterns = /(open|take me to|go to|show me|navigate to|switch to|open up)/i;
+        const pagePatterns = /\b(gym page|diet page|progress page|wellness page|profile page|coach page|today page|dashboard)\b/i;
+        
+        if (navPatterns.test(message) || pagePatterns.test(message)) {
+            let route = '/today';
+            for (const [key, val] of Object.entries(navMap)) {
+                if (msgLower.includes(key)) {
+                    route = val;
+                    break;
+                }
+            }
+            if (!ALLOWLIST.has(route)) {
+                route = '/today';
+            }
+            return res.json({
+                text: "Sure! Taking you there now. 🚀",
+                action: { type: 'navigate', route },
+                rag_sources: [],
+                memories_used: 0,
+                rag_enabled: false,
+                fallback_used: true
+            });
+        }
+
         // 2. Direct LLM Fallback (Groq primary, Gemini secondary)
         // ── Emotional tone detection (server-side reinforcement) ──
         const msg = message.toLowerCase();
