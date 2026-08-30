@@ -121,6 +121,9 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+    /* Full-height so position:fixed children fill viewport correctly */
+    min-height: 100%;
+    min-height: 100dvh;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -580,3 +583,42 @@ img { max-width: 100%; height: auto; }
 .markdown-body p:not(:last-child) { margin-bottom: 0.5rem; }
 .markdown-body h1, .markdown-body h2, .markdown-body h3 { font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; }
 
+/* ─────────────────────────────────────────────
+   AI COACH — layout & component overrides
+───────────────────────────────────────────── */
+
+/*
+  When the coach page is mounted, its shell uses position:fixed
+  which sits in the stacking context of #root.
+  We must ensure #root itself doesn't interfere with viewport height.
+*/
+#root:has(.coach-shell) {
+  /* prevent body-level scroll when coach is active */
+  overflow: hidden;
+}
+
+/* Thin scrollbar for the message area */
+.coach-messages-area {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+.coach-messages-area::-webkit-scrollbar { width: 4px; }
+.coach-messages-area::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+  border-radius: 9999px;
+}
+
+/* Composer textarea — override min-height for iOS */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari: use dvh to handle the dynamic viewport */
+  .coach-shell {
+    height: 100dvh;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .coach-typing-dot {
+    animation: none !important;
+  }
+}
