@@ -1,5 +1,4 @@
 import express from 'express';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 import DailyProgress from '../models/DailyProgress.js';
 import User from '../models/User.js';
@@ -11,10 +10,6 @@ import { processEvent } from '../services/achievementEngine.js';
 dotenv.config();
 
 const router = express.Router();
-
-// Initialize Gemini — use 2.0 Flash for speed + quality
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 // Helper: Groq LLM generation (supports single prompt or OpenAI-style messages array)
 const generateViaGroq = async (promptOrMessages, systemInstruction = '') => {
@@ -55,24 +50,12 @@ const generateViaGroq = async (promptOrMessages, systemInstruction = '') => {
     return { response: { text: () => content } };
 };
 
-// Primary: Groq LLM, Secondary Fallback: Gemini LLM
+// Groq-only generation — no Gemini fallback
 const generateWithRetry = async (prompt, systemInstruction = '') => {
-    if (process.env.GROQ_API_KEY) {
-        try {
-            return await generateViaGroq(prompt, systemInstruction);
-        } catch (groqErr) {
-            console.warn('Groq failed, attempting Gemini fallback:', groqErr.message || groqErr);
-        }
+    if (!process.env.GROQ_API_KEY) {
+        throw new Error('GROQ_API_KEY not configured — AI unavailable');
     }
-    try {
-        return await Promise.race([
-            model.generateContent(prompt),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Gemini Timeout')), 10000))
-        ]);
-    } catch (error) {
-        console.error('All AI providers failed:', error.message || error);
-        throw error;
-    }
+    return await generateViaGroq(prompt, systemInstruction);
 };
 
 // Middleware to verify token (optional for chat — chat can work for guests too)
@@ -214,38 +197,19 @@ router.post('/chat', authMiddleware, async (req, res) => {
                 const groqRes = await generateViaGroq(groqMessages);
                 text = groqRes.response.text().trim();
             } catch (groqErr) {
-                console.warn('Groq chat fallback failed, attempting Gemini:', groqErr.message || groqErr);
+                console.warn('Groq chat fallback failed:', groqErr.message || groqErr);
             }
         }
 
-        // Secondary fallback to Gemini
+        // If Groq unavailable, return friendly offline message
         if (!text) {
-            let chatHistory = history
-                .filter(m => m.text?.trim())
-                .slice(-10)
-                .map(m => ({
-                    role: m.type === 'user' ? 'user' : 'model',
-                    parts: [{ text: m.text }],
-                }));
-
-            const firstUserIdx = chatHistory.findIndex(m => m.role === 'user');
-            if (firstUserIdx !== -1) {
-                chatHistory = chatHistory.slice(firstUserIdx);
-            } else {
-                chatHistory = [];
-            }
-
-            const chat = model.startChat({
-                history: chatHistory,
-                systemInstruction: { parts: [{ text: finalSystemPrompt }] },
-                generationConfig: { maxOutputTokens: 300, temperature: 0.75, topP: 0.9 },
+            return res.json({
+                text: "I'm your fitness AI Coach, but I'm temporarily unavailable. Please try again in a moment.",
+                rag_sources: [],
+                memories_used: 0,
+                rag_enabled: false,
+                fallback_used: true
             });
-
-            const result = await Promise.race([
-                chat.sendMessage(message),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Gemini Chat Timeout')), 12000))
-            ]);
-            text = (await result.response).text().trim();
         }
 
         return res.json({ 

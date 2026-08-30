@@ -19,12 +19,18 @@ import asyncio
 import websockets
 import requests
 import json
-import google.generativeai as genai
+import re
+from datetime import datetime, timedelta
 from groq import Groq
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv("../.env")
+# Resolve paths relative to this script's location
+current_dir = Path(__file__).parent.resolve()
+project_root = current_dir.parent
+env_path = project_root / ".env"
 
+load_dotenv(dotenv_path=env_path)
 app = FastAPI(
     title="Runli AI Service",
     description="FastAPI microservice for RAG, ML/AI tasks, and voice coaching"
@@ -37,11 +43,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Primary: Google Gemini ──
-genai.configure(api_key=os.getenv("GEMINI_API_KEY", ""))
-gemini_model = genai.GenerativeModel('gemini-2.0-flash')
+# ── AI Service Internal Config ──
+AI_SERVICE_SECRET = os.getenv("AI_SERVICE_SECRET", "super-secret-ai-key-123")
+NODE_SERVICE_URL = os.getenv("NODE_SERVICE_URL", "http://localhost:5001")
 
-# ── Primary Coach LLM: Groq (as specified by user) ──
+# ── Primary Coach LLM: Groq ──
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
@@ -53,42 +59,167 @@ RAG_COLLECTION = os.getenv("RAG_COLLECTION", "user_memories")
 RAG_ENABLED = os.getenv("RAG_ENABLED", "true").lower() == "true"
 
 # ── ChromaDB — persistent volume (Docker: chroma_data:/app/chroma_data) ──
-CHROMA_PATH = os.getenv("CHROMA_PATH", "/app/chroma_data")
+_raw_chroma = os.getenv("CHROMA_PATH", str(project_root / "chroma_db"))
+if not os.path.isabs(_raw_chroma):
+    CHROMA_PATH = str((project_root / _raw_chroma).resolve())
+else:
+    CHROMA_PATH = _raw_chroma
 
 try:
     chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
     collection = chroma_client.get_or_create_collection(
         name=RAG_COLLECTION,
-        metadata={"hnsw:space": "cosine"}  # Use cosine similarity for better semantic matching
+        metadata={"hnsw:space": "cosine"}
+    )
+    pdf_collection = chroma_client.get_or_create_collection(
+        name="pdf_knowledge",
+        metadata={"hnsw:space": "cosine"}
     )
     CHROMA_AVAILABLE = True
-    print(f"[RAG] ChromaDB initialized at {CHROMA_PATH}, collection: {RAG_COLLECTION}")
+    print(f"[RAG] ChromaDB initialized at {CHROMA_PATH}")
 except Exception as e:
     print(f"[RAG] ChromaDB init failed: {e}. RAG will be disabled.")
     chroma_client = None
     collection = None
+    pdf_collection = None
     CHROMA_AVAILABLE = False
 
 
-def generate_with_fallback(prompt: str) -> str:
-    """Try Groq first; if it fails or isn't configured, fall back to Gemini."""
-    if groq_client:
-        try:
-            chat = groq_client.chat.completions.create(
-                model=GROQ_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=1024,
-                temperature=0.7
-            )
-            return chat.choices[0].message.content.strip()
-        except Exception as groq_err:
-            print(f"[Groq failed] {groq_err} — falling back to Gemini...")
+def generate_with_groq(prompt: str) -> str:
+    """Generate response using Groq."""
+    if not groq_client:
+        raise RuntimeError("Groq API key not configured")
     try:
-        response = gemini_model.generate_content(prompt)
-        return response.text.strip()
-    except Exception as gemini_err:
-        print(f"[Gemini failed] {gemini_err}")
-        raise RuntimeError("Both Groq and Gemini unavailable")
+        chat = groq_client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1024,
+            temperature=0.7
+        )
+        return chat.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"[Groq failed] {e}")
+        raise
+
+# ═══════════════════════════════════════════════════════
+#  HYBRID RAG HELPERS
+# ═══════════════════════════════════════════════════════
+
+def classify_intent(query: str, history: list) -> str:
+    """
+    Determine if query is PERSONAL, GENERIC, or CHIT_CHAT/OUT_OF_DOMAIN.
+    Uses deterministic routing for obvious intents, LLM for ambiguous cases.
+    """
+    q = query.lower()
+    
+    out_of_domain = [r"\bweather\b", r"\bcode\b", r"\bpython\b", r"\bjavascript\b", r"\breact\b", r"\bpolitics\b", r"\bmovie\b", r"\bnews\b"]
+    if any(re.search(k, q) for k in out_of_domain):
+        return "OUT_OF_DOMAIN"
+        
+    personal_keywords = [r"\bmy\b", r"\bi\b", r"\bdid i\b", r"my progress", r"my goal", r"last week", r"yesterday", r"how much did", r"my logs"]
+    if any(re.search(k, q) for k in personal_keywords):
+        return "PERSONAL"
+        
+    generic_keywords = [r"how to", r"what is", r"\bexplain\b", r"tutorial", r"best way", r"good form", r"recipe", r"benefits of", r"how many calories in"]
+    if any(re.search(k, q) for k in generic_keywords):
+        return "GENERIC"
+
+    system_prompt = (
+        "Classify the user's message into exactly ONE of these categories. Reply with ONLY the category name: "
+        "PERSONAL (asking about their own data, workouts, logs), "
+        "GENERIC (asking general fitness/diet advice), "
+        "CHIT_CHAT (casual greeting, thanks), "
+        "OUT_OF_DOMAIN (asking about non-fitness topics like coding, weather, politics)."
+    )
+    
+    messages = [{"role": "system", "content": system_prompt}]
+    for h in history[-3:]:
+        role = "user" if h.get("type") == "user" else "assistant"
+        messages.append({"role": role, "content": h.get("text", "")})
+    messages.append({"role": "user", "content": query})
+    
+    try:
+        chat = groq_client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=messages,
+            max_tokens=10,
+            temperature=0.1
+        )
+        return chat.choices[0].message.content.strip().upper()
+    except:
+        return "GENERIC"
+
+def extract_query_params(query: str) -> dict:
+    prompt = (
+        "Extract temporal and entity parameters from the user's fitness query.\n"
+        f"Query: '{query}'\n"
+        f"Current Date: {datetime.now().isoformat()[:10]}\n\n"
+        "Return EXACTLY a JSON object with these keys:\n"
+        "- start: YYYY-MM-DD (or null)\n"
+        "- end: YYYY-MM-DD (or null)\n"
+        "- collections: list of strings (choose from: ExerciseHistory, FoodLog, DailyProgress)\n"
+        "- exerciseName: string (or null)\n"
+        "Just output the JSON."
+    )
+    try:
+        res = generate_with_groq(prompt)
+        res = res.replace("```json", "").replace("```", "").strip()
+        return json.loads(res)
+    except:
+        end = datetime.now()
+        start = end - timedelta(days=7)
+        return {
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+            "collections": ["ExerciseHistory", "FoodLog", "DailyProgress"],
+            "exerciseName": None
+        }
+
+def fetch_mongodb_data(user_id: str, query: str) -> str:
+    params = extract_query_params(query)
+    
+    payload = {
+        "userId": user_id,
+        "collections": params.get("collections", []),
+        "dateRange": {"start": params.get("start"), "end": params.get("end")},
+        "exerciseName": params.get("exerciseName")
+    }
+    
+    try:
+        headers = {"x-ai-service-secret": AI_SERVICE_SECRET, "Content-Type": "application/json"}
+        resp = requests.post(f"{NODE_SERVICE_URL}/api/ai/user-data", json=payload, headers=headers, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json().get("data", {})
+            return json.dumps(data, indent=2)
+    except Exception as e:
+        print(f"[RAG] Mongo Bridge error: {e}")
+    return ""
+
+def search_pdf_knowledge(query: str) -> str:
+    if not CHROMA_AVAILABLE or not pdf_collection:
+        return ""
+    try:
+        results = pdf_collection.query(
+            query_texts=[query],
+            n_results=3
+        )
+        if not results or not results.get("documents") or not results["documents"][0]:
+            return ""
+            
+        docs = results["documents"][0]
+        distances = results.get("distances", [[]])[0]
+        
+        valid_chunks = []
+        for doc, dist in zip(docs, distances):
+            if dist < 1.0:
+                clean_doc = re.sub(r'```+', '', doc)
+                clean_doc = re.sub(r'\n{3,}', '\n\n', clean_doc)
+                valid_chunks.append(clean_doc[:800])
+                
+        return "\n---\n".join(valid_chunks)
+    except Exception as e:
+        print(f"[RAG] PDF search error: {e}")
+        return ""
 
 
 # ═══════════════════════════════════════════════════════
@@ -605,117 +736,98 @@ def rag_backfill(req: RAGBackfillRequest):
 @app.post("/rag/coach-chat")
 def rag_coach_chat(req: CoachChatRequest):
     """
-    Full RAG-enhanced AI Coach chat.
-    Pipeline: embed query → user-scoped retrieval → context build → Groq generation
-    Falls back gracefully if RAG or Groq unavailable.
+    Hybrid RAG AI Coach chat.
+    Uses Intent Router to dynamically fetch MongoDB data or PDF knowledge.
     """
     start_time = time.time()
     rag_sources = []
-    memories_used = 0
-    fallback_used = False
+    
+    # 1. Intent Classification
+    intent = classify_intent(req.message, req.history or [])
+    
+    if intent == "OUT_OF_DOMAIN":
+        return {
+            "text": "I'm your Runli fitness coach! I'm here to help you with your workouts, diet, and fitness goals. How can I help you with those today?",
+            "rag_sources": [],
+            "memories_used": 0,
+            "rag_enabled": False,
+            "fallback_used": False,
+            "latency_ms": int((time.time() - start_time) * 1000)
+        }
 
-    # 1. Retrieve relevant memories (user-scoped, always)
-    retrieved_memories = []
-    if RAG_ENABLED and CHROMA_AVAILABLE:
-        retrieved_memories = retrieve_memories(req.user_id, req.message)
-        memories_used = len(retrieved_memories)
-        rag_sources = [
-            {
-                "text": m["text"][:120],
-                "source_type": m["metadata"].get("source_type", "unknown"),
-                "date": m["metadata"].get("date", ""),
-                "relevance": m["relevance"]
-            }
-            for m in retrieved_memories
-        ]
+    # 2. Dynamic Retrieval based on Intent
+    context = ""
+    if intent == "PERSONAL":
+        mongo_data = fetch_mongodb_data(req.user_id, req.message)
+        if mongo_data:
+            context = f"User's Personal Data (from DB):\n{mongo_data}\n"
+            
+        # Optional: Include recent structured activity if passed from Node
+        if req.recent_activity:
+            context += f"\nRecent Activity: {json.dumps(req.recent_activity)}\n"
+            
+    elif intent == "GENERIC":
+        pdf_knowledge = search_pdf_knowledge(req.message)
+        if pdf_knowledge:
+            context = f"Fitness Knowledge Base:\n{pdf_knowledge}\n"
+            rag_sources.append({"source_type": "pdf", "text": "PDF Knowledge Base accessed"})
 
-    # 2. Build context from profile + recent activity + retrieved memories
-    context = build_rag_context(
-        req.user_profile or {},
-        req.recent_activity or [],
-        retrieved_memories,
-        req.message
-    )
+    # Always include the basic profile if available
+    profile = req.user_profile or {}
+    if profile:
+        context += f"\nUser Profile: Goal={profile.get('goal')}, Weight={profile.get('weight')}kg"
 
     # 3. Build system prompt
     base_system = req.system_prompt or (
         "You are Runli Coach — a personal AI fitness coach. "
         "You are concise, warm, science-backed, and deeply personal. "
         "Never be generic. Never invent facts. "
-        "Only reference the user's history when it appears in the supplied context. "
-        "If no relevant history is available, give helpful general fitness advice. "
-        "Replies must be SHORT (2-4 sentences max) unless the user explicitly asks for a full plan. "
+        "Use the provided context to answer the user's question accurately. "
+        "If you don't know the answer based on context, you can give general fitness advice. "
+        "Replies must be SHORT (2-4 sentences max). "
         "Never mention OpenAI, ChatGPT, Gemini, or Groq. "
-        "Do NOT diagnose medical conditions. If symptoms may indicate a medical concern, recommend seeing a doctor."
+        "Do NOT diagnose medical conditions."
     )
 
-    # Build conversation history for Groq
     messages = [{"role": "system", "content": base_system}]
-
-    # Add context as a system message if available
     if context.strip():
-        messages.append({
-            "role": "system",
-            "content": f"Use the following context to personalize your response:\n\n{context}"
-        })
+        messages.append({"role": "system", "content": f"Context for this query:\n\n{context}"})
 
-    # Add conversation history (last 10 messages for context window)
     for h in (req.history or [])[-10:]:
         role = "user" if h.get("type") == "user" else "assistant"
         text = h.get("text", "").strip()
         if text:
             messages.append({"role": role, "content": text})
 
-    # Add current message
     messages.append({"role": "user", "content": req.message})
 
-    # 4. Generate response with Groq (primary for AI Coach per spec)
-    response_text = None
-    latency_ms = 0
-
-    if groq_client:
-        try:
-            groq_start = time.time()
-            completion = groq_client.chat.completions.create(
-                model=GROQ_MODEL,
-                messages=messages,
-                max_tokens=300,
-                temperature=0.75,
-                top_p=0.9
-            )
-            response_text = completion.choices[0].message.content.strip()
-            latency_ms = int((time.time() - groq_start) * 1000)
-            print(f"[RAG] Groq generation: {latency_ms}ms, memories_used: {memories_used}")
-        except Exception as groq_err:
-            print(f"[RAG] Groq failed: {groq_err} — falling back to Gemini...")
-            fallback_used = True
-
-    # 5. Fallback to Gemini if Groq fails
-    if response_text is None:
-        try:
-            fallback_used = True
-            prompt_parts = [base_system, "\n\n"]
-            if context.strip():
-                prompt_parts.append(f"Context:\n{context}\n\n")
-            prompt_parts.append(f"User: {req.message}")
-            full_prompt = "".join(prompt_parts)
-            response_text = generate_with_fallback(full_prompt)
-        except Exception as e:
-            print(f"[RAG] All AI providers failed: {e}")
-            raise HTTPException(
-                status_code=503,
-                detail="AI service temporarily unavailable. Please try again shortly."
-            )
-
-    total_latency = int((time.time() - start_time) * 1000)
+    # 4. Generate response (Groq only)
+    try:
+        if not groq_client:
+            raise RuntimeError("Groq not configured")
+        
+        completion = groq_client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=messages,
+            max_tokens=300,
+            temperature=0.75,
+            top_p=0.9
+        )
+        response_text = completion.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"[RAG] Generation failed: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="AI service temporarily unavailable. Please try again shortly."
+        )
 
     return {
         "text": response_text,
         "rag_sources": rag_sources,
-        "memories_used": memories_used,
-        "rag_enabled": RAG_ENABLED and CHROMA_AVAILABLE,
-        "fallback_used": fallback_used,
-        "latency_ms": total_latency
+        "memories_used": len(rag_sources),
+        "rag_enabled": True,
+        "fallback_used": False,
+        "latency_ms": int((time.time() - start_time) * 1000)
     }
 
 
@@ -760,7 +872,7 @@ def generate_insight(req: InsightRequest):
     Incorporate their past context naturally if relevant.
     """
     try:
-        text = generate_with_fallback(prompt)
+        text = generate_with_groq(prompt)
         return {"insight": text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -778,7 +890,7 @@ def generate_digest(req: DigestRequest):
     {{"headline":"string","weeklyScore":0-100,"insights":[{{"type":"positive|warn|predict|challenge","text":"string"}},{{"type":"...","text":"..."}},{{"type":"...","text":"..."}}],"tip":"string"}}
     """
     try:
-        raw_text = generate_with_fallback(prompt)
+        raw_text = generate_with_groq(prompt)
         if raw_text.startswith("```json"):
             raw_text = raw_text[7:]
         if raw_text.startswith("```"):

@@ -3,7 +3,7 @@ torch
 torchvision
 fastapi
 uvicorn
-google-generativeai
+pypdf
 pydantic
 python-dotenv
 chromadb

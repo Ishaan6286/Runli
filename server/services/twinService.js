@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+
 import DailyProgress from '../models/DailyProgress.js';
 import FitnessScore from '../models/FitnessScore.js';
 import User from '../models/User.js';
@@ -7,8 +7,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
 
 export const generateTwinInsights = async (userId) => {
     try {
@@ -88,13 +87,12 @@ export const generateTwinInsights = async (userId) => {
                     text = data.choices?.[0]?.message?.content?.trim() || '';
                 }
             } catch (groqErr) {
-                console.warn("Groq failed in twinService, attempting Gemini:", groqErr.message);
+                console.warn("Groq failed in twinService:", groqErr.message);
             }
         }
 
         if (!text) {
-            const result = await model.generateContent(prompt);
-            text = result.response.text().trim();
+            throw new Error("Groq API unavailable or returned no text.");
         }
         
         if (text.startsWith('```json')) text = text.substring(7);
