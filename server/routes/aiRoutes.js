@@ -77,7 +77,7 @@ const authMiddleware = (req, res, next) => {
    Now fully RAG-enabled, powered by Python microservice.
 ───────────────────────────────────────────────────────────── */
 router.post('/chat', authMiddleware, async (req, res) => {
-    const { message, history = [], systemPrompt, userContext } = req.body;
+    const { message, history = [], systemPrompt, userContext, pendingAction } = req.body;
     const userId = req.userId;
 
     if (!message?.trim()) {
@@ -136,7 +136,8 @@ router.post('/chat', authMiddleware, async (req, res) => {
                     history,
                     user_profile: userProfile,
                     recent_activity: recentActivity,
-                    system_prompt: systemPrompt
+                    system_prompt: systemPrompt,
+                    pending_action: pendingAction
                 }),
                 signal: AbortSignal.timeout(15000)
             });
