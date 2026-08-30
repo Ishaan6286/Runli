@@ -35,7 +35,7 @@ const generateViaGroq = async (promptOrMessages, systemInstruction = '') => {
             Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-            model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
+            model: process.env.GROQ_MODEL || 'openai/gpt-oss-20b',
             messages,
             temperature: 0.7,
             max_tokens: 1000,
