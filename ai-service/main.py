@@ -49,7 +49,7 @@ NODE_SERVICE_URL = os.getenv("NODE_SERVICE_URL", "http://localhost:5001")
 
 # ── Primary Coach LLM: Groq ──
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 # ── RAG Configuration ──
@@ -140,7 +140,7 @@ def classify_intent(query: str, history: list) -> str:
     
     try:
         chat = groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="openai/gpt-oss-20b",
             messages=messages,
             max_tokens=10,
             temperature=0.1
