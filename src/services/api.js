@@ -482,7 +482,7 @@ export const swapAIDietMeal = async (data) => {
 };
 
 // --- AI COACH RAG ENGINE ---
-export const sendCoachMessage = async (message, history = []) => {
+export const sendCoachMessage = async (message, history = [], pendingAction = null) => {
     // Check if device is completely offline before trying
     if (!navigator.onLine) {
         throw new Error("You are currently offline. Please connect to the internet to chat with the AI Coach.");
@@ -498,6 +498,7 @@ export const sendCoachMessage = async (message, history = []) => {
             body: JSON.stringify({ 
                 message, 
                 history,
+                pendingAction,
                 userData: {
                     profile: userInfo,
                     workoutPlan: userInfo.workoutPlan || [],

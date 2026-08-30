@@ -20,7 +20,11 @@ import websockets
 import requests
 import json
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo  # Python < 3.9
 from groq import Groq
 from dotenv import load_dotenv
 from pathlib import Path
@@ -105,121 +109,197 @@ def generate_with_groq(prompt: str) -> str:
 #  HYBRID RAG HELPERS
 # ═══════════════════════════════════════════════════════
 
+# ── Date Resolution (deterministic, server-side) ─────────────────────────────
+def resolve_date_range(phrase: str, tz: str = "Asia/Kolkata") -> tuple:
+    """
+    Resolve natural language date phrases to (start_date_str, end_date_str).
+    Returns ISO YYYY-MM-DD strings.
+    """
+    try:
+        now = datetime.now(ZoneInfo(tz))
+    except Exception:
+        now = datetime.now()
+    today = now.date()
+    
+    p = phrase.lower().strip().replace("-", "_")
+    
+    if p in ("today",):
+        return today.isoformat(), today.isoformat()
+    if p in ("yesterday",):
+        d = today - timedelta(days=1)
+        return d.isoformat(), d.isoformat()
+    if p in ("tomorrow",):
+        d = today + timedelta(days=1)
+        return d.isoformat(), d.isoformat()
+    if p in ("this_week", "this week"):
+        start = today - timedelta(days=today.weekday())
+        return start.isoformat(), today.isoformat()
+    if p in ("last_week", "last week"):
+        start = today - timedelta(days=today.weekday() + 7)
+        end   = today - timedelta(days=today.weekday() + 1)
+        return start.isoformat(), end.isoformat()
+    if p in ("this_month", "this month"):
+        start = today.replace(day=1)
+        return start.isoformat(), today.isoformat()
+    if p in ("last_month", "last month"):
+        first_of_this = today.replace(day=1)
+        last_of_prev  = first_of_this - timedelta(days=1)
+        first_of_prev = last_of_prev.replace(day=1)
+        return first_of_prev.isoformat(), last_of_prev.isoformat()
+    if p in ("last_7_days", "last 7 days"):
+        start = today - timedelta(days=6)
+        return start.isoformat(), today.isoformat()
+    if p in ("last_30_days", "last 30 days", "last month roughly"):
+        start = today - timedelta(days=29)
+        return start.isoformat(), today.isoformat()
+    # weekdays
+    days = {"monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3, "friday": 4, "saturday": 5, "sunday": 6}
+    for day_name, day_num in days.items():
+        if p == day_name or p == f"last {day_name}":
+            days_back = (today.weekday() - day_num) % 7 or 7
+            d = today - timedelta(days=days_back)
+            return d.isoformat(), d.isoformat()
+    # fallback: last 7 days
+    start = today - timedelta(days=6)
+    return start.isoformat(), today.isoformat()
+
+
+def get_period_dates(period_label: str) -> tuple:
+    """Map period labels like 'this_week', 'last_month' to (start, end) ISO strings."""
+    return resolve_date_range(period_label)
+
+
+# ── Intent Classification ──────────────────────────────────────────────────────
 def classify_intent(query: str, history: list) -> str:
     """
-    Determine if query is PERSONAL, GENERIC, or CHIT_CHAT/OUT_OF_DOMAIN.
-    Uses deterministic routing for obvious intents, LLM for ambiguous cases.
+    Classify into: PERSONAL | GENERIC | HYBRID | APP_COMMAND | OUT_OF_DOMAIN.
+    Uses deterministic patterns first, LLM fallback for ambiguous.
     """
-    q = query.lower()
-    
-    out_of_domain = [r"\bweather\b", r"\bcode\b", r"\bpython\b", r"\bjavascript\b", r"\breact\b", r"\bpolitics\b", r"\bmovie\b", r"\bnews\b"]
-    if any(re.search(k, q) for k in out_of_domain):
+    q = query.lower().strip()
+
+    # OUT_OF_DOMAIN (hard blocklist)
+    ood = [
+        r"\bweather\b", r"\bpolitics\b", r"\bmovie\b", r"\bnews\b",
+        r"\bstocks?\b", r"\bcrypto\b", r"\bjavaScript\b", r"\bpython code\b",
+        r"\bwrite (a |an )?program\b", r"\bwrite (a |an )?script\b",
+        r"\bsql query\b", r"\bhtml\b", r"\bweb scraping\b",
+        r"\bpresident\b", r"\belection\b", r"\brecipe (for|to make)\b(?!.*protein)",
+    ]
+    if any(re.search(k, q, re.IGNORECASE) for k in ood):
         return "OUT_OF_DOMAIN"
-        
-    personal_keywords = [r"\bmy\b", r"\bi\b", r"\bdid i\b", r"my progress", r"my goal", r"last week", r"yesterday", r"how much did", r"my logs"]
-    if any(re.search(k, q) for k in personal_keywords):
+
+    # APP_COMMAND (navigation / safe UI actions)
+    nav_patterns = [
+        r"(open|take me to|go to|show me|navigate to|switch to|open up)",
+        r"\b(gym page|diet page|progress page|wellness page|profile page|coach page|today page|dashboard)\b",
+    ]
+    if any(re.search(k, q, re.IGNORECASE) for k in nav_patterns):
+        return "APP_COMMAND"
+
+    # PERSONAL (asking about their own data)
+    personal = [
+        r"\bmy\b", r"\bdid i\b", r"\bhave i\b", r"\bam i\b",
+        r"\bhow (much|many|often|long) did i\b",
+        r"\blast (week|month|time|workout|session|night)\b",
+        r"\byesterday\b", r"\bthis week\b", r"\bthis month\b",
+        r"\bmy (progress|goal|weight|sleep|mood|calories|protein|water|steps|gym|workout|exercise|log|history|records|performance|attendance|streak)\b",
+        r"\bhow (am|was) i (doing|performing)\b",
+        r"\bwhen (did|was) (my|the last)\b",
+    ]
+    if any(re.search(k, q, re.IGNORECASE) for k in personal):
+        # Check if it ALSO has generic fitness knowledge component → HYBRID
+        generic_in_personal = [
+            r"\bprogressive overload\b", r"\bhypertrophy\b", r"\bprotein (requirement|recommendation|intake)\b",
+            r"\boptimal\b", r"\bsufficient\b", r"\benough (protein|sleep|calories)\b",
+        ]
+        if any(re.search(k, q, re.IGNORECASE) for k in generic_in_personal):
+            return "HYBRID"
         return "PERSONAL"
-        
-    generic_keywords = [r"how to", r"what is", r"\bexplain\b", r"tutorial", r"best way", r"good form", r"recipe", r"benefits of", r"how many calories in"]
-    if any(re.search(k, q) for k in generic_keywords):
+
+    # GENERIC (fitness knowledge questions)
+    generic = [
+        r"\bwhat is\b", r"\bhow to\b", r"\bexplain\b", r"\bbest way\b",
+        r"\bhow many (calories|reps|sets|grams)\b",
+        r"\bbenefits of\b", r"\bwhat (should|does)\b",
+        r"\bprogressive overload\b", r"\bhypertrophy\b", r"\brecovery\b",
+        r"\bsuperset\b", r"\bdeload\b", r"\bRPE\b", r"\bVO2\b",
+    ]
+    if any(re.search(k, q, re.IGNORECASE) for k in generic):
         return "GENERIC"
 
-    system_prompt = (
-        "Classify the user's message into exactly ONE of these categories. Reply with ONLY the category name: "
-        "PERSONAL (asking about their own data, workouts, logs), "
-        "GENERIC (asking general fitness/diet advice), "
-        "CHIT_CHAT (casual greeting, thanks), "
-        "OUT_OF_DOMAIN (asking about non-fitness topics like coding, weather, politics)."
-    )
-    
-    messages = [{"role": "system", "content": system_prompt}]
-    for h in history[-3:]:
-        role = "user" if h.get("type") == "user" else "assistant"
-        messages.append({"role": role, "content": h.get("text", "")})
-    messages.append({"role": "user", "content": query})
-    
-    try:
-        chat = groq_client.chat.completions.create(
-            model="openai/gpt-oss-20b",
-            messages=messages,
-            max_tokens=10,
-            temperature=0.1
+    # LLM fallback for truly ambiguous cases
+    if groq_client:
+        system = (
+            "Classify this fitness chatbot message into ONE of: "
+            "PERSONAL (about the user's own data/logs), "
+            "GENERIC (general fitness/nutrition knowledge), "
+            "HYBRID (needs both personal data AND fitness knowledge), "
+            "APP_COMMAND (wants to navigate to a page or do a UI action), "
+            "OUT_OF_DOMAIN (unrelated to fitness, health, nutrition, or the app). "
+            "Reply with ONLY the category word."
         )
-        return chat.choices[0].message.content.strip().upper()
-    except:
-        return "GENERIC"
+        msgs = [{"role": "system", "content": system}]
+        for h in (history or [])[-2:]:
+            msgs.append({"role": "user" if h.get("type") == "user" else "assistant", "content": h.get("text", "")})
+        msgs.append({"role": "user", "content": query})
+        try:
+            resp = groq_client.chat.completions.create(
+                model=GROQ_MODEL, messages=msgs, max_tokens=10, temperature=0.0
+            )
+            cat = resp.choices[0].message.content.strip().upper()
+            if cat in ("PERSONAL", "GENERIC", "HYBRID", "APP_COMMAND", "OUT_OF_DOMAIN"):
+                return cat
+        except Exception:
+            pass
+    return "GENERIC"
 
-def extract_query_params(query: str) -> dict:
-    prompt = (
-        "Extract temporal and entity parameters from the user's fitness query.\n"
-        f"Query: '{query}'\n"
-        f"Current Date: {datetime.now().isoformat()[:10]}\n\n"
-        "Return EXACTLY a JSON object with these keys:\n"
-        "- start: YYYY-MM-DD (or null)\n"
-        "- end: YYYY-MM-DD (or null)\n"
-        "- collections: list of strings (choose from: ExerciseHistory, FoodLog, DailyProgress)\n"
-        "- exerciseName: string (or null)\n"
-        "Just output the JSON."
-    )
-    try:
-        res = generate_with_groq(prompt)
-        res = res.replace("```json", "").replace("```", "").strip()
-        return json.loads(res)
-    except:
-        end = datetime.now()
-        start = end - timedelta(days=7)
-        return {
-            "start": start.isoformat(),
-            "end": end.isoformat(),
-            "collections": ["ExerciseHistory", "FoodLog", "DailyProgress"],
-            "exerciseName": None
-        }
 
-def fetch_mongodb_data(user_id: str, query: str) -> str:
-    params = extract_query_params(query)
-    
-    payload = {
-        "userId": user_id,
-        "collections": params.get("collections", []),
-        "dateRange": {"start": params.get("start"), "end": params.get("end")},
-        "exerciseName": params.get("exerciseName")
-    }
-    
-    try:
-        headers = {"x-ai-service-secret": AI_SERVICE_SECRET, "Content-Type": "application/json"}
-        resp = requests.post(f"{NODE_SERVICE_URL}/api/ai/user-data", json=payload, headers=headers, timeout=5)
-        if resp.status_code == 200:
-            data = resp.json().get("data", {})
-            return json.dumps(data, indent=2)
-    except Exception as e:
-        print(f"[RAG] Mongo Bridge error: {e}")
-    return ""
-
-def search_pdf_knowledge(query: str) -> str:
+# ── PDF Knowledge Search ───────────────────────────────────────────────────────
+def search_pdf_knowledge(query: str, threshold: float = 1.0) -> str:
     if not CHROMA_AVAILABLE or not pdf_collection:
         return ""
     try:
-        results = pdf_collection.query(
-            query_texts=[query],
-            n_results=3
-        )
+        results = pdf_collection.query(query_texts=[query], n_results=3)
         if not results or not results.get("documents") or not results["documents"][0]:
             return ""
-            
         docs = results["documents"][0]
         distances = results.get("distances", [[]])[0]
-        
-        valid_chunks = []
+        chunks = []
         for doc, dist in zip(docs, distances):
-            if dist < 1.0:
-                clean_doc = re.sub(r'```+', '', doc)
-                clean_doc = re.sub(r'\n{3,}', '\n\n', clean_doc)
-                valid_chunks.append(clean_doc[:800])
-                
-        return "\n---\n".join(valid_chunks)
+            if dist < threshold:
+                clean = re.sub(r'```+', '', doc)
+                clean = re.sub(r'\n{3,}', '\n\n', clean)
+                # Sanitize: reject suspicious content
+                if any(p in clean.lower() for p in ["ignore previous", "system prompt", "disregard"]):
+                    continue
+                chunks.append(clean[:900])
+        return "\n---\n".join(chunks)
     except Exception as e:
         print(f"[RAG] PDF search error: {e}")
         return ""
+
+
+# ── Node Tool Executor ────────────────────────────────────────────────────────
+def execute_tool(user_id: str, tool_name: str, args: dict, confirmed: bool = False) -> dict:
+    """
+    Call the Node.js /api/ai/tools endpoint.
+    user_id is ALWAYS supplied by Python (from the original auth'd request), never from the LLM.
+    """
+    try:
+        resp = requests.post(
+            f"{NODE_SERVICE_URL}/api/ai/tools",
+            json={"userId": user_id, "tool": tool_name, "args": args, "confirmed": confirmed},
+            headers={"x-ai-service-secret": AI_SERVICE_SECRET, "Content-Type": "application/json"},
+            timeout=8
+        )
+        if resp.status_code == 200:
+            return resp.json().get("result", {})
+        print(f"[Tool] {tool_name} failed: {resp.status_code} {resp.text[:200]}")
+        return {"error": f"Tool call failed: {resp.status_code}"}
+    except Exception as e:
+        print(f"[Tool] {tool_name} exception: {e}")
+        return {"error": str(e)}
+
 
 
 # ═══════════════════════════════════════════════════════
@@ -431,6 +511,7 @@ class CoachChatRequest(BaseModel):
     user_profile: Optional[Dict[str, Any]] = {}
     recent_activity: Optional[List[Dict[str, Any]]] = []
     system_prompt: Optional[str] = None
+    pending_action: Optional[Dict[str, Any]] = None
 
 class RAGBackfillRequest(BaseModel):
     user_id: str
@@ -736,90 +817,450 @@ def rag_backfill(req: RAGBackfillRequest):
 @app.post("/rag/coach-chat")
 def rag_coach_chat(req: CoachChatRequest):
     """
-    Hybrid RAG AI Coach chat.
-    Uses Intent Router to dynamically fetch MongoDB data or PDF knowledge.
+    Hybrid RAG AI Coach chat — upgraded with Groq native tool-calling.
+    Flow:
+      1. Intent Classification (deterministic + LLM fallback)
+      2. OUT_OF_DOMAIN → immediate refusal
+      3. APP_COMMAND → navigate_to action returned to frontend
+      4. PERSONAL/HYBRID/GENERIC → Groq tool-calling loop (max 3 iterations)
+         - Groq selects tools, Python executes via Node /api/ai/tools
+         - Results fed back into context for final answer
+    Security: userId is ALWAYS from req.user_id (set by Node from JWT), never from LLM.
     """
     start_time = time.time()
     rag_sources = []
-    
-    # 1. Intent Classification
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    tz = "Asia/Kolkata"
+
+    # ── 1. Intent Classification ──────────────────────────────────────────────
     intent = classify_intent(req.message, req.history or [])
-    
+
+    # ── 2. OUT_OF_DOMAIN ──────────────────────────────────────────────────────
     if intent == "OUT_OF_DOMAIN":
         return {
-            "text": "I'm your Runli fitness coach! I'm here to help you with your workouts, diet, and fitness goals. How can I help you with those today?",
-            "rag_sources": [],
-            "memories_used": 0,
-            "rag_enabled": False,
-            "fallback_used": False,
+            "text": "I'm your Runli fitness coach! I can only help with workouts, nutrition, fitness tracking, and your Runli data. For anything else, I'm not the right tool. 💪",
+            "rag_sources": [], "memories_used": 0, "rag_enabled": False, "fallback_used": False,
             "latency_ms": int((time.time() - start_time) * 1000)
         }
 
-    # 2. Dynamic Retrieval based on Intent
-    context = ""
-    if intent == "PERSONAL":
-        mongo_data = fetch_mongodb_data(req.user_id, req.message)
-        if mongo_data:
-            context = f"User's Personal Data (from DB):\n{mongo_data}\n"
-            
-        # Optional: Include recent structured activity if passed from Node
-        if req.recent_activity:
-            context += f"\nRecent Activity: {json.dumps(req.recent_activity)}\n"
-            
-    elif intent == "GENERIC":
-        pdf_knowledge = search_pdf_knowledge(req.message)
-        if pdf_knowledge:
-            context = f"Fitness Knowledge Base:\n{pdf_knowledge}\n"
-            rag_sources.append({"source_type": "pdf", "text": "PDF Knowledge Base accessed"})
+    # ── 3. APP_COMMAND (navigation — handled in frontend) ─────────────────────
+    if intent == "APP_COMMAND":
+        nav_map = {
+            r"today|dashboard|home": "/today",
+            r"progress": "/progress",
+            r"diet|food|nutrition|eat|meal": "/diet-plan",
+            r"gym|train|workout|exercise": "/gym-mode",
+            r"wellness|sleep|recover|mood": "/wellness",
+            r"profile|me\b|account": "/me",
+            r"coach|ai|chat": "/coach",
+            r"habit": "/habits",
+            r"video|explore": "/videos",
+            r"analytic": "/analytics",
+            r"plan\b": "/plan",
+            r"billing|subscription|upgrade": "/billing",
+        }
+        ALLOWLIST = {"/today", "/progress", "/diet-plan", "/gym-mode", "/wellness",
+                     "/me", "/coach", "/habits", "/videos", "/analytics", "/plan",
+                     "/billing", "/workout-editor"}
+        q_lower = req.message.lower()
+        route = "/today"
+        for pattern, r in nav_map.items():
+            if re.search(pattern, q_lower, re.IGNORECASE):
+                route = r
+                break
+        if route not in ALLOWLIST:
+            route = "/today"
+        nav_text = f"Sure! Taking you there now. 🚀"
+        return {
+            "text": nav_text,
+            "action": {"type": "navigate", "route": route},
+            "rag_sources": [], "memories_used": 0, "rag_enabled": False, "fallback_used": False,
+            "latency_ms": int((time.time() - start_time) * 1000)
+        }
 
-    # Always include the basic profile if available
+    # ── 4. Build system prompt ────────────────────────────────────────────────
     profile = req.user_profile or {}
+    profile_snippet = ""
     if profile:
-        context += f"\nUser Profile: Goal={profile.get('goal')}, Weight={profile.get('weight')}kg"
+        parts = []
+        if profile.get("name"): parts.append(f"Name: {profile['name']}")
+        if profile.get("goal"): parts.append(f"Goal: {profile['goal']}")
+        if profile.get("weight"): parts.append(f"Weight: {profile['weight']}kg")
+        if profile.get("targetWeight"): parts.append(f"Target: {profile['targetWeight']}kg")
+        if profile.get("experience"): parts.append(f"Level: {profile['experience']}")
+        if profile.get("injuries"): parts.append(f"Injuries: {', '.join(profile['injuries'])}")
+        profile_snippet = " | ".join(parts)
 
-    # 3. Build system prompt
     base_system = req.system_prompt or (
         "You are Runli Coach — a personal AI fitness coach. "
         "You are concise, warm, science-backed, and deeply personal. "
-        "Never be generic. Never invent facts. "
-        "Use the provided context to answer the user's question accurately. "
-        "If you don't know the answer based on context, you can give general fitness advice. "
-        "Replies must be SHORT (2-4 sentences max). "
+        "Never invent data or facts. Only reference data from tool results. "
+        "When tool results are empty, say so honestly — do not guess. "
+        "Fitness, nutrition, workout, recovery, and Runli app topics ONLY. "
+        "Refuse non-fitness questions politely. "
+        "Replies must be SHORT (2-4 sentences) unless the user asks for a plan. "
         "Never mention OpenAI, ChatGPT, Gemini, or Groq. "
-        "Do NOT diagnose medical conditions."
+        "Do NOT diagnose medical conditions. If symptoms may need medical attention, recommend a doctor."
     )
+    base_system += f"\n\nCurrent Date: {today_str} (Timezone: {tz})"
+    if profile_snippet:
+        base_system += f"\nUser Profile: {profile_snippet}"
 
+    # ── 5. Tool Definitions (Groq native tool-calling) ────────────────────────
+    TOOLS = [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_daily_progress",
+                "description": "Get the user's daily progress record for a specific date (gym attendance, water, calories, protein, sleep, mood, steps, weight).",
+                "parameters": {"type": "object", "properties": {
+                    "date": {"type": "string", "description": "Date in YYYY-MM-DD format"}
+                }, "required": ["date"]}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_progress_history",
+                "description": "Get progress history across a date range. Use for trend analysis, weekly/monthly summaries, gym streak questions.",
+                "parameters": {"type": "object", "properties": {
+                    "start_date": {"type": "string", "description": "Start date YYYY-MM-DD"},
+                    "end_date": {"type": "string", "description": "End date YYYY-MM-DD"}
+                }, "required": ["start_date", "end_date"]}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_food_log",
+                "description": "Get the user's food/nutrition logs for a date range. Returns meals, macros, calories, protein.",
+                "parameters": {"type": "object", "properties": {
+                    "start_date": {"type": "string"},
+                    "end_date": {"type": "string"}
+                }, "required": ["start_date", "end_date"]}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_exercise_history",
+                "description": "Get the user's exercise log. Can filter by exercise name and date range.",
+                "parameters": {"type": "object", "properties": {
+                    "start_date": {"type": "string"},
+                    "end_date": {"type": "string"},
+                    "exercise_name": {"type": "string", "description": "Optional: filter by exercise name (e.g. 'bench press')"}
+                }, "required": ["start_date", "end_date"]}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_user_profile",
+                "description": "Get the user's fitness goals, targets (calorie goal, protein goal, water goal), current weight, target weight, experience level.",
+                "parameters": {"type": "object", "properties": {}}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_diet_plan",
+                "description": "Get the user's active AI-generated diet plan with meal breakdown.",
+                "parameters": {"type": "object", "properties": {}}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_fitness_score_history",
+                "description": "Get the user's daily fitness score history (overall score 0-100 and breakdown by category).",
+                "parameters": {"type": "object", "properties": {
+                    "start_date": {"type": "string"},
+                    "end_date": {"type": "string"}
+                }, "required": ["start_date", "end_date"]}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_progress_summary",
+                "description": "Get an aggregated summary for a period: gym days, attendance rate, average calories/protein/sleep, weight trend.",
+                "parameters": {"type": "object", "properties": {
+                    "start_date": {"type": "string"},
+                    "end_date": {"type": "string"}
+                }, "required": ["start_date", "end_date"]}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_personal_records",
+                "description": "Get the user's personal records (max reps) for exercises. Can filter by exercise name.",
+                "parameters": {"type": "object", "properties": {
+                    "exercise_name": {"type": "string", "description": "Optional: specific exercise name"}
+                }}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_exercise_summary",
+                "description": "Get exercise frequency summary for a period: which exercises done, how many sessions each.",
+                "parameters": {"type": "object", "properties": {
+                    "start_date": {"type": "string"},
+                    "end_date": {"type": "string"}
+                }, "required": ["start_date", "end_date"]}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "compare_progress_periods",
+                "description": "Compare two time periods side by side (gym days, calories, protein, sleep, exercise sessions).",
+                "parameters": {"type": "object", "properties": {
+                    "period1_start": {"type": "string"},
+                    "period1_end": {"type": "string"},
+                    "period2_start": {"type": "string"},
+                    "period2_end": {"type": "string"}
+                }, "required": ["period1_start", "period1_end", "period2_start", "period2_end"]}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "log_water",
+                "description": "Log water intake for the user.",
+                "parameters": {"type": "object", "properties": {
+                    "amount_ml": {"type": "number", "description": "Water amount in ml"},
+                    "date": {"type": "string", "description": "YYYY-MM-DD (defaults to today)"}
+                }, "required": ["amount_ml"]}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "mark_gym_attendance",
+                "description": "Mark that the user went to the gym on a specific date.",
+                "parameters": {"type": "object", "properties": {
+                    "date": {"type": "string", "description": "YYYY-MM-DD (defaults to today)"}
+                }}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "log_weight",
+                "description": "Log the user's body weight.",
+                "parameters": {"type": "object", "properties": {
+                    "weight_kg": {"type": "number"},
+                    "date": {"type": "string"}
+                }, "required": ["weight_kg"]}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "log_sleep",
+                "description": "Log sleep hours for the user.",
+                "parameters": {"type": "object", "properties": {
+                    "hours": {"type": "number"},
+                    "date": {"type": "string"}
+                }, "required": ["hours"]}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "log_mood",
+                "description": "Log mood score (1=awful, 2=bad, 3=ok, 4=good, 5=amazing).",
+                "parameters": {"type": "object", "properties": {
+                    "score": {"type": "integer", "minimum": 1, "maximum": 5},
+                    "date": {"type": "string"}
+                }, "required": ["score"]}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "delete_daily_progress",
+                "description": "Delete the user's daily progress record for a date. DESTRUCTIVE — requires confirmation.",
+                "parameters": {"type": "object", "properties": {
+                    "date": {"type": "string", "description": "YYYY-MM-DD"}
+                }, "required": ["date"]}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "delete_food_log",
+                "description": "Delete the user's food log for a date. DESTRUCTIVE — requires confirmation.",
+                "parameters": {"type": "object", "properties": {
+                    "date": {"type": "string"}
+                }, "required": ["date"]}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "delete_exercise_entry",
+                "description": "Delete a specific exercise entry. DESTRUCTIVE — requires confirmation.",
+                "parameters": {"type": "object", "properties": {
+                    "date": {"type": "string"},
+                    "exercise_name": {"type": "string"}
+                }, "required": ["date", "exercise_name"]}
+            }
+        },
+    ]
+
+    DESTRUCTIVE_TOOLS = {"delete_daily_progress", "delete_food_log", "delete_exercise_entry"}
+
+    # ── 6. Check for pending confirmation ────────────────────────────────────
+    pending_action = req.pending_action or {}
+    confirmed = False
+    if pending_action and re.search(r"\b(yes|confirm|proceed|go ahead|sure|do it|ok)\b", req.message, re.IGNORECASE):
+        confirmed = True
+
+    # ── 7. GENERIC: PDF-only path (no tools needed) ───────────────────────────
+    if intent == "GENERIC":
+        pdf_ctx = search_pdf_knowledge(req.message)
+        messages = [{"role": "system", "content": base_system}]
+        if pdf_ctx:
+            messages.append({"role": "system", "content": f"Fitness Knowledge Base (from verified PDFs):\n{pdf_ctx}"})
+            rag_sources.append({"source_type": "pdf", "text": "Fitness knowledge base consulted"})
+        for h in (req.history or [])[-8:]:
+            role = "user" if h.get("type") == "user" else "assistant"
+            txt = h.get("text", "").strip()
+            if txt:
+                messages.append({"role": role, "content": txt})
+        messages.append({"role": "user", "content": req.message})
+        try:
+            completion = groq_client.chat.completions.create(
+                model=GROQ_MODEL, messages=messages, max_tokens=400, temperature=0.7
+            )
+            return {
+                "text": completion.choices[0].message.content.strip(),
+                "rag_sources": rag_sources, "memories_used": len(rag_sources),
+                "rag_enabled": True, "fallback_used": False,
+                "latency_ms": int((time.time() - start_time) * 1000)
+            }
+        except Exception as e:
+            raise HTTPException(status_code=503, detail="AI service temporarily unavailable.")
+
+    # ── 8. PERSONAL / HYBRID: Native Groq tool-calling loop ──────────────────
     messages = [{"role": "system", "content": base_system}]
-    if context.strip():
-        messages.append({"role": "system", "content": f"Context for this query:\n\n{context}"})
 
-    for h in (req.history or [])[-10:]:
+    # For HYBRID, also add PDF context upfront
+    if intent == "HYBRID":
+        pdf_ctx = search_pdf_knowledge(req.message)
+        if pdf_ctx:
+            messages.append({"role": "system", "content": f"General Fitness Knowledge:\n{pdf_ctx}"})
+            rag_sources.append({"source_type": "pdf", "text": "Fitness knowledge base consulted"})
+
+    # If there's a pending destructive action and user confirmed, execute it directly
+    if confirmed and pending_action.get("tool") in DESTRUCTIVE_TOOLS:
+        result = execute_tool(req.user_id, pending_action["tool"], pending_action.get("args", {}), confirmed=True)
+        messages.append({"role": "system", "content": f"Tool result for {pending_action['tool']}: {json.dumps(result)}"})
+        for h in (req.history or [])[-8:]:
+            role = "user" if h.get("type") == "user" else "assistant"
+            txt = h.get("text", "").strip()
+            if txt: messages.append({"role": role, "content": txt})
+        messages.append({"role": "user", "content": req.message})
+        try:
+            completion = groq_client.chat.completions.create(
+                model=GROQ_MODEL, messages=messages, max_tokens=200, temperature=0.7
+            )
+            return {
+                "text": completion.choices[0].message.content.strip(),
+                "rag_sources": rag_sources, "memories_used": len(rag_sources),
+                "rag_enabled": True, "fallback_used": False, "pending_action": None,
+                "latency_ms": int((time.time() - start_time) * 1000)
+            }
+        except Exception:
+            raise HTTPException(status_code=503, detail="AI service temporarily unavailable.")
+
+    # Add conversation history
+    for h in (req.history or [])[-8:]:
         role = "user" if h.get("type") == "user" else "assistant"
-        text = h.get("text", "").strip()
-        if text:
-            messages.append({"role": role, "content": text})
-
+        txt = h.get("text", "").strip()
+        if txt: messages.append({"role": role, "content": txt})
     messages.append({"role": "user", "content": req.message})
 
-    # 4. Generate response (Groq only)
-    try:
+    # Tool-calling loop (max 3 rounds to allow multi-step reasoning)
+    new_pending_action = None
+    for _round in range(3):
         if not groq_client:
-            raise RuntimeError("Groq not configured")
-        
-        completion = groq_client.chat.completions.create(
-            model=GROQ_MODEL,
-            messages=messages,
-            max_tokens=300,
-            temperature=0.75,
-            top_p=0.9
+            raise HTTPException(status_code=503, detail="Groq not configured")
+        try:
+            completion = groq_client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=messages,
+                tools=TOOLS,
+                tool_choice="auto",
+                max_tokens=500,
+                temperature=0.3,
+            )
+        except Exception as e:
+            print(f"[RAG] Groq tool-calling failed: {e}")
+            raise HTTPException(status_code=503, detail="AI service temporarily unavailable.")
+
+        choice = completion.choices[0]
+        finish_reason = choice.finish_reason
+
+        # No tool call → final answer
+        if finish_reason == "stop" or not choice.message.tool_calls:
+            response_text = (choice.message.content or "").strip()
+            return {
+                "text": response_text,
+                "rag_sources": rag_sources,
+                "memories_used": len(rag_sources),
+                "rag_enabled": True,
+                "fallback_used": False,
+                "pending_action": new_pending_action,
+                "latency_ms": int((time.time() - start_time) * 1000)
+            }
+
+        # Process tool calls
+        messages.append(choice.message)  # append assistant message with tool_calls
+        for tc in choice.message.tool_calls:
+            tool_name = tc.function.name
+            try:
+                tool_args = json.loads(tc.function.arguments or "{}")
+            except Exception:
+                tool_args = {}
+
+            # Destructive tool → intercept, ask for confirmation
+            if tool_name in DESTRUCTIVE_TOOLS:
+                confirm_result = execute_tool(req.user_id, tool_name, tool_args, confirmed=False)
+                confirm_msg = confirm_result.get("message", f"I can run {tool_name}. Please confirm.")
+                new_pending_action = {"tool": tool_name, "args": tool_args}
+                # Return confirmation prompt immediately
+                return {
+                    "text": confirm_msg,
+                    "rag_sources": rag_sources,
+                    "memories_used": 0,
+                    "rag_enabled": True,
+                    "fallback_used": False,
+                    "pending_action": new_pending_action,
+                    "latency_ms": int((time.time() - start_time) * 1000)
+                }
+
+            # Execute safe tool
+            tool_result = execute_tool(req.user_id, tool_name, tool_args, confirmed=False)
+            rag_sources.append({"source_type": "tool", "tool": tool_name})
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": json.dumps(tool_result)
+            })
+
+    # Exceeded max rounds — ask Groq to wrap up with what it has
+    try:
+        messages.append({"role": "user", "content": "Please summarize the results above for the user."})
+        final = groq_client.chat.completions.create(
+            model=GROQ_MODEL, messages=messages, max_tokens=300, temperature=0.7
         )
-        response_text = completion.choices[0].message.content.strip()
-    except Exception as e:
-        print(f"[RAG] Generation failed: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail="AI service temporarily unavailable. Please try again shortly."
-        )
+        response_text = final.choices[0].message.content.strip()
+    except Exception:
+        response_text = "I retrieved your data but had trouble summarizing it. Please try a more specific question."
 
     return {
         "text": response_text,
@@ -827,8 +1268,10 @@ def rag_coach_chat(req: CoachChatRequest):
         "memories_used": len(rag_sources),
         "rag_enabled": True,
         "fallback_used": False,
+        "pending_action": new_pending_action,
         "latency_ms": int((time.time() - start_time) * 1000)
     }
+
 
 
 # ═══════════════════════════════════════════════════════

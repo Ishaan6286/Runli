@@ -122,6 +122,7 @@ const AICoach = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError]       = useState(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [pendingAction, setPendingAction] = useState(null);
 
   const messagesEndRef = useRef(null);
   const inputRef       = useRef(null);
@@ -160,7 +161,17 @@ const AICoach = () => {
 
     try {
       const historyForApi = history.slice(-10).map(m => ({ type: m.type, text: m.text }));
-      const response = await sendCoachMessage(userMsg.text, historyForApi);
+      const response = await sendCoachMessage(userMsg.text, historyForApi, pendingAction);
+      
+      // Handle frontend actions (navigation)
+      if (response.action && response.action.type === 'navigate' && response.action.route) {
+          navigate(response.action.route);
+          return;
+      }
+
+      // Update pending action state (for destructive tool confirmations)
+      setPendingAction(response.pending_action || null);
+
       setMessages(prev => [...prev, {
         id: Date.now().toString() + '-model',
         type: 'model',
